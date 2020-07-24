@@ -2,7 +2,7 @@
 name = "accelerator"
 version = "0.1.0"
 description = ""
-authors = ["Your Name <you@example.com>"]
+authors = ["Loic Coyle <loic.coyle <loic.coyle@hotmail.fr>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
