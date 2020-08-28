@@ -5,8 +5,7 @@ import numpy as np
 
 
 def to_v_vec(vec: List[float]) -> np.ndarray:
-    """Helper function to create 1D vertical arrays.
-    """
+    """Helper function to create 1D vertical arrays."""
     vec = np.array(vec)
     if np.squeeze(vec).ndim > 1:
         raise ValueError("'vec' is not 1D.")

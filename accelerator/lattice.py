@@ -57,7 +57,10 @@ class Lattice(list):
         self._m_v = None
 
     def transport(
-        self, init: List[float], plane: str = "h", twiss: bool = False,
+        self,
+        init: List[float],
+        plane: str = "h",
+        twiss: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Transport the given phase space along the lattice.
 
@@ -89,7 +92,10 @@ class Lattice(list):
         return np.hstack(out), np.array(s)
 
     def transport_beam(
-        self, twiss_init: List[float], beam: Beam, plane: str = "h",
+        self,
+        twiss_init: List[float],
+        beam: Beam,
+        plane: str = "h",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Compute the phase space ellipse along the lattice.
 
@@ -179,8 +185,7 @@ class Lattice(list):
         n_s_per_element: int = int(1e3),
         xztheta_init: List[float] = [0, 0, np.pi / 2],
     ) -> Tuple[plt.Figure, plt.Axes]:
-        """Plot the s coordinate in the horizontal plane of the lattice.
-        """
+        """Plot the s coordinate in the horizontal plane of the lattice."""
         xztheta = [np.array(xztheta_init)]
         s_start = 0
         for element in self:

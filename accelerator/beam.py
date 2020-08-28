@@ -4,8 +4,8 @@ from typing import List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.constants import c, m_p, e
 from matplotlib.patches import Ellipse
+from scipy.constants import c, e, m_p
 
 from .sampling import bigaussian
 from .utils import complete_twiss, compute_twiss_clojure, to_twiss
@@ -44,8 +44,8 @@ class Beam:
         self.number = number
         self.energy = energy
         self.mass = mass
-        self.gamma_relativistic = self.energy * 1e9 * e / (self.mass * c**2)
-        self.beta_relativistic = np.sqrt(1. - 1./self.gamma_relativistic**2)
+        self.gamma_relativistic = self.energy * 1e9 * e / (self.mass * c ** 2)
+        self.beta_relativistic = np.sqrt(1.0 - 1.0 / self.gamma_relativistic ** 2)
         self.emittance_h = emittance[0]
         self.emittance_v = emittance[1]
         self.n_particles = n_particles
@@ -93,28 +93,28 @@ class Beam:
         u_prime = -(alpha / beta) * u - np.sqrt(emit / beta) * np.sin(angles)
         return u, u_prime
 
-
     def matched_particle_distribution(
-        self,
-        twiss: List[float],
-        plane: str = 'h'
+        self, twiss: List[float], plane: str = "h"
     ) -> Tuple[np.ndarray, np.ndarray]:
 
         beta, alpha, gamma = twiss
 
-        emittance_norm = getattr(self, f'emittance_{plane}')
-        emittance_geom = emittance_norm / (self.beta_relativistic * self.gamma_relativistic)
-        
+        emittance_norm = getattr(self, f"emittance_{plane}")
+        emittance_geom = emittance_norm / (
+            self.beta_relativistic * self.gamma_relativistic
+        )
+
         u_pre = np.random.normal(
-            loc=0., scale=np.sqrt(emittance_geom), size=self.n_particles)
+            loc=0.0, scale=np.sqrt(emittance_geom), size=self.n_particles
+        )
         u_prime_pre = np.random.normal(
-            loc=0., scale=np.sqrt(emittance_geom), size=self.n_particles)
-        
+            loc=0.0, scale=np.sqrt(emittance_geom), size=self.n_particles
+        )
+
         u = np.sqrt(beta) * u_pre
-        u_prime = -alpha / np.sqrt(beta) * u_pre + 1./np.sqrt(beta) * u_prime_pre
+        u_prime = -alpha / np.sqrt(beta) * u_pre + 1.0 / np.sqrt(beta) * u_prime_pre
 
         return u, u_prime
-
 
     def __repr__(self) -> str:
         args = {

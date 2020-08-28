@@ -12,8 +12,7 @@ class BaseElement:
     """Element"""
 
     def __init__(self):
-        """Base class of a lattice element.
-        """
+        """Base class of a lattice element."""
         self._m_h = None
         self._m_v = None
 
@@ -38,7 +37,11 @@ class BaseElement:
         pass
 
     def plot(
-        self, u_init: List[float] = [1, np.pi / 8], plane="h", *args, **kwargs,
+        self,
+        u_init: List[float] = [1, np.pi / 8],
+        plane="h",
+        *args,
+        **kwargs,
     ) -> Tuple[plt.Figure, plt.Axes]:
         plane_map = {"h": self.m_h, "v": self.m_v}
         coord_map = {"h": "x", "v": "y"}
