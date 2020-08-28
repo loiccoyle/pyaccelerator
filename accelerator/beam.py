@@ -93,6 +93,29 @@ class Beam:
         u_prime = -(alpha / beta) * u - np.sqrt(emit / beta) * np.sin(angles)
         return u, u_prime
 
+
+    def matched_particle_distribution(
+        self,
+        twiss: List[float],
+        plane: str = 'h'
+    ) -> Tuple[np.ndarray, np.ndarray]:
+
+        beta, alpha, gamma = twiss
+
+        emittance_norm = getattr(self, f'emittance_{plane}')
+        emittance_geom = emittance_norm / (self.beta_relativistic * self.gamma_relativistic)
+        
+        u_pre = np.random.normal(
+            loc=0., scale=np.sqrt(emittance_geom), size=self.n_particles)
+        u_prime_pre = np.random.normal(
+            loc=0., scale=np.sqrt(emittance_geom), size=self.n_particles)
+        
+        u = np.sqrt(beta) * u_pre
+        u_prime = -alpha / np.sqrt(beta) * u_pre + 1./np.sqrt(beta) * u_prime_pre
+
+        return u, u_prime
+
+
     def __repr__(self) -> str:
         args = {
             "number": self.number,
