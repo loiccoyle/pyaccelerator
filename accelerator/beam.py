@@ -4,6 +4,7 @@ from typing import List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.constants import c, m_p, e
 from matplotlib.patches import Ellipse
 
 from .sampling import bigaussian
@@ -15,6 +16,7 @@ class Beam:
         self,
         number: int = 1,
         energy: float = 6500.0,
+        mass: float = m_p,
         n_particles: int = 1000,
         emittance: Union[Tuple[float, float], float] = 3.5e-6,
         sampling: str = "bigaussian",
@@ -24,6 +26,7 @@ class Beam:
         Args:
             number (optional): Beam number, either 1 or 2.
             energy (optional): Beam energy in GeV.
+            mass (optional): Particle mass in kg.
             n_particles (optional): number of particles in the beam.
             emittance (optional): beam emittance in meters, to specify horizontal
                 and vertical emittances use a tuple.
@@ -40,6 +43,9 @@ class Beam:
             emittance = (emittance, emittance)
         self.number = number
         self.energy = energy
+        self.mass = mass
+        self.gamma_relativistic = self.energy * 1e9 * e / (self.mass * c**2)
+        self.beta_relativistic = np.sqrt(1. - 1./self.gamma_relativistic**2)
         self.emittance_h = emittance[0]
         self.emittance_v = emittance[1]
         self.n_particles = n_particles
