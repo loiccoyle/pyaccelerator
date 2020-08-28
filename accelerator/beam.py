@@ -96,6 +96,15 @@ class Beam:
     def matched_particle_distribution(
         self, twiss: List[float], plane: str = "h"
     ) -> Tuple[np.ndarray, np.ndarray]:
+        """Generate gaussian distributed phasespace coords matched to the `twiss` parameters.
+
+        Args:
+            twiss: initial twiss parameters.
+            plane: plane of interest, either "h" or "v".
+
+        Returns:
+            u, u_prime: arrays of phasespace coordinates.
+        """
 
         beta, alpha, gamma = twiss
 
