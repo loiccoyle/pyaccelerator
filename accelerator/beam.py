@@ -15,7 +15,7 @@ class Beam:
         self,
         number: int = 1,
         energy: float = 6500.0,
-        n_particles: int = 1e3,
+        n_particles: int = 1000,
         emittance: Union[Tuple[float, float], float] = 3.5e-6,
         sampling: str = "bigaussian",
     ):
