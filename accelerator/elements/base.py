@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ..transfer_matrix import TransferMatrix
-from ..utils import compute_m_twiss
 
 
 class BaseElement:

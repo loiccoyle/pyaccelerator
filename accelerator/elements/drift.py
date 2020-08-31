@@ -1,6 +1,5 @@
-from typing import List, Tuple
+from typing import Tuple
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 from .base import BaseElement
@@ -25,7 +24,7 @@ class Drift(BaseElement):
         self.l = l
         self.length = l
 
-    def transfer_matrix(self) -> np.ndarray:
+    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
         m_h = np.zeros((2, 2))
         m_h[0][0] = 1
         m_h[0][1] = self.l

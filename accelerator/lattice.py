@@ -6,13 +6,7 @@ import numpy as np
 
 from .beam import Beam
 from .transfer_matrix import TransferMatrix
-from .utils import (
-    compute_m_twiss,
-    compute_one_turn,
-    compute_twiss_invariant,
-    to_phase_coord,
-    to_twiss,
-)
+from .utils import compute_one_turn, compute_twiss_invariant, to_phase_coord, to_twiss
 
 
 class Lattice(list):

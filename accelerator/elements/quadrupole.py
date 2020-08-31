@@ -3,7 +3,6 @@ from typing import Tuple
 import numpy as np
 
 from .base import BaseElement
-from .utils import straight_element
 
 
 class Quadrupole(BaseElement):
