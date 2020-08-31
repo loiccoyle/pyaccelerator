@@ -50,6 +50,24 @@ class Lattice(list):
         self._m_h = None
         self._m_v = None
 
+    def slice(self, element_type: "BaseElement", n_element: int) -> "Lattice":
+        """Slice the `element_type` elements of the `Lattice` into `n_element`.
+
+        Args:
+            element_type: element class to slice.
+            n_element: slice `element_type` into `n_element` smaller elements.
+
+        Return
+            Sliced `Lattice`.
+        """
+        new_lattice = []
+        for element in self:
+            if isinstance(element, element_type) and element.length > 0:
+                new_lattice.extend(element.slice(n_element))
+            else:
+                new_lattice.append(element)
+        return Lattice(new_lattice)
+
     def transport(
         self,
         init: List[float],

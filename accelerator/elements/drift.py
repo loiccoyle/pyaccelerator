@@ -2,6 +2,7 @@ from typing import Tuple
 
 import numpy as np
 
+from ..lattice import Lattice
 from .base import BaseElement
 from .utils import straight_element
 
@@ -30,6 +31,17 @@ class Drift(BaseElement):
         m_h[1][1] = 1
         m_v = m_h
         return m_h, m_v
+
+    def slice(self, n_drifts: int) -> Lattice:
+        """Slice the element into a many smaller elements.
+
+        Args:
+            n_drifts: number of `Drift` elements.
+
+        Returns:
+            `Lattice` of sliced `Drift` elements.
+        """
+        return Lattice([Drift(self.length / n_drifts)] * n_drifts)
 
     def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
         return straight_element(theta, d_s)

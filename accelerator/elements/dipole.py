@@ -2,6 +2,7 @@ from typing import Tuple
 
 import numpy as np
 
+from ..lattice import Lattice
 from .base import BaseElement
 from .utils import bent_element
 
@@ -41,6 +42,17 @@ class Dipole(BaseElement):
         # m_v[1][0] = 0
         m_v[1][1] = 1
         return m_h, m_v
+
+    def slice(self, n_dipoles: int) -> Lattice:
+        """Slice the element into a many smaller elements.
+
+        Args:
+            n_dipoles: number of `Dipole` elements.
+
+        Returns:
+            `Lattice` of sliced `Dipole` elements.
+        """
+        return Lattice([Dipole(self.rho, self.theta / n_dipoles)] * n_dipoles)
 
     def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
         return bent_element(theta, d_s, self.rho)
