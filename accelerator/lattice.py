@@ -1,12 +1,12 @@
 """Accelerator lattice"""
-from typing import List, Tuple
+from typing import List, Tuple, Type
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .beam import Beam
 from .transfer_matrix import TransferMatrix
-from .utils import compute_one_turn, compute_twiss_invariant, to_phase_coord, to_twiss
+from .utils import compute_one_turn, to_phase_coord, to_twiss
 
 
 class Lattice(list):
@@ -50,7 +50,7 @@ class Lattice(list):
         self._m_h = None
         self._m_v = None
 
-    def slice(self, element_type: "BaseElement", n_element: int) -> "Lattice":
+    def slice(self, element_type: Type["BaseElement"], n_element: int) -> "Lattice":
         """Slice the `element_type` elements of the `Lattice` into `n_element`.
 
         Args:
