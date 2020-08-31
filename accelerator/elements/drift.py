@@ -35,4 +35,4 @@ class Drift(BaseElement):
         return straight_element(theta, d_s)
 
     def __repr__(self):
-        return f"Drift(l={self.l})"
+        return f"Drift(length={self.length})"

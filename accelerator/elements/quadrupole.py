@@ -7,6 +7,7 @@ from .base import BaseElement
 
 class Quadrupole(BaseElement):
     """Quadrupole element"""
+
     def __init__(self, f: float):
         """Quadrupole element.
 

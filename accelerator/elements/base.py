@@ -37,7 +37,7 @@ class BaseElement:
         return self._m_v
 
     @abstractmethod
-    def transfer_matrix(self) -> np.ndarray:
+    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
         pass
 
     def plot(
@@ -46,7 +46,17 @@ class BaseElement:
         plane="h",
         *args,
         **kwargs,
-    ) -> Tuple[plt.Figure, plt.Axes]:
+    ) -> Tuple[plt.Figure, np.ndarray]:
+        """Plot the effect of the element on the phase space coords.
+
+        Args:
+            u_init: initial phase space coords.
+            plane: ether "h" or "v".
+            args, kwargs: plotting args/kwargs.
+
+        Returns
+            Plotted Figure and array of axes.
+        """
         plane_map = {"h": self.m_h, "v": self.m_v}
         coord_map = {"h": "x", "v": "y"}
         coord = coord_map[plane]

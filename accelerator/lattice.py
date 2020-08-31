@@ -178,8 +178,16 @@ class Lattice(list):
         self,
         n_s_per_element: int = int(1e3),
         xztheta_init: List[float] = [0, 0, np.pi / 2],
-    ) -> Tuple[plt.Figure, plt.Axes]:
-        """Plot the s coordinate in the horizontal plane of the lattice."""
+    ) -> Tuple[plt.Figure, np.ndarray]:
+        """Plot the s coordinate in the horizontal plane of the lattice.
+
+        Args:
+            n_s_per_element: number of steps along the s coord.
+            xztheta_init: initial vector.
+
+        Returns:
+            Plotted Figure and array of axes.
+        """
         xztheta = [np.array(xztheta_init)]
         s_start = 0
         for element in self:
