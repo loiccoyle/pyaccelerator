@@ -6,6 +6,7 @@ from .base import BaseElement
 
 
 class Quadrupole(BaseElement):
+    """Quadrupole element"""
     def __init__(self, f: float):
         """Quadrupole element.
 
@@ -19,9 +20,8 @@ class Quadrupole(BaseElement):
             m_h: element transfer matrix horizontal plane.
             m_v: element transfer matrix vertical plane.
         """
-        super().__init__()
+        super().__init__(0)
         self.f = f
-        self.length = 0
 
     def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
         m_h = np.zeros((2, 2))

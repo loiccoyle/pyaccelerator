@@ -9,25 +9,23 @@ from .utils import straight_element
 class Drift(BaseElement):
     """Drift element"""
 
-    def __init__(self, l: float):
+    def __init__(self, length: float):
         """Drift element.
 
         Args:
-            l: drift length in meters.
+            length: drift length in meters.
 
         Attributes:
-            l: drift length.
+            length: drift length in meters.
             m_h: element transfer matrix horizontal plane.
             m_v: element transfer matrix vertical plane.
         """
-        super().__init__()
-        self.l = l
-        self.length = l
+        super().__init__(length)
 
     def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
         m_h = np.zeros((2, 2))
         m_h[0][0] = 1
-        m_h[0][1] = self.l
+        m_h[0][1] = self.length
         # m_h[1][0] = 0
         m_h[1][1] = 1
         m_v = m_h

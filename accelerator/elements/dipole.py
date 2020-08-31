@@ -17,15 +17,15 @@ class Dipole(BaseElement):
             theta: bending angle in radians.
 
         Attributes:
+            length: dipole length in meters.
             rho: bending radius in meters.
             theta: bending angle in radians.
             m_h: element transfer matrix horizontal plane.
             m_v: element transfer matrix vertical plane.
         """
-        super().__init__()
+        super().__init__(rho * theta)
         self.rho = rho
         self.theta = theta
-        self.length = rho * theta
 
     def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
         # horizontal

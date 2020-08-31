@@ -10,10 +10,15 @@ from ..transfer_matrix import TransferMatrix
 class BaseElement:
     """Element"""
 
-    def __init__(self):
-        """Base class of a lattice element."""
+    def __init__(self, length: float):
+        """Base class of a lattice element.
+
+        Args:
+            length: length of the element.
+        """
         self._m_h = None
         self._m_v = None
+        self.length = length
 
     @property
     def m_h(self) -> TransferMatrix:
