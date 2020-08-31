@@ -176,9 +176,6 @@ class Lattice(list):
         self._clear_cache()
         return super().sort(*args, **kwargs)
 
-    def __getslice__(self, i, j):
-        return Lattice(list.__getslice__(self, i, j))
-
     def __add__(self, other):
         return Lattice(list.__add__(self, other))
 
