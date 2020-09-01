@@ -1,45 +1,60 @@
 from functools import reduce
-from typing import List, Optional, Tuple, Union
+from typing import Optional, Sequence, Tuple, TypeVar, Union
 
 import numpy as np
 
+Number = TypeVar("Number", int, float)
 
-def to_v_vec(vec: List[float]) -> np.ndarray:
-    """Helper function to create 1D vertical arrays."""
+
+def to_v_vec(vec: Sequence[Number]) -> np.ndarray:
+    """Helper function to create 1D vertical arrays.
+
+    Args:
+        vec: vector to convert to vertical array.
+
+    Returns:
+        Vertical 1D `np.ndarray`.
+    """
     vec = np.array(vec)
     if np.squeeze(vec).ndim > 1:
         raise ValueError("'vec' is not 1D.")
     return np.array(vec).reshape(-1, 1)
 
 
-def to_twiss(twiss: List[Union[float, None]]) -> np.ndarray:
+def to_twiss(twiss: Sequence[Union[Number, None]]) -> np.ndarray:
     """Helper function to create twiss vectors.
 
     Args:
-        twiss: list of length 3.
+        twiss: list of length 3, a single twiss parameter can be None.
+
+    Returns:
+        Completed vertical 1D twiss parameter `np.ndarray`.
     """
     if len(twiss) != 3:
-        raise ValueError(f"Length of 'twiss' != 3.")
+        raise ValueError("Length of 'twiss' != 3.")
     twiss = complete_twiss(*twiss)
-    return np.array(twiss).reshape(3, 1)
+    return to_v_vec(twiss)
 
 
-def to_phase_coord(phase_coord: List[float]) -> np.ndarray:
+def to_phase_coord(phase_coord: Sequence[Number]) -> np.ndarray:
     """Helper function to create phase space coordinate vectors.
 
     Args:
-        twiss: list of length 2.
+        phase_coord: list of length 2.
+
+    Returns:
+        Vertical 1D `np.ndarray`.
     """
     if len(phase_coord) != 2:
-        raise ValueError(f"Length of 'phase_coord' != 2.")
-    return np.array(phase_coord).reshape(2, 1)
+        raise ValueError("Length of 'phase_coord' != 2.")
+    return to_v_vec(phase_coord)
 
 
 def complete_twiss(
-    beta: Optional[float] = None,
-    alpha: Optional[float] = None,
-    gamma: Optional[float] = None,
-) -> Tuple[float, float, float]:
+    beta: Optional[Number] = None,
+    alpha: Optional[Number] = None,
+    gamma: Optional[Number] = None,
+) -> Tuple[Number, Number, Number]:
     """Given 2 twiss parameters, compute the third.
 
     Args:
@@ -48,7 +63,7 @@ def complete_twiss(
         gamma (optional): twiss gamma in meter^-1.
 
     Returns:
-        tuple of completes twiss parameters, (beta, alpha, gamma).
+        Tuple of completes twiss parameters, (beta, alpha, gamma).
     """
 
     number_of_none = sum([param is None for param in (beta, alpha, gamma)])
@@ -65,12 +80,21 @@ def complete_twiss(
     return (beta, alpha, gamma)
 
 
-def compute_one_turn(list_of_m: List[np.array]) -> np.array:
+def compute_one_turn(list_of_m: Sequence[np.array]) -> np.array:
+    """Iteratively compute the matrix multiplictions of the arrays in the
+    provided sequence.
+
+    Args:
+        list_of_m: sequence of transfer matrices.
+
+    Returns:
+        Result of the iterative matrix multiplication of the matrices.
+    """
     # matrix multiply all the elements.
     return reduce(lambda x, y: np.dot(y, x), list_of_m)
 
 
-def compute_twiss_clojure(twiss: List[float]) -> float:
+def compute_twiss_clojure(twiss: Sequence[Number]) -> float:
     """Compute twiss clojure condition:
 
     beta * gamma - alpha^2 = 1
@@ -110,6 +134,15 @@ def compute_m_twiss(m: np.array) -> np.array:
 
 
 def compute_invariant(transfer_matrix: np.ndarray, tol: float = 1e-14) -> np.ndarray:
+    """Computes the invariant vector(s) for a given transformation matrix.
+
+    Args:
+        transfer_matrix: transformation matrix.
+        tol (optional): numerical tolerance.
+
+    Returns:
+        `np.array` of invariant vectors, each column is a vector.
+    """
     eig_values, eig_vectors = np.linalg.eig(transfer_matrix)
     mask = (eig_values < 1 + tol) & (eig_values > 1 - tol)
     if sum(mask) == 0:
@@ -127,12 +160,9 @@ def compute_twiss_invariant(
         tol (optional): numerical tolerance.
 
     Returns:
-        invariant twiss parameters.
+        Invariant twiss parameters.
     """
-    if (
-        twiss_transfer_matrix.shape[0] != 3
-        or twiss_transfer_matrix.shape[0] != twiss_transfer_matrix.shape[1]
-    ):
+    if twiss_transfer_matrix.shape[0] != 3 or twiss_transfer_matrix.shape[1] != 3:
         raise ValueError("'twiss_transfer_matrix' is not of shape (3, 3).")
     invariants = compute_invariant(twiss_transfer_matrix)
     potential_twiss = np.apply_along_axis(compute_twiss_clojure, 0, invariants) > tol
