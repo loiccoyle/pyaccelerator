@@ -17,9 +17,9 @@ class Drift(BaseElement):
             length: drift length in meters.
 
         Attributes:
-            length: drift length in meters.
-            m_h: element transfer matrix horizontal plane.
-            m_v: element transfer matrix vertical plane.
+            length: element length in meters.
+            m_h: element phase space transfer matrix in the horizontal plane.
+            m_v: element phase space transfer matrix in the vertical plane.
         """
         super().__init__(length)
 

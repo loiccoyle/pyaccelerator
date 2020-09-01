@@ -1,8 +1,6 @@
-import logging
-
 import numpy as np
 
-from .utils import compute_invariant, compute_m_twiss, compute_twiss_invariant
+from .utils import compute_m_twiss, compute_twiss_invariant
 
 
 class TransferMatrix(np.ndarray):
@@ -10,7 +8,7 @@ class TransferMatrix(np.ndarray):
         obj = np.asarray(input_array).view(cls)
 
         if obj.ndim != 2:
-            raise ValueError(f"'{obj}' should be 2d.")
+            raise ValueError(f"'{obj}' should be 2D.")
         if obj.shape[0] != obj.shape[1]:
             raise ValueError(f"'{obj}' is not square.")
         if obj.shape[0] != 2:
@@ -20,8 +18,9 @@ class TransferMatrix(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
-        if obj is None:
-            return
+        # if obj is None:
+        #     return
+        # pylint: disable=attribute-defined-outside-init
         self.twiss = getattr(obj, "twiss", None)
 
 
@@ -30,7 +29,7 @@ class TwissTransferMatrix(np.ndarray):
         obj = np.asarray(input_array).view(cls)
 
         if obj.ndim != 2:
-            raise ValueError(f"'{obj}' should be 2d.")
+            raise ValueError(f"'{obj}' should be 2D.")
         if obj.shape[0] != obj.shape[1]:
             raise ValueError(f"'{obj}' is not square.")
         if obj.shape[0] != 3:
@@ -43,6 +42,7 @@ class TwissTransferMatrix(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
-        if obj is None:
-            return
+        # if obj is None:
+        #     return
+        # pylint: disable=attribute-defined-outside-init
         self.invariant = getattr(obj, "invariant", None)

@@ -14,17 +14,21 @@ class Lattice(list):
 
     def __init__(self, *args):
         """Looks like a list, smells like a list and tastes like a list.
-        With a few added bells and whistles.
+        Is infact an accelerator lattice.
 
         Attributes:
-            m_h: horizontal transfer matrix
-            m_v: vertical transfer matrix.
+            m_h: horizontal phase space transfer matrix
+            m_v: vertical phase space transfer matrix.
 
         Methods:
             transport: transport either the phase space coords or the twiss
                 parameters through the lattice.
             transport_beam: Same as `transport` but returns the phase space
                 ellipses along with the twiss parameters through the lattice.
+
+        Examples:
+            >>> Lattice([Drift(1), Quadrupole(0.8)])
+            [Drift(1), Quadrupole(0.8)]
         """
         super().__init__(*args)
         self._m_h = None
@@ -57,8 +61,13 @@ class Lattice(list):
             element_type: element class to slice.
             n_element: slice `element_type` into `n_element` smaller elements.
 
-        Return
+        Returns:
             Sliced `Lattice`.
+
+        Examples:
+            >>> lat = Lattice([Drift(1), Quadrupole(0.8)])
+            >>> lat.slice(Drift, 2)
+            [Drift(0.5), Drift(0.5), Quadrupole(0.8)]
         """
         new_lattice = []
         for element in self:
@@ -172,9 +181,10 @@ class Lattice(list):
         self._clear_cache()
         return super().reverse(*args, **kwargs)
 
+    # Disable sorting
+    # TODO: is there a way to remove the method altogether?
     def sort(self, *args, **kwargs):
-        self._clear_cache()
-        return super().sort(*args, **kwargs)
+        """DISABLED."""
 
     def __add__(self, other):
         return Lattice(list.__add__(self, other))
@@ -197,7 +207,8 @@ class Lattice(list):
         """Plot the s coordinate in the horizontal plane of the lattice.
 
         Args:
-            n_s_per_element: number of steps along the s coord.
+            n_s_per_element: number of steps along the s coordinate for each
+                element in the lattice.
             xztheta_init: initial vector.
 
         Returns:
