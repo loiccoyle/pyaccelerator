@@ -24,3 +24,7 @@ class TestQuadrupole(TestCase):
 
     def test_repr(self):
         repr(Quadrupole(1))
+
+    def test_plot(self):
+        quad = Quadrupole(0.8)
+        quad.plot()

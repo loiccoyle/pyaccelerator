@@ -35,3 +35,7 @@ class TestDrift(TestCase):
     def test_dxztheta_ds(self):
         drift = Drift(1)
         assert np.allclose(drift._dxztheta_ds(0, 1), [1, 0, 0])
+
+    def test_plot(self):
+        drift = Drift(1)
+        drift.plot()
