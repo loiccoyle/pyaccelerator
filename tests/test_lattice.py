@@ -92,6 +92,15 @@ class TestLattice(TestCase):
         assert len(lat) == 0
         assert isinstance(popped, Drift)
 
-    def test_plot(self):
+        drift = Drift(1)
+        lat = Lattice([drift])
+        lat.remove(drift)
+        assert len(lat) == 0
+
         lat = Lattice([Drift(1)])
+        lat.clear()
+        assert len(lat) == 0
+
+    def test_plot(self):
+        lat = Lattice([Drift(1), Quadrupole(0.8)])
         lat.plot()

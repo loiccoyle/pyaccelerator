@@ -37,7 +37,7 @@ class BaseElement:
         return self._m_v
 
     @abstractmethod
-    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
+    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
         pass
 
     def plot(

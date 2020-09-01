@@ -18,8 +18,8 @@ class TransferMatrix(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
-        if obj is None:
-            return
+        # if obj is None:
+        #     return
         # pylint: disable=attribute-defined-outside-init
         self.twiss = getattr(obj, "twiss", None)
 
@@ -42,7 +42,7 @@ class TwissTransferMatrix(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
-        if obj is None:
-            return
+        # if obj is None:
+        #     return
         # pylint: disable=attribute-defined-outside-init
         self.invariant = getattr(obj, "invariant", None)

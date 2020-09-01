@@ -23,6 +23,7 @@ class TestUtils(TestCase):
         )
         with self.assertRaises(ValueError):
             utils.to_twiss([1, None, None])
+        with self.assertRaises(ValueError):
             utils.to_twiss([1, 2, 3, 4])
 
     def test_to_phase_coord(self):
@@ -33,6 +34,8 @@ class TestUtils(TestCase):
     def test_complete_twiss(self):
         assert utils.complete_twiss(beta=1, alpha=0, gamma=1) == (1, 0, 1)
         assert utils.complete_twiss(beta=1, alpha=0, gamma=None) == (1, 0, 1)
+        assert utils.complete_twiss(beta=1, alpha=None, gamma=1) == (1, 0, 1)
+        assert utils.complete_twiss(beta=None, alpha=0, gamma=1) == (1, 0, 1)
         with self.assertRaises(ValueError):
             assert utils.complete_twiss(beta=1, alpha=None, gamma=None)
 

@@ -2,10 +2,10 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.transfer_matrix import TransferMatrix, TwissTransferMatrix
 from accelerator.elements.drift import Drift
 from accelerator.elements.quadrupole import Quadrupole
 from accelerator.lattice import Lattice
+from accelerator.transfer_matrix import TransferMatrix, TwissTransferMatrix
 
 
 class TestTransferMatrix(TestCase):
@@ -61,13 +61,13 @@ class TestTwissTransferMatrix(TestCase):
 
         # From the course exmple notebook
         # FODO phase advance
-        psi_cell = np.arccos(1. - L**2 / (2.*f**2))
+        psi_cell = np.arccos(1.0 - L ** 2 / (2.0 * f ** 2))
 
         # Calc. periodic Twiss solutions
-        beta_x0 = 2.*L / np.sin(psi_cell) * (1. + np.sin(psi_cell / 2.))
-        gamma_x0 = 1./beta_x0
-        beta_y0 = 2.*L / np.sin(psi_cell) * (1. - np.sin(psi_cell / 2.))
-        gamma_y0 = 1./beta_y0
+        beta_x0 = 2.0 * L / np.sin(psi_cell) * (1.0 + np.sin(psi_cell / 2.0))
+        gamma_x0 = 1.0 / beta_x0
+        beta_y0 = 2.0 * L / np.sin(psi_cell) * (1.0 - np.sin(psi_cell / 2.0))
+        gamma_y0 = 1.0 / beta_y0
         self.assertAlmostEqual(beta_x0, FODO.m_h.twiss.invariant[0][0])
         self.assertAlmostEqual(gamma_x0, FODO.m_h.twiss.invariant[2][0])
         self.assertAlmostEqual(beta_y0, FODO.m_v.twiss.invariant[0][0])
