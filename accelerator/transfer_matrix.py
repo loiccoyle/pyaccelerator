@@ -8,7 +8,7 @@ class TransferMatrix(np.ndarray):
         obj = np.asarray(input_array).view(cls)
 
         if obj.ndim != 2:
-            raise ValueError(f"'{obj}' should be 2d.")
+            raise ValueError(f"'{obj}' should be 2D.")
         if obj.shape[0] != obj.shape[1]:
             raise ValueError(f"'{obj}' is not square.")
         if obj.shape[0] != 2:
@@ -29,7 +29,7 @@ class TwissTransferMatrix(np.ndarray):
         obj = np.asarray(input_array).view(cls)
 
         if obj.ndim != 2:
-            raise ValueError(f"'{obj}' should be 2d.")
+            raise ValueError(f"'{obj}' should be 2D.")
         if obj.shape[0] != obj.shape[1]:
             raise ValueError(f"'{obj}' is not square.")
         if obj.shape[0] != 3:
