@@ -5,16 +5,20 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from ..transfer_matrix import TransferMatrix
-from ..utils import compute_m_twiss
 
 
 class BaseElement:
     """Element"""
 
-    def __init__(self):
-        """Base class of a lattice element."""
+    def __init__(self, length: float):
+        """Base class of a lattice element.
+
+        Args:
+            length: length of the element.
+        """
         self._m_h = None
         self._m_v = None
+        self.length = length
 
     @property
     def m_h(self) -> TransferMatrix:
@@ -33,7 +37,7 @@ class BaseElement:
         return self._m_v
 
     @abstractmethod
-    def transfer_matrix(self) -> np.ndarray:
+    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
         pass
 
     def plot(
@@ -42,7 +46,17 @@ class BaseElement:
         plane="h",
         *args,
         **kwargs,
-    ) -> Tuple[plt.Figure, plt.Axes]:
+    ) -> Tuple[plt.Figure, np.ndarray]:
+        """Plot the effect of the element on the phase space coords.
+
+        Args:
+            u_init: initial phase space coords.
+            plane: ether "h" or "v".
+            args, kwargs: plotting args/kwargs.
+
+        Returns
+            Plotted Figure and array of axes.
+        """
         plane_map = {"h": self.m_h, "v": self.m_v}
         coord_map = {"h": "x", "v": "y"}
         coord = coord_map[plane]

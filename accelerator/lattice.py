@@ -1,18 +1,12 @@
 """Accelerator lattice"""
-from typing import List, Tuple
+from typing import List, Tuple, Type
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from .beam import Beam
 from .transfer_matrix import TransferMatrix
-from .utils import (
-    compute_m_twiss,
-    compute_one_turn,
-    compute_twiss_invariant,
-    to_phase_coord,
-    to_twiss,
-)
+from .utils import compute_one_turn, to_phase_coord, to_twiss
 
 
 class Lattice(list):
@@ -55,6 +49,24 @@ class Lattice(list):
     def _clear_cache(self):
         self._m_h = None
         self._m_v = None
+
+    def slice(self, element_type: Type["BaseElement"], n_element: int) -> "Lattice":
+        """Slice the `element_type` elements of the `Lattice` into `n_element`.
+
+        Args:
+            element_type: element class to slice.
+            n_element: slice `element_type` into `n_element` smaller elements.
+
+        Return
+            Sliced `Lattice`.
+        """
+        new_lattice = []
+        for element in self:
+            if isinstance(element, element_type) and element.length > 0:
+                new_lattice.extend(element.slice(n_element))
+            else:
+                new_lattice.append(element)
+        return Lattice(new_lattice)
 
     def transport(
         self,
@@ -164,9 +176,6 @@ class Lattice(list):
         self._clear_cache()
         return super().sort(*args, **kwargs)
 
-    def __getslice__(self, i, j):
-        return Lattice(list.__getslice__(self, i, j))
-
     def __add__(self, other):
         return Lattice(list.__add__(self, other))
 
@@ -184,8 +193,16 @@ class Lattice(list):
         self,
         n_s_per_element: int = int(1e3),
         xztheta_init: List[float] = [0, 0, np.pi / 2],
-    ) -> Tuple[plt.Figure, plt.Axes]:
-        """Plot the s coordinate in the horizontal plane of the lattice."""
+    ) -> Tuple[plt.Figure, np.ndarray]:
+        """Plot the s coordinate in the horizontal plane of the lattice.
+
+        Args:
+            n_s_per_element: number of steps along the s coord.
+            xztheta_init: initial vector.
+
+        Returns:
+            Plotted Figure and array of axes.
+        """
         xztheta = [np.array(xztheta_init)]
         s_start = 0
         for element in self:

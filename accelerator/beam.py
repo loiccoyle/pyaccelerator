@@ -2,13 +2,11 @@
 import logging
 from typing import List, Tuple, Union
 
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.patches import Ellipse
 from scipy.constants import c, e, m_p
 
 from .sampling import bigaussian
-from .utils import complete_twiss, compute_twiss_clojure, to_twiss
+from .utils import compute_twiss_clojure, to_twiss
 
 
 class Beam:
