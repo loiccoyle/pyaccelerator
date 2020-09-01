@@ -1,7 +1,5 @@
 import numpy as np
 
-from ..utils import to_v_vec
-
 
 def straight_element(theta: float, d_s: float) -> np.ndarray:
     return np.array([np.cos(theta) * d_s, np.sin(theta) * d_s, 0])
