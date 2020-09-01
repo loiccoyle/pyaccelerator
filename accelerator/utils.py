@@ -1,12 +1,10 @@
 from functools import reduce
-from typing import Optional, Sequence, Tuple, TypeVar, Union
+from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
 
-Number = TypeVar("Number", int, float)
 
-
-def to_v_vec(vec: Sequence[Number]) -> np.ndarray:
+def to_v_vec(vec: Sequence[float]) -> np.ndarray:
     """Helper function to create 1D vertical arrays.
 
     Args:
@@ -21,7 +19,7 @@ def to_v_vec(vec: Sequence[Number]) -> np.ndarray:
     return np.array(vec).reshape(-1, 1)
 
 
-def to_twiss(twiss: Sequence[Union[Number, None]]) -> np.ndarray:
+def to_twiss(twiss: Sequence[Union[float, None]]) -> np.ndarray:
     """Helper function to create twiss vectors.
 
     Args:
@@ -36,7 +34,7 @@ def to_twiss(twiss: Sequence[Union[Number, None]]) -> np.ndarray:
     return to_v_vec(twiss)
 
 
-def to_phase_coord(phase_coord: Sequence[Number]) -> np.ndarray:
+def to_phase_coord(phase_coord: Sequence[float]) -> np.ndarray:
     """Helper function to create phase space coordinate vectors.
 
     Args:
@@ -51,10 +49,10 @@ def to_phase_coord(phase_coord: Sequence[Number]) -> np.ndarray:
 
 
 def complete_twiss(
-    beta: Optional[Number] = None,
-    alpha: Optional[Number] = None,
-    gamma: Optional[Number] = None,
-) -> Tuple[Number, Number, Number]:
+    beta: Optional[float] = None,
+    alpha: Optional[float] = None,
+    gamma: Optional[float] = None,
+) -> Tuple[float, float, float]:
     """Given 2 twiss parameters, compute the third.
 
     Args:
@@ -94,7 +92,7 @@ def compute_one_turn(list_of_m: Sequence[np.array]) -> np.array:
     return reduce(lambda x, y: np.dot(y, x), list_of_m)
 
 
-def compute_twiss_clojure(twiss: Sequence[Number]) -> float:
+def compute_twiss_clojure(twiss: Sequence[float]) -> float:
     """Compute twiss clojure condition:
 
     beta * gamma - alpha^2 = 1

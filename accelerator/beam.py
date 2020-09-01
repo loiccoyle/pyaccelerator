@@ -1,6 +1,6 @@
 """Accelerator Beam"""
 import logging
-from typing import List, Tuple, Union
+from typing import Sequence, Tuple, Union
 
 import numpy as np
 from scipy.constants import c, e, m_p
@@ -53,7 +53,7 @@ class Beam:
 
     def phasespace(
         self,
-        twiss: List[float],
+        twiss: Sequence[float],
         plane: str = "h",
         closure_tol: float = 1e-9,
         n_angles: int = 1e3,
@@ -92,7 +92,7 @@ class Beam:
         return u, u_prime
 
     def matched_particle_distribution(
-        self, twiss: List[float], plane: str = "h"
+        self, twiss: Sequence[float], plane: str = "h"
     ) -> Tuple[np.ndarray, np.ndarray]:
         """Generate gaussian distributed phasespace coords matched to the `twiss` parameters.
 

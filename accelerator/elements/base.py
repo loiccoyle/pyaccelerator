@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import List, Tuple
+from typing import Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -42,21 +42,23 @@ class BaseElement:
 
     def plot(
         self,
-        u_init: List[float] = [1, np.pi / 8],
-        plane="h",
         *args,
+        u_init: Optional[Sequence[float]] = None,
+        plane="h",
         **kwargs,
     ) -> Tuple[plt.Figure, np.ndarray]:
         """Plot the effect of the element on the phase space coords.
 
         Args:
-            u_init: initial phase space coords.
+            u_init: initial phase space coords, defaults to [1, np.pi/8].
             plane: ether "h" or "v".
             args, kwargs: plotting args/kwargs.
 
         Returns
             Plotted Figure and array of axes.
         """
+        if u_init is None:
+            u_init = [1, np.pi / 8]
         plane_map = {"h": self.m_h, "v": self.m_v}
         coord_map = {"h": "x", "v": "y"}
         coord = coord_map[plane]
