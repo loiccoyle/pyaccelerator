@@ -1,5 +1,5 @@
 """Accelerator lattice"""
-from typing import List, Tuple, Type
+from typing import Sequence, Tuple, Type
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -79,7 +79,7 @@ class Lattice(list):
 
     def transport(
         self,
-        init: List[float],
+        init: Sequence[float],
         plane: str = "h",
         twiss: bool = False,
     ) -> Tuple[np.ndarray, np.ndarray]:
@@ -114,7 +114,7 @@ class Lattice(list):
 
     def transport_beam(
         self,
-        twiss_init: List[float],
+        twiss_init: Sequence[float],
         beam: Beam,
         plane: str = "h",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -202,7 +202,7 @@ class Lattice(list):
     def plot(
         self,
         n_s_per_element: int = int(1e3),
-        xztheta_init: List[float] = [0, 0, np.pi / 2],
+        xztheta_init: Sequence[float] = [0, 0, np.pi / 2],
     ) -> Tuple[plt.Figure, np.ndarray]:
         """Plot the s coordinate in the horizontal plane of the lattice.
 
