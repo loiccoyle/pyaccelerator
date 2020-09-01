@@ -17,11 +17,11 @@ class Quadrupole(BaseElement):
             f: quadrupole focal length in meters.
 
         Attributes:
-            f: quadrupole focal length in meters.
-            m_h: element transfer matrix horizontal plane.
-            m_v: element transfer matrix vertical plane.
+            f: element focal length in meters.
+            m_h: element phase space transfer matrix in the horizontal plane.
+            m_v: element phase space transfer matrix in the vertical plane.
         """
-        super().__init__(0)
+        super().__init__(0)  # 0 length (thin lense)
         self.f = f
 
     def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:

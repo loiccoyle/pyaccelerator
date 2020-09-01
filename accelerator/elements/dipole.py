@@ -18,11 +18,11 @@ class Dipole(BaseElement):
             theta: bending angle in radians.
 
         Attributes:
-            length: dipole length in meters.
+            length: element length in meters.
             rho: bending radius in meters.
             theta: bending angle in radians.
-            m_h: element transfer matrix horizontal plane.
-            m_v: element transfer matrix vertical plane.
+            m_h: element phase space transfer matrix in the horizontal plane.
+            m_v: element phase space transfer matrix in the vertical plane.
         """
         super().__init__(rho * theta)
         self.rho = rho
