@@ -1,8 +1,6 @@
-import logging
-
 import numpy as np
 
-from .utils import compute_invariant, compute_m_twiss, compute_twiss_invariant
+from .utils import compute_m_twiss, compute_twiss_invariant
 
 
 class TransferMatrix(np.ndarray):
@@ -22,6 +20,7 @@ class TransferMatrix(np.ndarray):
     def __array_finalize__(self, obj):
         if obj is None:
             return
+        # pylint: disable=attribute-defined-outside-init
         self.twiss = getattr(obj, "twiss", None)
 
 
@@ -45,4 +44,5 @@ class TwissTransferMatrix(np.ndarray):
     def __array_finalize__(self, obj):
         if obj is None:
             return
+        # pylint: disable=attribute-defined-outside-init
         self.invariant = getattr(obj, "invariant", None)

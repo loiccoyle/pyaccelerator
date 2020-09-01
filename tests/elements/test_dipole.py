@@ -43,5 +43,5 @@ class TestDipole(TestCase):
 
     def test_dxztheta_ds(self):
         dipole = Dipole(angle_dipole, rho_dipole)
-        #TODO: do the math to check this.
+        # TODO: do the math to check this.
         dipole._dxztheta_ds(0, l_dipole)

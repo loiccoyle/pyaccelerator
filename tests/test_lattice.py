@@ -2,10 +2,10 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.lattice import Lattice
+from accelerator.elements.dipole import Dipole
 from accelerator.elements.drift import Drift
 from accelerator.elements.quadrupole import Quadrupole
-from accelerator.elements.dipole import Dipole
+from accelerator.lattice import Lattice
 
 
 class TestLattice(TestCase):
@@ -33,7 +33,7 @@ class TestLattice(TestCase):
         assert np.allclose(lat.m_h, lat_sliced.m_h)
         assert np.allclose(lat.m_v, lat_sliced.m_v)
 
-        lat = Lattice([Drift(1), Dipole(np.pi/4, 100)])
+        lat = Lattice([Drift(1), Dipole(np.pi / 4, 100)])
         lat = lat.slice(Drift, 10)
         assert len(lat) == 11
         lat = lat.slice(Dipole, 10)

@@ -3,9 +3,9 @@ from unittest import TestCase
 import numpy as np
 
 from accelerator import utils
-from accelerator.lattice import Lattice
 from accelerator.elements.drift import Drift
 from accelerator.elements.quadrupole import Quadrupole
+from accelerator.lattice import Lattice
 
 
 class TestUtils(TestCase):
