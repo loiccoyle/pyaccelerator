@@ -4,7 +4,6 @@ from typing import Sequence, Tuple, Type, Union
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .beam import Beam
 from .transfer_matrix import TransferMatrix
 from .utils import compute_one_turn, to_phase_coord, to_twiss
 
@@ -24,6 +23,8 @@ class Lattice(list):
             transport: transport the phase space coordinates, the twiss
                 parameters through the lattice or a distributio of phase space
                 coords.
+            slice: slice elements into smaller elements.
+            plots: plot the overview of the lattice.
 
         Examples:
             >>> Lattice([Drift(1), Quadrupole(0.8)])
@@ -54,7 +55,7 @@ class Lattice(list):
         self._m_v = None
 
     def slice(self, element_type: Type["BaseElement"], n_element: int) -> "Lattice":
-        """Slice the `element_type` elements of the `Lattice` into `n_element`.
+        """Slice the `element_type` elements of the lattice into `n_element`.
 
         Args:
             element_type: element class to slice.
@@ -64,6 +65,7 @@ class Lattice(list):
             Sliced `Lattice`.
 
         Examples:
+            Slice the `Drift` elements into 2:
             >>> lat = Lattice([Drift(1), Quadrupole(0.8)])
             >>> lat.slice(Drift, 2)
             [Drift(0.5), Drift(0.5), Quadrupole(0.8)]
@@ -211,7 +213,7 @@ class Lattice(list):
         u_prime_coords = [o[1] for o in out]
         u_coords = np.vstack(u_coords).T
         u_prime_coords = np.vstack(u_prime_coords).T
-        return tuple([u_coords, u_prime_coords, np.array(s_coords)])
+        return u_coords, u_prime_coords, np.array(s_coords)
 
     # Very ugly way of clearing cached one turn matrices on in place
     # modification of the sequence.
@@ -288,10 +290,10 @@ class Lattice(list):
             s_start += element.length
         xztheta = np.vstack(xztheta)
 
-        fig, ax = plt.subplots(1, 1)
-        ax.plot(xztheta[:, 0], xztheta[:, 1], label="s")
-        ax.set_aspect("equal")
-        ax.set_xlabel("x [m]")
-        ax.set_ylabel("z [m]")
-        ax.legend()
-        return fig, ax
+        fig, axes = plt.subplots(1, 1)
+        axes.plot(xztheta[:, 0], xztheta[:, 1], label="s")
+        axes.set_aspect("equal")
+        axes.set_xlabel("x [m]")
+        axes.set_ylabel("z [m]")
+        axes.legend()
+        return fig, axes
