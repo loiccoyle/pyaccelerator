@@ -76,7 +76,9 @@ class Lattice(list):
                 new_lattice.append(element)
         return Lattice(new_lattice)
 
-    def transport(self, value: Sequence[Union[float, np.ndarray]], plane:str='h'):
+    def transport(
+        self, value: Sequence[Union[float, np.ndarray]], plane: str = "h"
+    ) -> Tuple[np.ndarray, ...]:
         """Transport phase space coordinates or twiss parameters along the lattice.
 
         Args:
@@ -140,14 +142,14 @@ class Lattice(list):
                 # distribution of phase space coords
                 return self._transport_distribution(*value, plane=plane)
 
-        raise ValueError(f"Failed determine how to transport \"{value}\".")
+        raise ValueError(f'Failed determine how to transport "{value}".')
 
     def _transport(
         self,
         init: Sequence[float],
         plane: str = "h",
         twiss: bool = False,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Transport the given phase space along the lattice.
 
         Args:
@@ -169,15 +171,15 @@ class Lattice(list):
         else:
             init = to_phase_coord(init)
         out = [init]
-        s = [0]
+        s_coords = [0]
         transfer_ms = [getattr(element, "m_" + plane) for element in self]
         if twiss:
             transfer_ms = [m.twiss for m in transfer_ms]
         for i, m in enumerate(transfer_ms):
             out.append(m @ out[i])
-            s.append(s[i] + self[i].length)
+            s_coords.append(s_coords[i] + self[i].length)
         out = np.hstack(out)
-        return tuple([*out] + [np.array(s)])
+        return tuple([*out] + [np.array(s_coords)])
 
     def _transport_distribution(
         self,
@@ -200,16 +202,16 @@ class Lattice(list):
         """
         coords = np.vstack([u, u_prime])
         out = [coords]
-        s = [0]
+        s_coords = [0]
         transfer_ms = [getattr(element, "m_" + plane) for element in self]
         for i, m in enumerate(transfer_ms):
             out.append(m @ out[i])
-            s.append(s[i] + self[i].length)
+            s_coords.append(s_coords[i] + self[i].length)
         u_coords = [o[0] for o in out]
         u_prime_coords = [o[1] for o in out]
         u_coords = np.vstack(u_coords).T
         u_prime_coords = np.vstack(u_prime_coords).T
-        return tuple([u_coords, u_prime_coords, np.array(s)])
+        return tuple([u_coords, u_prime_coords, np.array(s_coords)])
 
     # Very ugly way of clearing cached one turn matrices on in place
     # modification of the sequence.
