@@ -46,6 +46,13 @@ class TestDipole(TestCase):
         # TODO: do the math to check this.
         dipole._dxztheta_ds(0, l_dipole)
 
+    def test_serialize(self):
+        dip = Dipole(rho_dipole, angle_dipole)
+        dic = dip._serialize()
+        assert dic["element"] == "Dipole"
+        assert dic["rho"] == rho_dipole
+        assert dic["theta"] == angle_dipole
+
     def test_plot(self):
         dipole = Dipole(rho_dipole, angle_dipole)
         dipole.plot()

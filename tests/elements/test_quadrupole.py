@@ -25,6 +25,12 @@ class TestQuadrupole(TestCase):
     def test_repr(self):
         repr(Quadrupole(1))
 
+    def test_serialize(self):
+        quad = Quadrupole(0.6)
+        dic = quad._serialize()
+        assert dic["element"] == "Quadrupole"
+        assert dic["f"] == 0.6
+
     def test_plot(self):
         quad = Quadrupole(0.8)
         quad.plot()

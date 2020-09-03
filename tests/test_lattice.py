@@ -1,3 +1,5 @@
+from pathlib import Path
+from shutil import rmtree
 from unittest import TestCase
 
 import numpy as np
@@ -10,6 +12,11 @@ from accelerator.lattice import Lattice
 
 
 class TestLattice(TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls.test_folder = Path("test_lattice")
+        cls.test_folder.mkdir()
+
     def test_init(self):
         lat = Lattice()
         assert len(lat) == 0
@@ -244,7 +251,22 @@ class TestLattice(TestCase):
         with self.assertRaises(ValueError):
             lat.transport([1])
         with self.assertRaises(ValueError):
-            lat.transport(np.ones((2,2,2)))
+            lat.transport(np.ones((2, 2, 2)))
+
+    def test_save_load(self):
+        lat = Lattice([Drift(1), Quadrupole(0.5)])
+        save_file = self.test_folder / "lattice.json"
+        lat.save(save_file)
+        assert save_file.is_file()
+        lat_loaded = Lattice.load(save_file)
+        assert isinstance(lat_loaded[0], Drift)
+        assert isinstance(lat_loaded[1], Quadrupole)
+        assert lat_loaded[0].length, 1
+        assert lat_loaded[1].f, 0.5
+
+    @classmethod
+    def tearDownClass(cls):
+        rmtree(cls.test_folder)
 
     def test_plot(self):
         lat = Lattice([Drift(1), Quadrupole(0.8)])
