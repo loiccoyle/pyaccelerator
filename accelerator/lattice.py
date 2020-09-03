@@ -132,7 +132,8 @@ class Lattice(list):
         # TODO: the _transport and the _transport_distribution share a lot of
         # code they could easily be merged.
         plane = plane.lower()
-        if not all([isinstance(v, np.ndarray) for v in value]):
+        if not all([isinstance(v, np.ndarray) and len(v) > 1 for v in value]):
+            # either a single phase space coord or a single twiss parameter
             if len(value) == 2:
                 # phasespace coords
                 return self._transport(value, twiss=False, plane=plane)
@@ -140,6 +141,7 @@ class Lattice(list):
                 # twiss parameters
                 return self._transport(value, twiss=True, plane=plane)
         else:
+            # a distribution
             if len(value) == 2:
                 # distribution of phase space coords
                 return self._transport_distribution(*value, plane=plane)
