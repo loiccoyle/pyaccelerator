@@ -1,10 +1,9 @@
 """Accelerator lattice"""
-from typing import Sequence, Tuple, Type
+from typing import Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from .beam import Beam
 from .transfer_matrix import TransferMatrix
 from .utils import compute_one_turn, to_phase_coord, to_twiss
 
@@ -21,10 +20,11 @@ class Lattice(list):
             m_v: vertical phase space transfer matrix.
 
         Methods:
-            transport: transport either the phase space coords or the twiss
-                parameters through the lattice.
-            transport_beam: Same as `transport` but returns the phase space
-                ellipses along with the twiss parameters through the lattice.
+            transport: transport the phase space coordinates, the twiss
+                parameters through the lattice or a distributio of phase space
+                coords.
+            slice: slice elements into smaller elements.
+            plots: plot the overview of the lattice.
 
         Examples:
             >>> Lattice([Drift(1), Quadrupole(0.8)])
@@ -55,7 +55,7 @@ class Lattice(list):
         self._m_v = None
 
     def slice(self, element_type: Type["BaseElement"], n_element: int) -> "Lattice":
-        """Slice the `element_type` elements of the `Lattice` into `n_element`.
+        """Slice the `element_type` elements of the lattice into `n_element`.
 
         Args:
             element_type: element class to slice.
@@ -65,6 +65,7 @@ class Lattice(list):
             Sliced `Lattice`.
 
         Examples:
+            Slice the `Drift` elements into 2:
             >>> lat = Lattice([Drift(1), Quadrupole(0.8)])
             >>> lat.slice(Drift, 2)
             [Drift(0.5), Drift(0.5), Quadrupole(0.8)]
@@ -78,11 +79,81 @@ class Lattice(list):
         return Lattice(new_lattice)
 
     def transport(
+        self, value: Sequence[Union[float, np.ndarray]], plane: str = "h"
+    ) -> Tuple[np.ndarray, ...]:
+        """Transport phase space coordinates or twiss parameters along the lattice.
+
+        Args:
+            value: To transport phase space coords, provide a sequence of 2
+                floats. To transport twiss parameters, provide a sequence of 3
+                floats. To transport a distribution of phase space coords
+                provide a sequence of 2 1D `np.ndarray`, the position and angle
+                coordinates.
+            plane: the plane of interest, either "h" or "v".
+
+        Returns:
+            If a phase space coordinate is provided, returns the phase space
+                position, angle and s coordinates along the lattice.
+            If a twiss parameter is provided, returns the twiss parameters,
+                beta, alpha, gamma and the s coordinate along the lattice.
+            If a distribution of phase space coordinates is provided, returns
+                the position distribution, the angle distribution and the s
+                coordinate along the lattice.
+
+        Raises:
+            ValueError: If unable to infer the provided coordinates.
+
+        Examples:
+            Transport phase space coords through a drift:
+            >>> lat = Lattice([Drift(1)])
+            >>> lat.transport([1, 1])
+            (array([1., 2.]), array([1., 1.]), array([0, 1]))
+
+            Transport twiss parameters through a drift:
+            >>> lat = Lattice([Drift(1)])
+            >>> lat.transport([1, 0, 1])
+            (array([1., 2.]), array([ 0., -1.]), array([1., 1.]), array([0, 1]))
+
+            Transport a distribution of phase space coordinates through the
+                lattice:
+            >>> beam = Beam()
+            >>> lat = Lattice([Drift(1)])
+            >>> u, u_prime, s = lat.transport(beam.matched_particle_distribution([1, 0, 1]))
+            >>> plt.plot(u, u_prime)
+            ...
+
+            Transport a phase space ellipse's coordinates through the lattice:
+            >>> beam = Beam()
+            >>> lat = Lattice([Drift(1)])
+            >>> u, u_prime, s = lat.transport(beam.phasespace([1, 0, 1]))
+            >>> plt.plot(u, u_prime)
+            ...
+        """
+        # TODO: the _transport and the _transport_distribution share a lot of
+        # code they could easily be merged.
+        plane = plane.lower()
+        if not all([isinstance(v, np.ndarray) and len(v) > 1 for v in value]):
+            # either a single phase space coord or a single twiss parameter
+            if len(value) == 2:
+                # phasespace coords
+                return self._transport(value, twiss=False, plane=plane)
+            if len(value) == 3:
+                # twiss parameters
+                return self._transport(value, twiss=True, plane=plane)
+        else:
+            # a distribution
+            if len(value) == 2:
+                # distribution of phase space coords
+                return self._transport_distribution(*value, plane=plane)
+
+        raise ValueError(f'Failed determine how to transport "{value}".')
+
+    def _transport(
         self,
         init: Sequence[float],
         plane: str = "h",
         twiss: bool = False,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Transport the given phase space along the lattice.
 
         Args:
@@ -95,61 +166,56 @@ class Lattice(list):
                 matrices.
 
         Returns:
-            vec, s: phase coordinates or twiss parameters along with the
-                lattice and the s coordinates.
+            `*coords`, `s`, with `coords` the phase space coordinates or twiss
+                parameters, depending on the `twiss` flag. along the lattice and
+                `s` the s coordinates.
         """
         if twiss:
             init = to_twiss(init)
         else:
             init = to_phase_coord(init)
         out = [init]
-        s = [0]
-        transfer_ms = [getattr(element, "m_" + plane.lower()) for element in self]
+        s_coords = [0]
+        transfer_ms = [getattr(element, "m_" + plane) for element in self]
         if twiss:
             transfer_ms = [m.twiss for m in transfer_ms]
         for i, m in enumerate(transfer_ms):
             out.append(m @ out[i])
-            s.append(s[i] + self[i].length)
-        return np.hstack(out), np.array(s)
+            s_coords.append(s_coords[i] + self[i].length)
+        out = np.hstack(out)
+        return tuple([*out] + [np.array(s_coords)])
 
-    def transport_beam(
+    def _transport_distribution(
         self,
-        twiss_init: Sequence[float],
-        beam: Beam,
+        u: np.ndarray,
+        u_prime: np.ndarray,
         plane: str = "h",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-        """Compute the phase space ellipse along the lattice.
+        """Transport a distribution of in phase space along the lattice.
 
         Args:
-            twiss_init: initial twiss parameters, as a list [beta, alpha,
-                gamma], one twiss parameter can be None.
-            beam: Beam instance.
-            plane (optional): plane of interest.
+            u: phase space position[m] coordinates, 1D array same length as `u_prime`.
+            u_prime: phase space angle[rad] coordinate, 1D array same length as `u`.
+            plane (optional): plane of interest, either "h" or "v".
 
         Returns:
-            u, u_prime, twiss, s: phase space ellipse positions, phase space
-                ellispe angles, twiss parameters along the lattice and
-                the s coordinates.
+            `u_coords`, `u_prime_coords`, `s`, with `u_coords` the position
+                array and `u_prime_coords` the angle array, both of shape
+                (len(`u`), number of elements in the lattice + 1) and `s` the s
+                coordinate along the lattice.
         """
-        twiss_init = to_twiss(twiss_init)
-
-        def calc_phasespace(u):
-            return beam.phasespace(u, plane=plane)
-
-        init_phase = calc_phasespace(twiss_init)
-        twiss = [twiss_init]
-        u = [init_phase[0]]
-        u_prime = [init_phase[1]]
-        s = [0]
-        transfer_ms = [getattr(element, "m_" + plane).twiss for element in self]
+        coords = np.vstack([u, u_prime])
+        out = [coords]
+        s_coords = [0]
+        transfer_ms = [getattr(element, "m_" + plane) for element in self]
         for i, m in enumerate(transfer_ms):
-            new_twiss = m @ twiss[i]
-            phase_space = calc_phasespace(new_twiss)
-            u.append(phase_space[0])
-            u_prime.append(phase_space[1])
-            twiss.append(new_twiss)
-            s.append(s[i] + self[i].length)
-        return np.vstack(u).T, np.vstack(u_prime).T, np.hstack(twiss), np.array(s)
+            out.append(m @ out[i])
+            s_coords.append(s_coords[i] + self[i].length)
+        u_coords = [o[0] for o in out]
+        u_prime_coords = [o[1] for o in out]
+        u_coords = np.vstack(u_coords).T
+        u_prime_coords = np.vstack(u_prime_coords).T
+        return u_coords, u_prime_coords, np.array(s_coords)
 
     # Very ugly way of clearing cached one turn matrices on in place
     # modification of the sequence.
@@ -226,10 +292,10 @@ class Lattice(list):
             s_start += element.length
         xztheta = np.vstack(xztheta)
 
-        fig, ax = plt.subplots(1, 1)
-        ax.plot(xztheta[:, 0], xztheta[:, 1], label="s")
-        ax.set_aspect("equal")
-        ax.set_xlabel("x [m]")
-        ax.set_ylabel("z [m]")
-        ax.legend()
-        return fig, ax
+        fig, axes = plt.subplots(1, 1)
+        axes.plot(xztheta[:, 0], xztheta[:, 1], label="s")
+        axes.set_aspect("equal")
+        axes.set_xlabel("x [m]")
+        axes.set_ylabel("z [m]")
+        axes.legend()
+        return fig, axes
