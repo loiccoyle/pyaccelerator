@@ -1,6 +1,8 @@
 """Accelerator lattice"""
+import json
+import os
 from collections.abc import Iterable
-from typing import Sequence, Tuple, Type, Union
+from typing import TYPE_CHECKING, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,9 +10,35 @@ import numpy as np
 from .transfer_matrix import TransferMatrix
 from .utils import compute_one_turn, to_phase_coord, to_twiss
 
+if TYPE_CHECKING:
+    from .elements.base import BaseElement
+
 
 class Lattice(list):
     """A list of accelerator elements."""
+
+    @classmethod
+    def load(cls, path: os.PathLike) -> "Lattice":
+        """Load a lattice from a file.
+
+        Args:
+            path: file path.
+
+        Returns:
+            Loaded `Lattice` instance.
+
+        Examples:
+            Save and load a lattice:
+            >>> lat = Lattice([Drift(1)])
+            >>> lat.save('drift.json')
+            >>> lat_loaded = Lattice.load('drift.json')
+        """
+        # TODO: non top level import to avoid circular imports
+        from .elements.utils import deserialize
+
+        with open(path, "r") as fp:
+            serialized = json.load(fp)
+        return cls([deserialize(element) for element in serialized])
 
     def __init__(self, *args):
         """Looks like a list, smells like a list and tastes like a list.
@@ -265,6 +293,21 @@ class Lattice(list):
             return Lattice(result)
         except TypeError:
             return result
+
+    def save(self, path: os.PathLike):
+        """Save a lattice to file.
+
+        Args:
+            path: file path.
+
+        Examples:
+            Save a lattice:
+            >>> lat = Lattice([Drift(1)])
+            >>> lat.save('drift.json')
+        """
+        serializable = [element._serialize() for element in self]
+        with open(path, "w") as fp:
+            json.dump(serializable, fp, indent=4)
 
     def plot(
         self,

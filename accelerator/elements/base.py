@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import Optional, Sequence, Tuple
+from typing import Any, Dict, Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -39,6 +39,22 @@ class BaseElement:
     @abstractmethod
     def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
         pass
+
+    def _serialize(self) -> Dict[str, Any]:
+        """Serialize the element.
+
+        Returns:
+            A serializable dictionary.
+        """
+        # remove private attributes
+        out = {
+            key: value
+            for key, value in self.__dict__.items()
+            if not key.startswith("_")
+        }
+        # add element name
+        out["element"] = self.__class__.__name__
+        return out
 
     def plot(
         self,
