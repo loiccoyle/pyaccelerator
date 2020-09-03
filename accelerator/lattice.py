@@ -10,7 +10,7 @@ import numpy as np
 from .transfer_matrix import TransferMatrix
 from .utils import compute_one_turn, to_phase_coord, to_twiss
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .elements.base import BaseElement
 
 

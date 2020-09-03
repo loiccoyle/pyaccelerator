@@ -4,7 +4,7 @@ import numpy as np
 
 from .. import elements
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from .base import BaseElement
 
 
