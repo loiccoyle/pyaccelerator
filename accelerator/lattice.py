@@ -53,7 +53,7 @@ class Lattice(list):
                 parameters through the lattice or a distributio of phase space
                 coords.
             slice: slice elements into smaller elements.
-            plots: plot the overview of the lattice.
+            plot: lattice plotting.
 
         Examples:
             >>> Lattice([Drift(1), Quadrupole(0.8)])
@@ -62,6 +62,7 @@ class Lattice(list):
         super().__init__(*args)
         self._m_h = None
         self._m_v = None
+        self.plot = Plotter(self)
 
     @property
     def m_h(self):
@@ -97,7 +98,7 @@ class Lattice(list):
             Slice the `Drift` elements into 2:
             >>> lat = Lattice([Drift(1), Quadrupole(0.8)])
             >>> lat.slice(Drift, 2)
-            [Drift(0.5), Drift(0.5), Quadrupole(0.8)]
+            [Drift(length=0.5), Drift(length=0.5), Quadrupole(f=0.8)]
         """
         new_lattice = []
         for element in self:
@@ -309,24 +310,46 @@ class Lattice(list):
         with open(path, "w") as fp:
             json.dump(serializable, fp, indent=4)
 
-    def plot(
+
+class Plotter:
+    """Lattice plotter.
+
+    Examples:
+        Plot a lattice:
+        >>> lat = Lattice([Quadrupole(-0.6), Drift(1), Quadrupole(0.6)])
+        >>> lat.plot.lattice()  # or lat.plot("lattice")
+        ...
+
+        Plot the top down view of the lattice.
+        >>> lat = Lattice([Drift(1), Dipole(1, np.pi/2)])
+        >>> lat.plot.top_down()  # or lat.plot("top_down")
+        ...
+    """
+
+    def __init__(self, lattice: Lattice):
+        """Lattice plotter.
+
+        Args:
+            lattice: `Lattice` instance.
+        """
+        self._lattice = lattice
+
+    def top_down(
         self,
         n_s_per_element: int = int(1e3),
-        xztheta_init: Sequence[float] = [0, 0, np.pi / 2],
-    ) -> Tuple[plt.Figure, np.ndarray]:
+    ) -> Tuple[plt.Figure, plt.Axes]:
         """Plot the s coordinate in the horizontal plane of the lattice.
 
         Args:
             n_s_per_element: number of steps along the s coordinate for each
                 element in the lattice.
-            xztheta_init: initial vector.
 
         Returns:
-            Plotted Figure and array of axes.
+            Plotted `plt.Figure` and `plt.Axes`.
         """
-        xztheta = [np.array(xztheta_init)]
+        xztheta = [np.array([0, 0, np.pi / 2])]
         s_start = 0
-        for element in self:
+        for element in self._lattice:
             # skip thin elements
             if element.length == 0:
                 continue
@@ -336,10 +359,44 @@ class Lattice(list):
             s_start += element.length
         xztheta = np.vstack(xztheta)
 
-        fig, axes = plt.subplots(1, 1)
-        axes.plot(xztheta[:, 0], xztheta[:, 1], label="s")
-        axes.set_aspect("equal")
-        axes.set_xlabel("x [m]")
-        axes.set_ylabel("z [m]")
-        axes.legend()
-        return fig, axes
+        fig, ax = plt.subplots(1, 1)
+        ax.plot(xztheta[:, 0], xztheta[:, 1], label="s")
+        # forcefully adding margins, this might cause issues
+        if xztheta[:, 0].max() - xztheta[:, 0].min() < 0.1:
+            ax.set_xlim((-1, 1))
+        if xztheta[:, 1].max() - xztheta[:, 1].min() < 0.1:
+            ax.set_ylim((-1, 1))
+        ax.set_aspect("equal")
+        ax.margins(0.05)
+        ax.set_xlabel("x [m]")
+        ax.set_ylabel("z [m]")
+        ax.legend()
+        return fig, ax
+
+    def lattice(self) -> Tuple[plt.Figure, plt.Axes]:
+        """Plot the lattice.
+
+        Returns:
+            Plotted `plt.Figure` and `plt.Axes`.
+        """
+        fig, ax = plt.subplots(1, 1)
+
+        s_coord = 0
+        for element in self._lattice:
+            patch = element._get_patch(s_coord)
+            s_coord += element.length
+            # skip elements which don't have a defined patch
+            if patch is None:
+                continue
+            ax.add_patch(patch)
+
+        ax.hlines(0, 0, s_coord, color="tab:gray", ls="dashed")
+        ax.axes.yaxis.set_visible(False)
+        ax.margins(0.05)
+        ax.set_xlabel("s [m]")
+        # legend outside of the figure
+        ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+        return fig, ax
+
+    def __call__(self, *args, plot_type="lattice", **kwargs):
+        return getattr(self, plot_type)(*args, **kwargs)

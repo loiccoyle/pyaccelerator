@@ -2,13 +2,14 @@ from pathlib import Path
 from shutil import rmtree
 from unittest import TestCase
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from accelerator.beam import Beam
 from accelerator.elements.dipole import Dipole
 from accelerator.elements.drift import Drift
 from accelerator.elements.quadrupole import Quadrupole
-from accelerator.lattice import Lattice
+from accelerator.lattice import Lattice, Plotter
 
 
 class TestLattice(TestCase):
@@ -271,3 +272,40 @@ class TestLattice(TestCase):
     def test_plot(self):
         lat = Lattice([Drift(1), Quadrupole(0.8)])
         lat.plot()
+
+
+# I don't really know how to test the correctness of plots...
+class TestPlotter(TestCase):
+    def test_plotter(self):
+        lat = Lattice(
+            [
+                Drift(1),
+                Quadrupole(0.6),
+                Drift(1),
+                Quadrupole(-0.6),
+                Dipole(1, np.pi / 2),
+                Quadrupole(0),
+            ]
+        )
+        plotter = Plotter(lat)
+
+        fig, axes = plotter.top_down()
+        assert isinstance(fig, plt.Figure)
+        assert isinstance(axes, plt.Axes)
+        fig, axes = plotter.lattice()
+        assert isinstance(fig, plt.Figure)
+        assert isinstance(axes, plt.Axes)
+        fig, axes = plotter()
+        assert isinstance(fig, plt.Figure)
+        assert isinstance(axes, plt.Axes)
+
+        # testing the margins
+        lat = Lattice(
+            [
+                Drift(0.01),
+            ]
+        )
+        plotter = Plotter(lat)
+        fig, axes = plotter.top_down()
+        assert isinstance(fig, plt.Figure)
+        assert isinstance(axes, plt.Axes)

@@ -1,6 +1,7 @@
-from typing import Tuple
+from typing import Tuple, Union
 
 import numpy as np
+from matplotlib import patches
 
 from .base import BaseElement
 
@@ -37,6 +38,30 @@ class Quadrupole(BaseElement):
         m_v[1][0] = 1 / self.f
         m_v[1][1] = 1
         return m_h, m_v
+
+    def _get_patch(self, s: float) -> Union[None, patches.Patch]:
+        if self.f < 0:
+            head_length = -10
+            label = "Defocussing Quad"
+            colour = "tab:red"
+        elif self.f > 0:
+            head_length = 10
+            label = "Focussing Quad"
+            colour = "tab:blue"
+        else:
+            # if for whatever reason the strength is 0 skip
+            return
+
+        return patches.FancyArrowPatch(
+            (s, 1),
+            (s, -1),
+            arrowstyle=patches.ArrowStyle(
+                "<->", head_length=head_length, head_width=10
+            ),
+            label=label,
+            edgecolor=colour,
+            facecolor=colour,
+        )
 
     def __repr__(self) -> str:
         return f"Quadrupole(f={self.f})"

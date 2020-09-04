@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import numpy as np
+from matplotlib import patches
 
 from ..lattice import Lattice
 from .base import BaseElement
@@ -53,6 +54,11 @@ class Dipole(BaseElement):
             `Lattice` of sliced `Dipole` elements.
         """
         return Lattice([Dipole(self.rho, self.theta / n_dipoles)] * n_dipoles)
+
+    def _get_patch(self, s: float) -> patches.Patch:
+        return patches.Rectangle(
+            (s, -0.5), self.length, 1, facecolor="lightcoral", label="Dipole"
+        )
 
     def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
         return bent_element(theta, d_s, self.rho)

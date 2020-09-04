@@ -3,6 +3,7 @@ from typing import Any, Dict, Optional, Sequence, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.patches import Patch
 
 from ..transfer_matrix import TransferMatrix
 
@@ -55,6 +56,15 @@ class BaseElement:
         # add element name
         out["element"] = self.__class__.__name__
         return out
+
+    @abstractmethod
+    def _get_patch(self, s: float) -> Patch:
+        """Generate a `matplotlib.patches.Patch` object to represent the
+        element when plotting the lattice.
+
+        Args:
+            s: s coordinate where the patch should appear.
+        """
 
     def plot(
         self,
