@@ -36,6 +36,12 @@ class TestDrift(TestCase):
         drift = Drift(1)
         assert np.allclose(drift._dxztheta_ds(0, 1), [1, 0, 0])
 
+    def test_serialize(self):
+        drift = Drift(2)
+        dic = drift._serialize()
+        assert dic["element"] == "Drift"
+        assert dic["length"] == 2
+
     def test_plot(self):
         drift = Drift(1)
         drift.plot()
