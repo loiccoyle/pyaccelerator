@@ -1,6 +1,7 @@
 from typing import Tuple
 
 import numpy as np
+from matplotlib import patches
 
 from ..lattice import Lattice
 from .base import BaseElement
@@ -42,6 +43,11 @@ class Drift(BaseElement):
             `Lattice` of sliced `Drift` elements.
         """
         return Lattice([Drift(self.length / n_drifts)] * n_drifts)
+
+    def _get_patch(self, s: float) -> patches.Patch:
+        return patches.Rectangle(
+            (s, -0.5), self.length, 1, facecolor="tab:gray", alpha=0.5, label="Drift"
+        )
 
     def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
         return straight_element(theta, d_s)
