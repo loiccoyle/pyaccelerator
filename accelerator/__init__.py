@@ -1,3 +1,5 @@
+"""Python package to build simple toy accelerator.
+"""
 import logging
 
 from . import elements

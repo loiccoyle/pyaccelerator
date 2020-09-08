@@ -9,22 +9,21 @@ from .utils import bent_element
 
 
 class Dipole(BaseElement):
-    """Dipole element"""
+    """Dipole element.
+
+    Args:
+        rho: Bending radius in meters.
+        theta: Bending angle in radians.
+
+    Attributes:
+        length: Element length in meters.
+        rho: Bending radius in meters.
+        theta: Bending angle in radians.
+        m_h: Element phase space transfer matrix in the horizontal plane.
+        m_v: Element phase space transfer matrix in the vertical plane.
+    """
 
     def __init__(self, rho: float, theta: float):
-        """Dipole element.
-
-        Args:
-            rho: bending radius in meters.
-            theta: bending angle in radians.
-
-        Attributes:
-            length: element length in meters.
-            rho: bending radius in meters.
-            theta: bending angle in radians.
-            m_h: element phase space transfer matrix in the horizontal plane.
-            m_v: element phase space transfer matrix in the vertical plane.
-        """
         super().__init__(rho * theta)
         self.rho = rho
         self.theta = theta
@@ -48,10 +47,10 @@ class Dipole(BaseElement):
         """Slice the element into a many smaller elements.
 
         Args:
-            n_dipoles: number of `Dipole` elements.
+            n_dipoles: number of :py:class:`Dipole` elements.
 
         Returns:
-            `Lattice` of sliced `Dipole` elements.
+            :py:class:`~accelerator.lattice.Lattice` of sliced :py:class:`Dipole` elements.
         """
         return Lattice([Dipole(self.rho, self.theta / n_dipoles)] * n_dipoles)
 

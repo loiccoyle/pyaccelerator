@@ -4,6 +4,8 @@ from .utils import compute_m_twiss, compute_twiss_invariant
 
 
 class TransferMatrix(np.ndarray):
+    """Phase space transfer matrix."""
+
     def __new__(cls, input_array):
         obj = np.asarray(input_array).view(cls)
 
@@ -25,6 +27,8 @@ class TransferMatrix(np.ndarray):
 
 
 class TwissTransferMatrix(np.ndarray):
+    """Twiss parameter transfer matrix."""
+
     def __new__(cls, input_array):
         obj = np.asarray(input_array).view(cls)
 
