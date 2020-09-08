@@ -9,19 +9,18 @@ from .utils import straight_element
 
 
 class Drift(BaseElement):
-    """Drift element"""
+    """Drift element.
+
+    Args:
+        length: Drift length in meters.
+
+    Attributes:
+        length: Element length in meters.
+        m_h: Element phase space transfer matrix in the horizontal plane.
+        m_v: Element phase space transfer matrix in the vertical plane.
+    """
 
     def __init__(self, length: float):
-        """Drift element.
-
-        Args:
-            length: drift length in meters.
-
-        Attributes:
-            length: element length in meters.
-            m_h: element phase space transfer matrix in the horizontal plane.
-            m_v: element phase space transfer matrix in the vertical plane.
-        """
         super().__init__(length)
 
     def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:

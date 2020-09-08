@@ -10,6 +10,23 @@ from .utils import compute_twiss_clojure, to_twiss
 
 
 class Beam:
+    """Represents one beam.
+
+    Args:
+        number (optional): Beam number, either 1 or 2.
+        energy (optional): Beam energy in GeV.
+        mass (optional): Particle mass in kg.
+        n_particles (optional): number of particles in the beam.
+        emittance (optional): beam emittance in meters, to specify horizontal
+            and vertical emittances use a tuple.
+
+    Examples:
+        Beam with even emittances:
+            >>> Beam(beam=1, n_particles=100, emittance=2.5)
+
+        Beam with uneven emittances:
+            >>> Beam(beam=1, n_particles=100, emittance=(3.5, 2.5))"""
+
     def __init__(
         self,
         number: int = 1,
@@ -19,23 +36,6 @@ class Beam:
         emittance: Union[Tuple[float, float], float] = 3.5e-6,
         sampling: str = "bigaussian",
     ):
-        """Represents one beam.
-
-        Args:
-            number (optional): Beam number, either 1 or 2.
-            energy (optional): Beam energy in GeV.
-            mass (optional): Particle mass in kg.
-            n_particles (optional): number of particles in the beam.
-            emittance (optional): beam emittance in meters, to specify horizontal
-                and vertical emittances use a tuple.
-
-        Examples:
-            Beam with even emittances:
-            >>> Beam(beam=1, n_particles=100, emittance=2.5)
-
-            Beam with uneven emittances:
-            >>> Beam(beam=1, n_particles=100, emittance=(3.5, 2.5))
-        """
         sampling_map = {"bigaussian": bigaussian}
         if not isinstance(emittance, tuple):
             emittance = (emittance, emittance)
@@ -58,7 +58,7 @@ class Beam:
         closure_tol: float = 1e-9,
         n_angles: int = 1e3,
     ) -> Tuple[np.ndarray, np.ndarray]:
-        """Vizualize the beam phase space given the twiss parameters.
+        """Compute the beam's phase space ellipse given the twiss parameters.
 
         Args:
             twiss: twiss parameters, beta[m], alpha[rad], gamma[m^-1], one

@@ -15,7 +15,15 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class Lattice(list):
-    """A list of accelerator elements."""
+    """A lattice of accelerator elements.
+
+    Looks like a list, smells like a list and tastes like a list.
+    Is infact an accelerator lattice.
+
+    Examples:
+           >>> Lattice([Drift(1), Quadrupole(0.8)])
+           [Drift(1), Quadrupole(0.8)]
+    """
 
     @classmethod
     def load(cls, path: os.PathLike) -> "Lattice":
@@ -25,13 +33,13 @@ class Lattice(list):
             path: file path.
 
         Returns:
-            Loaded `Lattice` instance.
+            Loaded :py:class:`Lattice` instance.
 
         Examples:
             Save and load a lattice:
-            >>> lat = Lattice([Drift(1)])
-            >>> lat.save('drift.json')
-            >>> lat_loaded = Lattice.load('drift.json')
+                >>> lat = Lattice([Drift(1)])
+                >>> lat.save('drift.json')
+                >>> lat_loaded = Lattice.load('drift.json')
         """
         # TODO: non top level import to avoid circular imports
         from .elements.utils import deserialize
@@ -41,24 +49,6 @@ class Lattice(list):
         return cls([deserialize(element) for element in serialized])
 
     def __init__(self, *args):
-        """Looks like a list, smells like a list and tastes like a list.
-        Is infact an accelerator lattice.
-
-        Attributes:
-            m_h: horizontal phase space transfer matrix
-            m_v: vertical phase space transfer matrix.
-
-        Methods:
-            transport: transport the phase space coordinates, the twiss
-                parameters through the lattice or a distributio of phase space
-                coords.
-            slice: slice elements into smaller elements.
-            plot: lattice plotting.
-
-        Examples:
-            >>> Lattice([Drift(1), Quadrupole(0.8)])
-            [Drift(1), Quadrupole(0.8)]
-        """
         super().__init__(*args)
         self._m_h = None
         self._m_v = None
@@ -66,6 +56,7 @@ class Lattice(list):
 
     @property
     def m_h(self):
+        """Horizontal :py:class:`~accelerator.transfer_matrix.TransferMatrix` of the lattice."""
         if self._m_h is None:
             self._m_h = TransferMatrix(
                 compute_one_turn([element.m_h for element in self])
@@ -74,6 +65,7 @@ class Lattice(list):
 
     @property
     def m_v(self):
+        """Vertical :py:class:`~accelerator.transfer_matrix.TransferMatrix` of the lattice."""
         if self._m_v is None:
             self._m_v = TransferMatrix(
                 compute_one_turn([element.m_v for element in self])
@@ -92,13 +84,13 @@ class Lattice(list):
             n_element: slice `element_type` into `n_element` smaller elements.
 
         Returns:
-            Sliced `Lattice`.
+            Sliced :py:class:`Lattice`.
 
         Examples:
-            Slice the `Drift` elements into 2:
-            >>> lat = Lattice([Drift(1), Quadrupole(0.8)])
-            >>> lat.slice(Drift, 2)
-            [Drift(length=0.5), Drift(length=0.5), Quadrupole(f=0.8)]
+            Slice the :py:class:`~accelerator.elements.drift.Drift` elements into 2:
+                >>> lat = Lattice([Drift(1), Quadrupole(0.8)])
+                >>> lat.slice(Drift, 2)
+                [Drift(length=0.5), Drift(length=0.5), Quadrupole(f=0.8)]
         """
         new_lattice = []
         for element in self:
@@ -117,47 +109,48 @@ class Lattice(list):
             value: To transport phase space coords, provide a sequence of 2
                 floats. To transport twiss parameters, provide a sequence of 3
                 floats. To transport a distribution of phase space coords
-                provide a sequence of 2 1D `np.ndarray`, the position and angle
+                provide a sequence of 2 1D :py:class:`numpy.ndarray`, the position and angle
                 coordinates.
             plane: the plane of interest, either "h" or "v".
 
         Returns:
             If a phase space coordinate is provided, returns the phase space
-                position, angle and s coordinates along the lattice.
+            position, angle and s coordinates along the lattice.
+
             If a twiss parameter is provided, returns the twiss parameters,
-                beta, alpha, gamma and the s coordinate along the lattice.
+            beta, alpha, gamma and the s coordinate along the lattice.
+
             If a distribution of phase space coordinates is provided, returns
-                the position distribution, the angle distribution and the s
-                coordinate along the lattice.
+            the position distribution, the angle distribution and the s
+            coordinate along the lattice.
 
         Raises:
             ValueError: If unable to infer the provided coordinates.
 
         Examples:
-            Transport phase space coords through a drift:
-            >>> lat = Lattice([Drift(1)])
-            >>> lat.transport([1, 1])
-            (array([1., 2.]), array([1., 1.]), array([0, 1]))
+            Transport phase space coords through a :py:class:`~accelerator.elements.drift.Drift`:
+                >>> lat = Lattice([Drift(1)])
+                >>> lat.transport([1, 1])
+                (array([1., 2.]), array([1., 1.]), array([0, 1]))
 
-            Transport twiss parameters through a drift:
-            >>> lat = Lattice([Drift(1)])
-            >>> lat.transport([1, 0, 1])
-            (array([1., 2.]), array([ 0., -1.]), array([1., 1.]), array([0, 1]))
+            Transport twiss parameters through a :py:class:`~accelerator.elements.drift.Drift`:
+                >>> lat = Lattice([Drift(1)])
+                >>> lat.transport([1, 0, 1])
+                (array([1., 2.]), array([ 0., -1.]), array([1., 1.]), array([0, 1]))
 
-            Transport a distribution of phase space coordinates through the
-                lattice:
-            >>> beam = Beam()
-            >>> lat = Lattice([Drift(1)])
-            >>> u, u_prime, s = lat.transport(beam.matched_particle_distribution([1, 0, 1]))
-            >>> plt.plot(u, u_prime)
-            ...
+            Transport a distribution of phase space coordinates through the lattice:
+                    >>> beam = Beam()
+                    >>> lat = Lattice([Drift(1)])
+                    >>> u, u_prime, s = lat.transport(beam.matched_particle_distribution([1, 0, 1]))
+                    >>> plt.plot(u, u_prime)
+                    ...
 
             Transport a phase space ellipse's coordinates through the lattice:
-            >>> beam = Beam()
-            >>> lat = Lattice([Drift(1)])
-            >>> u, u_prime, s = lat.transport(beam.phasespace([1, 0, 1]))
-            >>> plt.plot(u, u_prime)
-            ...
+                >>> beam = Beam()
+                >>> lat = Lattice([Drift(1)])
+                >>> u, u_prime, s = lat.transport(beam.phasespace([1, 0, 1]))
+                >>> plt.plot(u, u_prime)
+                ...
         """
         # TODO: the _transport and the _transport_distribution share a lot of
         # code they could easily be merged.
@@ -303,8 +296,8 @@ class Lattice(list):
 
         Examples:
             Save a lattice:
-            >>> lat = Lattice([Drift(1)])
-            >>> lat.save('drift.json')
+                >>> lat = Lattice([Drift(1)])
+                >>> lat.save('drift.json')
         """
         serializable = [element._serialize() for element in self]
         with open(path, "w") as fp:
@@ -314,24 +307,22 @@ class Lattice(list):
 class Plotter:
     """Lattice plotter.
 
+    Args:
+        lattice: :py:class:`Lattice` instance.
+
     Examples:
         Plot a lattice:
-        >>> lat = Lattice([Quadrupole(-0.6), Drift(1), Quadrupole(0.6)])
-        >>> lat.plot.lattice()  # or lat.plot("lattice")
-        ...
+            >>> lat = Lattice([Quadrupole(-0.6), Drift(1), Quadrupole(0.6)])
+            >>> lat.plot.lattice()  # or lat.plot("lattice")
+            ...
 
-        Plot the top down view of the lattice.
-        >>> lat = Lattice([Drift(1), Dipole(1, np.pi/2)])
-        >>> lat.plot.top_down()  # or lat.plot("top_down")
-        ...
+        Plot the top down view of the lattice:
+            >>> lat = Lattice([Drift(1), Dipole(1, np.pi/2)])
+            >>> lat.plot.top_down()  # or lat.plot("top_down")
+            ...
     """
 
     def __init__(self, lattice: Lattice):
-        """Lattice plotter.
-
-        Args:
-            lattice: `Lattice` instance.
-        """
         self._lattice = lattice
 
     def top_down(
@@ -345,7 +336,7 @@ class Plotter:
                 element in the lattice.
 
         Returns:
-            Plotted `plt.Figure` and `plt.Axes`.
+            Plotted ``plt.Figure`` and ``plt.Axes``.
         """
         xztheta = [np.array([0, 0, np.pi / 2])]
         s_start = 0
@@ -377,7 +368,7 @@ class Plotter:
         """Plot the lattice.
 
         Returns:
-            Plotted `plt.Figure` and `plt.Axes`.
+            Plotted ``plt.Figure`` and ``plt.Axes``.
         """
         fig, ax = plt.subplots(1, 1)
 

@@ -7,21 +7,20 @@ from .base import BaseElement
 
 
 class Quadrupole(BaseElement):
-    """Quadrupole element"""
+    """Quadrupole element.
+
+    Thin lense approximation.
+
+    Args:
+        f: Quadrupole focal length in meters.
+
+    Attributes:
+        f: Element focal length in meters.
+        m_h: Element phase space transfer matrix in the horizontal plane.
+        m_v: Element phase space transfer matrix in the vertical plane.
+    """
 
     def __init__(self, f: float):
-        """Quadrupole element.
-
-        Thin lense approximation.
-
-        Args:
-            f: quadrupole focal length in meters.
-
-        Attributes:
-            f: element focal length in meters.
-            m_h: element phase space transfer matrix in the horizontal plane.
-            m_v: element phase space transfer matrix in the vertical plane.
-        """
         super().__init__(0)  # 0 length (thin lense)
         self.f = f
 
