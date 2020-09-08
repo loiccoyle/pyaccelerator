@@ -14,3 +14,5 @@ logger.setLevel(logging.DEBUG)
 
 __all__ = ["Beam", "Lattice"]
 __all__.extend(elements.__all__)
+
+__version__ = '0.1.0'

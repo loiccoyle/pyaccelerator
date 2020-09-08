@@ -1,5 +1,7 @@
 # Accelerator
-<a href="https://github.com/loiccoyle/accelerator/actions?query=workflow%3Atests"><img src="https://github.com/loiccoyle/accelerator/workflows/tests/badge.svg"></a>
+
+[![Tests](https://github.com/loiccoyle/accelerator/workflows/tests/badge.svg)](https://github.com/loiccoyle/accelerator/actions?query=workflow%3Atests)
+[![Documentation Status](https://readthedocs.org/projects/pyaccelerator/badge/?version=latest)](https://pyaccelerator.readthedocs.io/en/latest/?badge=latest)
 
 Python package to build simple toy accelerators.
 

@@ -12,21 +12,14 @@
 #
 import os
 import sys
-sys.path.insert(0, os.path.abspath('..'))
-print(sys.path)
-print(os.getcwd())
-from pathlib import Path
-print(list(Path.cwd().glob('*')))
-print(list(Path.cwd().parent.glob('*')))
 from datetime import date
 
 import sphinx_rtd_theme
-from pkg_resources import get_distribution
+from accelerator import __version__
 
 # -- Project information -----------------------------------------------------
 
-release = get_distribution("accelerator").version
-version = ".".join(release.split(".")[:2])
+version = __version__
 project = "accelerator {}".format(version)
 copyright = "{0}, Loic Coyle".format(date.today().year)
 author = "Loic Coyle"
@@ -72,4 +65,3 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
-html_title = "accelerator {}".format(version)
