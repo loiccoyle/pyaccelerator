@@ -43,15 +43,15 @@ class TestBeam(TestCase):
         beam = Beam(n_particles=int(1e6))
         x, x_prime = beam.match(twiss=[1, 0, 1])
         self.assertAlmostEqual(x.mean(), 0, places=3)
-        self.assertAlmostEqual(x.std(), np.sqrt(beam.geo_emittance_h))
+        self.assertAlmostEqual(x.std(), np.sqrt(beam.geo_emittance_h), places=3)
         self.assertAlmostEqual(x_prime.mean(), 0, places=3)
-        self.assertAlmostEqual(x_prime.std(), np.sqrt(beam.geo_emittance_v))
+        self.assertAlmostEqual(x_prime.std(), np.sqrt(beam.geo_emittance_v), places=3)
 
         x, x_prime = beam.match(twiss=[1 / 2, 0, 2])
         self.assertAlmostEqual(x.mean(), 0, places=3)
-        self.assertAlmostEqual(x.std(), np.sqrt(beam.geo_emittance_h * 1 / 2))
+        self.assertAlmostEqual(x.std(), np.sqrt(beam.geo_emittance_h * 1 / 2), places=3)
         self.assertAlmostEqual(x_prime.mean(), 0, places=3)
-        self.assertAlmostEqual(x_prime.std(), np.sqrt(beam.geo_emittance_v * 2))
+        self.assertAlmostEqual(x_prime.std(), np.sqrt(beam.geo_emittance_v * 2), places=3)
 
     def test_plot(self):
         beam = Beam()
