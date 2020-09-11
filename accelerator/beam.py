@@ -22,9 +22,11 @@ class Beam:
 
     Examples:
         Beam with even emittances:
+
             >>> Beam(beam=1, n_particles=100, emittance=2.5)
 
         Beam with uneven emittances:
+
             >>> Beam(beam=1, n_particles=100, emittance=(3.5, 2.5))"""
 
     def __init__(
@@ -68,7 +70,7 @@ class Beam:
             n_angles (optional): Number of angles for which to compute the ellipse.
 
         Returns:
-            u, u_prime: position and angle phase space coordrinates of the ellipse.
+            Position and angle phase space coordrinates of the ellipse.
         """
         twiss = to_twiss(twiss)
         beta = twiss[0][0]
@@ -101,7 +103,7 @@ class Beam:
             plane: plane of interest, either "h" or "v".
 
         Returns:
-            u, u_prime: arrays of phasespace coordinates.
+            Arrays of phasespace coordinates.
         """
 
         beta, alpha, gamma = twiss
