@@ -152,7 +152,7 @@ class Lattice(list):
 
                 >>> beam = Beam()
                 >>> lat = Lattice([Drift(1)])
-                >>> u, u_prime, s = lat.transport(beam.matched_particle_distribution([1, 0, 1]))
+                >>> u, u_prime, s = lat.transport(beam.match([1, 0, 1]))
                 >>> plt.plot(u, u_prime)
                 ...
 
@@ -160,7 +160,7 @@ class Lattice(list):
 
                 >>> beam = Beam()
                 >>> lat = Lattice([Drift(1)])
-                >>> u, u_prime, s = lat.transport(beam.phasespace([1, 0, 1]))
+                >>> u, u_prime, s = lat.transport(beam.ellipse([1, 0, 1]))
                 >>> plt.plot(u, u_prime)
                 ...
         """
