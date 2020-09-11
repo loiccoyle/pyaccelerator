@@ -198,7 +198,7 @@ class TestLattice(TestCase):
         )
         beam = Beam()
         u, u_prime, s = FODO.transport(
-            beam.phasespace(FODO.m_h.twiss.invariant, n_angles=n_angles)
+            beam.ellipse(FODO.m_h.twiss.invariant, n_angles=n_angles)
         )
         assert u.shape[-1] == len(FODO) + 1
         assert u_prime.shape[-1] == len(FODO) + 1
@@ -221,7 +221,7 @@ class TestLattice(TestCase):
         n_particles = 10
         beam = Beam(n_particles=n_particles)
         u, u_prime, s = FODO.transport(
-            beam.matched_particle_distribution(FODO.m_h.twiss.invariant)
+            beam.match(FODO.m_h.twiss.invariant)
         )
         assert u.shape[-1] == len(FODO) + 1
         assert u_prime.shape[-1] == len(FODO) + 1
