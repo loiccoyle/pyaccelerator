@@ -1,14 +1,22 @@
 from typing import Tuple
 
 import numpy as np
-from numpy import random
 
 
 def bigaussian(
     n_particles: int,
-    mean: Tuple[float, float] = (0, 0),
-    emittances: Tuple[float, float] = (3.5, 3.5),
-):
-    rng = random.default_rng()
-    cov = np.diag(emittances)
-    return rng.mulitvariate_normal(mean, cov, n_particles)
+    mean: Tuple[float, float],
+    geometric_emittance: float,
+) -> np.array:
+    """Generate a bigaussian distributed distribution.
+
+    Args:
+        n_particles: number of particles.
+        meam: distribution centers.
+        geometric_emittance: geometric emittance.
+
+    Returns:
+        Array of position and angle phase space coordinates of the distribution.
+    """
+    cov = np.diag((geometric_emittance, geometric_emittance))
+    return np.random.multivariate_normal(mean, cov, n_particles).T
