@@ -17,25 +17,17 @@ class BaseElement:
         Args:
             length: length of the element.
         """
-        self._m_h = None
-        self._m_v = None
         self.length = length
 
     @property
     def m_h(self) -> TransferMatrix:
-        if self._m_h is None or self._m_v is None:
-            ms = self.transfer_matrix()
-            self._m_h = TransferMatrix(ms[0])
-            self._m_v = TransferMatrix(ms[1])
-        return self._m_h
+        m_h, _ = self.transfer_matrix()
+        return TransferMatrix(m_h)
 
     @property
     def m_v(self) -> TransferMatrix:
-        if self._m_h is None or self._m_v is None:
-            ms = self.transfer_matrix()
-            self._m_h = TransferMatrix(ms[0])
-            self._m_v = TransferMatrix(ms[1])
-        return self._m_v
+        _, m_v = self.transfer_matrix()
+        return TransferMatrix(m_v)
 
     @abstractmethod
     def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
