@@ -2,7 +2,6 @@
 import json
 import os
 from collections.abc import Iterable
-from functools import partial
 from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
