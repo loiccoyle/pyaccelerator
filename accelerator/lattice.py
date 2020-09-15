@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import minimize, OptimizeResult
 
 from .transfer_matrix import TransferMatrix
 from .utils import compute_one_turn, to_phase_coord, to_twiss
@@ -262,9 +262,9 @@ class Lattice(list):
         target: Sequence[float],
         location: Union["BaseElement", int],
         plane: str = "h",
-        init: Union[Sequence[float], str] = "periodic",
+        init: Union[Sequence[float], str] = "solution",
         **kwargs,
-    ):
+    ) -> OptimizeResult:
         """Match lattice properties to constraints.
 
         Modifies the lattice in place.
@@ -276,7 +276,7 @@ class Lattice(list):
             target: target twiss or phase space coords.
             location: location where the target whould be reached.
             plane (optional): either "h" or "v".
-            init (optional): initial twiss or phase space coords, if "periodic"
+            init (optional): initial twiss or phase space coords, if "solution"
                 the optimization will assume twiss parameters and use the
                 prediodic twiss solutions.
             kwargs: passed to :py:meth:`scipy.optimize.minimize`.
@@ -328,13 +328,23 @@ class Lattice(list):
                 >>> q_d = Quadrupole(-0.8)
                 >>> d = Drift(1)
                 >>> lat = Lattice([q_f, d, q_d, d, q_f])
-                >>> opt_result = lat.match({q_f: "f", q_d: "f"}, target=[0.5, None, None], location=q_d, plane="h", init="periodic")
+                >>> opt_result = lat.match({q_f: "f", q_d: "f"}, init="solution", target=[0.5, None, None], location=q_d, plane="h")
                 >>> lat
-                [Quadrupole(f=1.323...), Drift(length=1), Quadrupole(f=-0.828), Drift(1), Quadrupole(f=1.323...)]
+                [Quadrupole(f=1.323...), Drift(length=1), Quadrupole(f=-0.828...), Drift(1), Quadrupole(f=1.323...)]
         """
         # TODO: Matching might be too complex to a single method, it might be
-        # worth having a Constraints class which takes a lattice (similar to the Plotter)
-        # and it having add, match, ... methods.
+        # worth having a Constraints class which takes a lattice (similar to the
+        # Plotter class bellow) and it having matching related methods.
+        # The interface would look something like this:
+        #   lattice.constraints.add(free_param, target, location, ...)
+        #   lattice.constraints.add(free_param, target, location, ...)
+        #   lattice.constraints.add(free_param, target, location, ...)
+        #   lattice.constraints.add(free_param, target, location, ...)
+        #   lattice.constraints.match()
+        # TODO: The minimization modifies the lattice in place which might be
+        # confusing for ppl new to programming/python? This means that if the
+        # matching is impossible, thus the minimization fails, then the lattice
+        # will still be modified.
 
         if not isinstance(location, int):
             location = self.index(location) + 1
@@ -342,10 +352,10 @@ class Lattice(list):
             # add 1 because we also have the initial parameters
             location += 1
 
-        periodic = init == "periodic"
+        periodic = init == "solution"
         if periodic and len(target) == 2:
             raise ValueError(
-                "When using init='periodic' target must be twiss parameters."
+                "When using init='solution' target must be twiss parameters."
             )
         transfer_matrix = "m_" + plane.lower()
         init_parameters = [
@@ -363,19 +373,20 @@ class Lattice(list):
                 setattr(element, attribute, new_value)
             self._clear_cache()
             if periodic:
-                # compute the periodic solution
+                # compute the periodic twiss solution
                 init = getattr(self, transfer_matrix).twiss.invariant
                 if init is None:
                     # return a non 0 value so that the optimization continues
                     # but this messes up the gradients (depending on the
                     # optimization method) so it might cause issues
-                    # there must be a better way of doing this...
+                    # TODO: there must be a better way of doing this...
                     return 1
 
             *transported, _ = self.transport(init, plane=plane)
             # get the values at the requested location and only keep the
             # parameters which are not None in the target list.
             transported = np.vstack(transported)[not_none, location]
+            # l2 norm to minimize
             return np.linalg.norm(transported - target, 2)
 
         return minimize(func, init_parameters, **kwargs)
