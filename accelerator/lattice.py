@@ -23,6 +23,8 @@ class Lattice(list):
     Is infact an accelerator lattice.
 
     Examples:
+        Create a simple lattice.
+
            >>> Lattice([Drift(1), Quadrupole(0.8)])
            [Drift(1), Quadrupole(0.8)]
     """
@@ -39,9 +41,10 @@ class Lattice(list):
 
         Examples:
             Save and load a lattice:
+
                 >>> lat = Lattice([Drift(1)])
-                >>> lat.save('drift.json')
-                >>> lat_loaded = Lattice.load('drift.json')
+                >>> lat.save("drift.json")
+                >>> lat_loaded = Lattice.load("drift.json")
         """
         # TODO: non top level import to avoid circular imports
         from .elements.utils import deserialize
@@ -89,7 +92,9 @@ class Lattice(list):
             Sliced :py:class:`Lattice`.
 
         Examples:
-            Slice the :py:class:`~accelerator.elements.drift.Drift` elements into 2:
+            Slice the :py:class:`~accelerator.elements.drift.Drift` elements
+            into 2:
+
                 >>> lat = Lattice([Drift(1), Quadrupole(0.8)])
                 >>> lat.slice(Drift, 2)
                 [Drift(length=0.5), Drift(length=0.5), Quadrupole(f=0.8)]
@@ -130,27 +135,34 @@ class Lattice(list):
             ValueError: If unable to infer the provided coordinates.
 
         Examples:
-            Transport phase space coords through a :py:class:`~accelerator.elements.drift.Drift`:
+            Transport phase space coords through a
+            :py:class:`~accelerator.elements.drift.Drift`:
+
                 >>> lat = Lattice([Drift(1)])
                 >>> lat.transport([1, 1])
                 (array([1., 2.]), array([1., 1.]), array([0, 1]))
 
-            Transport twiss parameters through a :py:class:`~accelerator.elements.drift.Drift`:
+            Transport twiss parameters through a
+            :py:class:`~accelerator.elements.drift.Drift`:
+
                 >>> lat = Lattice([Drift(1)])
                 >>> lat.transport([1, 0, 1])
                 (array([1., 2.]), array([ 0., -1.]), array([1., 1.]), array([0, 1]))
 
-            Transport a distribution of phase space coordinates through the lattice:
-                    >>> beam = Beam()
-                    >>> lat = Lattice([Drift(1)])
-                    >>> u, u_prime, s = lat.transport(beam.matched_particle_distribution([1, 0, 1]))
-                    >>> plt.plot(u, u_prime)
-                    ...
+            Transport a distribution of phase space coordinates through the
+            lattice:
 
-            Transport a phase space ellipse's coordinates through the lattice:
                 >>> beam = Beam()
                 >>> lat = Lattice([Drift(1)])
-                >>> u, u_prime, s = lat.transport(beam.phasespace([1, 0, 1]))
+                >>> u, u_prime, s = lat.transport(beam.match([1, 0, 1]))
+                >>> plt.plot(u, u_prime)
+                ...
+
+            Transport a phase space ellipse's coordinates through the lattice:
+
+                >>> beam = Beam()
+                >>> lat = Lattice([Drift(1)])
+                >>> u, u_prime, s = lat.transport(beam.ellipse([1, 0, 1]))
                 >>> plt.plot(u, u_prime)
                 ...
         """
@@ -201,7 +213,8 @@ class Lattice(list):
             init = to_phase_coord(init)
         out = [init]
         s_coords = [0]
-        transfer_ms = [getattr(element, "m_" + plane) for element in self]
+        transfer_matrix = "m_" + plane
+        transfer_ms = [getattr(element, transfer_matrix) for element in self]
         if twiss:
             transfer_ms = [m.twiss for m in transfer_ms]
         for i, m in enumerate(transfer_ms):
@@ -232,7 +245,8 @@ class Lattice(list):
         coords = np.vstack([u, u_prime])
         out = [coords]
         s_coords = [0]
-        transfer_ms = [getattr(element, "m_" + plane) for element in self]
+        transfer_matrix = "m_" + plane
+        transfer_ms = [getattr(element, transfer_matrix) for element in self]
         for i, m in enumerate(transfer_ms):
             out.append(m @ out[i])
             s_coords.append(s_coords[i] + self[i].length)
@@ -422,6 +436,7 @@ class Lattice(list):
 
         Examples:
             Save a lattice:
+
                 >>> lat = Lattice([Drift(1)])
                 >>> lat.save('drift.json')
         """
@@ -438,11 +453,13 @@ class Plotter:
 
     Examples:
         Plot a lattice:
+
             >>> lat = Lattice([Quadrupole(-0.6), Drift(1), Quadrupole(0.6)])
             >>> lat.plot.lattice()  # or lat.plot("lattice")
             ...
 
         Plot the top down view of the lattice:
+
             >>> lat = Lattice([Drift(1), Dipole(1, np.pi/2)])
             >>> lat.plot.top_down()  # or lat.plot("top_down")
             ...
