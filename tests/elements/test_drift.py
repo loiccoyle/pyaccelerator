@@ -10,8 +10,6 @@ class TestDrift(TestCase):
     def test_init(self):
         drift = Drift(1)
         assert drift.length == 1
-        assert drift._m_h == None
-        assert drift._m_v == None
 
     def test_transfer_matrix(self):
         drift = Drift(1)

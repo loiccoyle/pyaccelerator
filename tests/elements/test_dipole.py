@@ -16,8 +16,6 @@ class TestDipole(TestCase):
     def test_init(self):
         dipole = Dipole(rho_dipole, angle_dipole)
         assert dipole.length == l_dipole
-        assert dipole._m_h == None
-        assert dipole._m_v == None
 
     def test_transfer_matrix(self):
         dipole = Dipole(rho_dipole, angle_dipole)
