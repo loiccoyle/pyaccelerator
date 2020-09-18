@@ -16,11 +16,14 @@ class TestQuadrupole(TestCase):
         quadrupole = Quadrupole(1)
         expected_transfer_matrix_h = np.array([[1, 0], [-1, 1]])
         expected_transfer_matrix_v = np.array([[1, 0], [1, 1]])
-        out = quadrupole.transfer_matrix()
-        assert np.allclose(out[0], expected_transfer_matrix_h)
-        assert np.allclose(out[1], expected_transfer_matrix_v)
-        assert np.allclose(quadrupole.m_h, out[0])
-        assert np.allclose(quadrupole.m_v, out[1])
+        m_h, m_v = (
+            quadrupole._get_transfer_matrix_h(),
+            quadrupole._get_transfer_matrix_v(),
+        )
+        assert np.allclose(m_h, expected_transfer_matrix_h)
+        assert np.allclose(m_v, expected_transfer_matrix_v)
+        assert np.allclose(quadrupole.m_h, m_h)
+        assert np.allclose(quadrupole.m_v, m_v)
 
     def test_repr(self):
         repr(Quadrupole(1))

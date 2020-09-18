@@ -24,19 +24,21 @@ class Quadrupole(BaseElement):
         super().__init__(0)  # 0 length (thin lense)
         self.f = f
 
-    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_transfer_matrix_h(self) -> np.ndarray:
         m_h = np.zeros((2, 2))
         m_h[0][0] = 1
         # m_h[0][1] = 0
         m_h[1][0] = -1 / self.f
         m_h[1][1] = 1
+        return m_h
 
+    def _get_transfer_matrix_v(self) -> np.ndarray:
         m_v = np.zeros((2, 2))
         m_v[0][0] = 1
         # m_v[0][1] = 0
         m_v[1][0] = 1 / self.f
         m_v[1][1] = 1
-        return m_h, m_v
+        return m_v
 
     def _get_patch(self, s: float) -> Union[None, patches.Patch]:
         if self.f < 0:

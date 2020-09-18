@@ -23,14 +23,17 @@ class Drift(BaseElement):
     def __init__(self, length: float):
         super().__init__(length)
 
-    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_transfer_matrix_h(self) -> np.ndarray:
         m_h = np.zeros((2, 2))
         m_h[0][0] = 1
         m_h[0][1] = self.length
         # m_h[1][0] = 0
         m_h[1][1] = 1
-        m_v = m_h
-        return m_h, m_v
+        return m_h
+
+    def _get_transfer_matrix_v(self) -> np.ndarray:
+        # same as horizontal
+        return self._get_transfer_matrix_h()
 
     def slice(self, n_drifts: int) -> Lattice:
         """Slice the element into a many smaller elements.

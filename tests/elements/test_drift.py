@@ -16,11 +16,11 @@ class TestDrift(TestCase):
     def test_transfer_matrix(self):
         drift = Drift(1)
         expected_transfer_matrix = np.array([[1, 1], [0, 1]])
-        out = drift.transfer_matrix()
-        assert np.allclose(out[0], expected_transfer_matrix)
-        assert np.allclose(out[1], expected_transfer_matrix)
-        assert np.allclose(drift.m_h, out[0])
-        assert np.allclose(drift.m_v, out[1])
+        m_h, m_v = drift._get_transfer_matrix_h(), drift._get_transfer_matrix_v()
+        assert np.allclose(m_h, expected_transfer_matrix)
+        assert np.allclose(m_v, expected_transfer_matrix)
+        assert np.allclose(drift.m_h, m_h)
+        assert np.allclose(drift.m_v, m_v)
 
     def test_slice(self):
         drift = Drift(1)

@@ -25,11 +25,11 @@ class TestDipole(TestCase):
             [[0.5, 1.37832224e02], [-5.44139809e-03, 0.5]]
         )
         expected_transfer_matrix_v = np.array([[1, l_dipole], [0, 1]])
-        out = dipole.transfer_matrix()
-        assert np.allclose(out[0], expected_transfer_matrix_h)
-        assert np.allclose(out[1], expected_transfer_matrix_v)
-        assert np.allclose(dipole.m_h, out[0])
-        assert np.allclose(dipole.m_v, out[1])
+        m_h, m_v = dipole._get_transfer_matrix_h(), dipole._get_transfer_matrix_v()
+        assert np.allclose(m_h, expected_transfer_matrix_h)
+        assert np.allclose(m_v, expected_transfer_matrix_v)
+        assert np.allclose(dipole.m_h, m_h)
+        assert np.allclose(dipole.m_v, m_v)
 
     def test_slice(self):
         dipole = Dipole(rho_dipole, angle_dipole)

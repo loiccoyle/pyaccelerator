@@ -28,20 +28,23 @@ class Dipole(BaseElement):
         self.rho = rho
         self.theta = theta
 
-    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
+    def _get_transfer_matrix_h(self) -> np.ndarray:
         # horizontal
         m_h = np.zeros((2, 2))
         m_h[0][0] = np.cos(self.theta)
         m_h[0][1] = self.rho * np.sin(self.theta)
         m_h[1][0] = -(1 / self.rho) * np.sin(self.theta)
         m_h[1][1] = np.cos(self.theta)
+        return m_h
+
+    def _get_transfer_matrix_v(self) -> np.ndarray:
         # vertical
         m_v = np.zeros((2, 2))
         m_v[0][0] = 1
         m_v[0][1] = self.length
         # m_v[1][0] = 0
         m_v[1][1] = 1
-        return m_h, m_v
+        return m_v
 
     def slice(self, n_dipoles: int) -> Lattice:
         """Slice the element into a many smaller elements.
