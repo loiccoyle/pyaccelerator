@@ -220,9 +220,7 @@ class TestLattice(TestCase):
         )
         n_particles = 10
         beam = Beam(n_particles=n_particles)
-        u, u_prime, s = FODO.transport(
-            beam.match(FODO.m_h.twiss.invariant)
-        )
+        u, u_prime, s = FODO.transport(beam.match(FODO.m_h.twiss.invariant))
         assert u.shape[-1] == len(FODO) + 1
         assert u_prime.shape[-1] == len(FODO) + 1
         assert len(s) == len(FODO) + 1

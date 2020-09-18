@@ -1,8 +1,8 @@
 """Accelerator Beam"""
 from typing import Sequence, Tuple, Union
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from scipy.constants import c, e, m_p
 
 from .sampling import bigaussian
