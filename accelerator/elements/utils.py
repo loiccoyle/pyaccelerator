@@ -25,13 +25,10 @@ def deserialize(dic: Dict[str, Any]) -> "BaseElement":
     """Deserialize a element dictionary into an element instance.
 
     Args:
-        dic: element dict.
+        dic: Element dict.
 
     Returns:
         Element instance.
     """
     element = dic.pop("element")
-    # kinda ugly exception for the Drift element.
-    if not element == "Drift":
-        del dic["length"]
     return getattr(elements, element)(**dic)

@@ -11,9 +11,9 @@ def bigaussian(
     """Generate a bigaussian distributed distribution.
 
     Args:
-        n_particles: number of particles.
-        meam: distribution centers.
-        geometric_emittance: geometric emittance.
+        n_particles: Number of particles.
+        meam: Distribution centers.
+        geometric_emittance: Geometric emittance.
 
     Returns:
         Array of position and angle phase space coordinates of the distribution.

@@ -9,29 +9,54 @@ from ..transfer_matrix import TransferMatrix
 
 
 class BaseElement:
-    """Element"""
+    """Base class of a lattice element.
 
-    def __init__(self, length: float):
-        """Base class of a lattice element.
+    Args:
+        *instance_args: Arguments required to make the instance of this
+            class's subclasses.
+    """
 
-        Args:
-            length: length of the element.
-        """
-        self.length = length
+    def __init__(self, *instance_args):
+        # args of the subclass instance.
+        self._instance_args = instance_args
+
+    @property
+    def length(self) -> float:
+        return self._get_length()
 
     @property
     def m_h(self) -> TransferMatrix:
-        m_h, _ = self.transfer_matrix()
-        return TransferMatrix(m_h)
+        """Horizontal phase space transfer matrix."""
+        return TransferMatrix(self._get_transfer_matrix_h())
 
     @property
     def m_v(self) -> TransferMatrix:
-        _, m_v = self.transfer_matrix()
-        return TransferMatrix(m_v)
+        """Vertical phase space transfer matrix."""
+        return TransferMatrix(self._get_transfer_matrix_v())
 
     @abstractmethod
-    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+    def _get_transfer_matrix_h(self) -> np.ndarray:  # pragma: no cover
         pass
+
+    @abstractmethod
+    def _get_transfer_matrix_v(self) -> np.ndarray:  # pragma: no cover
+        pass
+
+    @abstractmethod
+    def _get_length(self) -> float:  # pragma: no cover
+        pass
+
+    @abstractmethod
+    def _get_patch(self, s: float) -> Patch:
+        """Generate a ``matplotlib.patches.Patch`` object to represent the
+        element when plotting the lattice.
+
+        Args:
+            s: s coordinate where the patch should appear.
+
+        Returns:
+            ``matplotlib.patches.Patch`` which represents the element.
+        """
 
     def _serialize(self) -> Dict[str, Any]:
         """Serialize the element.
@@ -39,24 +64,10 @@ class BaseElement:
         Returns:
             A serializable dictionary.
         """
-        # remove private attributes
-        out = {
-            key: value
-            for key, value in self.__dict__.items()
-            if not key.startswith("_")
-        }
-        # add element name
+        out = {key: getattr(self, key) for key in self._instance_args}
+        # add element
         out["element"] = self.__class__.__name__
         return out
-
-    @abstractmethod
-    def _get_patch(self, s: float) -> Patch:
-        """Generate a `matplotlib.patches.Patch` object to represent the
-        element when plotting the lattice.
-
-        Args:
-            s: s coordinate where the patch should appear.
-        """
 
     def plot(
         self,
@@ -68,12 +79,12 @@ class BaseElement:
         """Plot the effect of the element on the phase space coords.
 
         Args:
-            u_init: initial phase space coords, defaults to [1, np.pi/8].
-            plane: ether "h" or "v".
-            args, kwargs: plotting args/kwargs.
+            u_init: Initial phase space coords, defaults to [1, np.pi/8].
+            plane: Ether "h" or "v".
+            args, kwargs: Passed to ``matplotlib.pyplot.plot``.
 
-        Returns
-            Plotted Figure and array of axes.
+        Returns:
+            Plotted ``plt.Figure` and array of ``plt.Axes``.
         """
         if u_init is None:
             u_init = [1, np.pi / 8]
@@ -92,3 +103,15 @@ class BaseElement:
         axes[1].set_ylabel(f"{coord}'")
         axes[1].set_xlabel("s (m)")
         return fig, axes
+
+    def copy(self) -> "BaseElement":
+        """Create a copy of this instance.
+
+        Returns:
+            A copy of this instance.
+        """
+        return self.__class__(*[getattr(self, atr) for atr in self._instance_args])
+
+    def __repr__(self) -> str:
+        args = [f"{arg}={repr(getattr(self, arg))}" for arg in self._instance_args]
+        return f"{self.__class__.__name__}({', '.join(args)})"
