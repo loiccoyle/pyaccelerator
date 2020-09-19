@@ -10,8 +10,6 @@ class TestDrift(TestCase):
     def test_init(self):
         drift = Drift(1)
         assert drift.length == 1
-        assert drift._m_h == None
-        assert drift._m_v == None
 
     def test_transfer_matrix(self):
         drift = Drift(1)
@@ -40,8 +38,32 @@ class TestDrift(TestCase):
         drift = Drift(2)
         dic = drift._serialize()
         assert dic["element"] == "Drift"
-        assert dic["length"] == 2
+        assert dic["l"] == drift.l
+        assert dic["name"] == drift.name
+
+        # make sure that if the instance's attribute is changed
+        # the serialization takes the new values.
+        drift = Drift(2)
+        drift.l = 5
+        dic = drift._serialize()
+        assert dic["element"] == "Drift"
+        assert dic["l"] == drift.l
+        assert dic["name"] == drift.name
 
     def test_plot(self):
         drift = Drift(1)
         drift.plot()
+
+    def test_copy(self):
+        drift = Drift(1)
+        copy = drift.copy()
+        assert copy.l == drift.l
+        assert copy.name == drift.name
+
+        # make sure that if the instance's attribute is changed
+        # copying takes the new values.
+        drift = Drift(1)
+        drift.l = 2
+        copy = drift.copy()
+        assert copy.l == drift.l
+        assert copy.name == drift.name

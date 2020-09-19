@@ -9,8 +9,6 @@ class TestQuadrupole(TestCase):
     def test_init(self):
         quadrupole = Quadrupole(1)
         assert quadrupole.length == 0
-        assert quadrupole._m_h == None
-        assert quadrupole._m_v == None
 
     def test_transfer_matrix(self):
         quadrupole = Quadrupole(1)
@@ -32,8 +30,32 @@ class TestQuadrupole(TestCase):
         quad = Quadrupole(0.6)
         dic = quad._serialize()
         assert dic["element"] == "Quadrupole"
-        assert dic["f"] == 0.6
+        assert dic["f"] == quad.f
+        assert dic["name"] == quad.name
+
+        # make sure that if the instance's attribute is changed
+        # the serialization takes the new values.
+        quad = Quadrupole(0.6)
+        quad.f = 0.8
+        dic = quad._serialize()
+        assert dic["element"] == "Quadrupole"
+        assert dic["f"] == quad.f
+        assert dic["name"] == quad.name
 
     def test_plot(self):
         quad = Quadrupole(0.8)
         quad.plot()
+
+    def test_copy(self):
+        quad = Quadrupole(1)
+        copy = quad.copy()
+        assert copy.f == quad.f
+        assert copy.name == quad.name
+
+        # make sure that if the instance's attribute is changed
+        # copying takes the new values.
+        quad = Quadrupole(1)
+        quad.f = 2
+        copy = quad.copy()
+        assert copy.f == quad.f
+        assert copy.name == quad.name

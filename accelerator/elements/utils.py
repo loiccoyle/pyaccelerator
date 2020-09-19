@@ -31,7 +31,4 @@ def deserialize(dic: Dict[str, Any]) -> "BaseElement":
         Element instance.
     """
     element = dic.pop("element")
-    # kinda ugly exception for the Drift element.
-    if not element == "Drift":
-        del dic["length"]
     return getattr(elements, element)(**dic)

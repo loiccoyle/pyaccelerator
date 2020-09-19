@@ -1,4 +1,5 @@
-from typing import Tuple, Union
+from itertools import count
+from typing import Optional, Union
 
 import numpy as np
 from matplotlib import patches
@@ -13,6 +14,7 @@ class Quadrupole(BaseElement):
 
     Args:
         f: Quadrupole focal length in meters.
+        name (optional): Element name.
 
     Attributes:
         f: Element focal length in meters.
@@ -20,9 +22,17 @@ class Quadrupole(BaseElement):
         m_v: Element phase space transfer matrix in the vertical plane.
     """
 
-    def __init__(self, f: float):
-        super().__init__(0)  # 0 length (thin lense)
+    _instance_count = count(0)
+
+    def __init__(self, f: float, name: Optional[str] = None):
         self.f = f
+        if name is None:
+            name = f"quadrupole_{next(self._instance_count)}"
+        super().__init__("f", "name")
+        self.name = name
+
+    def _get_length(self) -> float:
+        return 0
 
     def _get_transfer_matrix_h(self) -> np.ndarray:
         m_h = np.zeros((2, 2))
@@ -63,6 +73,3 @@ class Quadrupole(BaseElement):
             edgecolor=colour,
             facecolor=colour,
         )
-
-    def __repr__(self) -> str:
-        return f"Quadrupole(f={self.f})"

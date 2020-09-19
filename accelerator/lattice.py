@@ -318,6 +318,19 @@ class Lattice(list):
         with open(path, "w") as fp:
             json.dump(serializable, fp, indent=4)
 
+    def copy(self, deep=True) -> "Lattice":
+        """Create a copy of the lattice.
+
+        Args:
+            deep: if True create copies of the elements themselves.
+
+        Returns:
+            A copy of the lattice.
+        """
+        if deep:
+            return Lattice([element.copy() for element in self])
+        return Lattice([element for element in self])
+
 
 class Plotter:
     """Lattice plotter.

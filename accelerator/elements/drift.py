@@ -1,4 +1,5 @@
-from typing import Tuple
+from itertools import count
+from typing import Optional
 
 import numpy as np
 from matplotlib import patches
@@ -12,16 +13,28 @@ class Drift(BaseElement):
     """Drift element.
 
     Args:
-        length: Drift length in meters.
+        l: Drift length in meters.
+        name (optional): Element name.
 
     Attributes:
+        l: Element length in meters.
         length: Element length in meters.
         m_h: Element phase space transfer matrix in the horizontal plane.
         m_v: Element phase space transfer matrix in the vertical plane.
+        name: Element name.
     """
 
-    def __init__(self, length: float):
-        super().__init__(length)
+    _instance_count = count(0)
+
+    def __init__(self, l: float, name: Optional[str] = None):
+        super().__init__("l", "name")
+        self.l = l
+        if name is None:
+            name = f"drift_{next(self._instance_count)}"
+        self.name = name
+
+    def _get_length(self) -> float:
+        return self.l
 
     def _get_transfer_matrix_h(self) -> np.ndarray:
         m_h = np.zeros((2, 2))
@@ -44,7 +57,11 @@ class Drift(BaseElement):
         Returns:
             `Lattice` of sliced `Drift` elements.
         """
-        return Lattice([Drift(self.length / n_drifts)] * n_drifts)
+        out = [
+            Drift(self.length / n_drifts, name=f"{self.name}_slice_{i}")
+            for i in range(n_drifts)
+        ]
+        return Lattice(out)
 
     def _get_patch(self, s: float) -> patches.Patch:
         return patches.Rectangle(
@@ -53,6 +70,3 @@ class Drift(BaseElement):
 
     def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
         return straight_element(theta, d_s)
-
-    def __repr__(self):
-        return f"Drift(length={self.length})"

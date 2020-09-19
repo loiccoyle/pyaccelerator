@@ -9,53 +9,42 @@ from ..transfer_matrix import TransferMatrix
 
 
 class BaseElement:
-    """Element"""
+    """Base class of a lattice element.
 
-    def __init__(self, length: float):
-        """Base class of a lattice element.
+    Args:
+        *instance_args: arguments required to make the instance of this
+            class's subclasses.
+    """
 
-        Args:
-            length: length of the element.
-        """
-        self._m_h = None
-        self._m_v = None
-        self.length = length
+    def __init__(self, *instance_args):
+        # args of the subclass instance.
+        self._instance_args = instance_args
+
+    @property
+    def length(self) -> float:
+        return self._get_length()
 
     @property
     def m_h(self) -> TransferMatrix:
-        if self._m_h is None or self._m_v is None:
-            ms = self.transfer_matrix()
-            self._m_h = TransferMatrix(ms[0])
-            self._m_v = TransferMatrix(ms[1])
-        return self._m_h
+        """Horizontal phase space transfer matrix."""
+        return TransferMatrix(self._get_transfer_matrix_h())
 
     @property
     def m_v(self) -> TransferMatrix:
-        if self._m_h is None or self._m_v is None:
-            ms = self.transfer_matrix()
-            self._m_h = TransferMatrix(ms[0])
-            self._m_v = TransferMatrix(ms[1])
-        return self._m_v
+        """Vertical phase space transfer matrix."""
+        return TransferMatrix(self._get_transfer_matrix_v())
 
     @abstractmethod
-    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:  # pragma: no cover
+    def _get_transfer_matrix_h(self) -> np.ndarray:  # pragma: no cover
         pass
 
-    def _serialize(self) -> Dict[str, Any]:
-        """Serialize the element.
+    @abstractmethod
+    def _get_transfer_matrix_v(self) -> np.ndarray:  # pragma: no cover
+        pass
 
-        Returns:
-            A serializable dictionary.
-        """
-        # remove private attributes
-        out = {
-            key: value
-            for key, value in self.__dict__.items()
-            if not key.startswith("_")
-        }
-        # add element name
-        out["element"] = self.__class__.__name__
-        return out
+    @abstractmethod
+    def _get_length(self) -> float:  # pragma: no cover
+        pass
 
     @abstractmethod
     def _get_patch(self, s: float) -> Patch:
@@ -65,6 +54,17 @@ class BaseElement:
         Args:
             s: s coordinate where the patch should appear.
         """
+
+    def _serialize(self) -> Dict[str, Any]:
+        """Serialize the element.
+
+        Returns:
+            A serializable dictionary.
+        """
+        out = {key: getattr(self, key) for key in self._instance_args}
+        # add element
+        out["element"] = self.__class__.__name__
+        return out
 
     def plot(
         self,
@@ -80,7 +80,7 @@ class BaseElement:
             plane: ether "h" or "v".
             args, kwargs: plotting args/kwargs.
 
-        Returns
+        Returns:
             Plotted Figure and array of axes.
         """
         if u_init is None:
@@ -100,3 +100,15 @@ class BaseElement:
         axes[1].set_ylabel(f"{coord}'")
         axes[1].set_xlabel("s (m)")
         return fig, axes
+
+    def copy(self) -> "BaseElement":
+        """Create a copy of this instance.
+
+        Returns:
+            A copy of this instance.
+        """
+        return self.__class__(*[getattr(self, atr) for atr in self._instance_args])
+
+    def __repr__(self) -> str:
+        args = [f"{arg}={repr(getattr(self, arg))}" for arg in self._instance_args]
+        return f"{self.__class__.__name__}({', '.join(args)})"

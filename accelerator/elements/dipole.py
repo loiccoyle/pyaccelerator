@@ -1,4 +1,5 @@
-from typing import Tuple
+from itertools import count
+from typing import Optional
 
 import numpy as np
 from matplotlib import patches
@@ -14,6 +15,7 @@ class Dipole(BaseElement):
     Args:
         rho: Bending radius in meters.
         theta: Bending angle in radians.
+        name (optional): Element name.
 
     Attributes:
         length: Element length in meters.
@@ -21,12 +23,21 @@ class Dipole(BaseElement):
         theta: Bending angle in radians.
         m_h: Element phase space transfer matrix in the horizontal plane.
         m_v: Element phase space transfer matrix in the vertical plane.
+        name: Element name.
     """
 
-    def __init__(self, rho: float, theta: float):
-        super().__init__(rho * theta)
+    _instance_count = count(0)
+
+    def __init__(self, rho: float, theta: float, name: Optional[str] = None):
         self.rho = rho
         self.theta = theta
+        if name is None:
+            name = f"dipole_{next(self._instance_count)}"
+        super().__init__("rho", "theta", "name")
+        self.name = name
+
+    def _get_length(self) -> float:
+        return self.rho * self.theta
 
     def _get_transfer_matrix_h(self) -> np.ndarray:
         # horizontal
@@ -55,7 +66,11 @@ class Dipole(BaseElement):
         Returns:
             :py:class:`~accelerator.lattice.Lattice` of sliced :py:class:`Dipole` elements.
         """
-        return Lattice([Dipole(self.rho, self.theta / n_dipoles)] * n_dipoles)
+        out = [
+            Dipole(self.rho, self.theta / n_dipoles, name=f"{self.name}_slice_{i}")
+            for i in range(n_dipoles)
+        ]
+        return Lattice(out)
 
     def _get_patch(self, s: float) -> patches.Patch:
         return patches.Rectangle(
@@ -64,6 +79,3 @@ class Dipole(BaseElement):
 
     def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
         return bent_element(theta, d_s, self.rho)
-
-    def __repr__(self) -> str:
-        return f"Dipole(rho={self.rho:.4f}, theta={self.theta:.4f})"
