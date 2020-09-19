@@ -84,7 +84,7 @@ class BaseElement:
             args, kwargs: Passed to ``matplotlib.pyplot.plot``.
 
         Returns:
-            Plotted ``plt.Figure` and array of ``plt.Axes``.
+            Plotted ``plt.Figure`` and array of ``plt.Axes``.
         """
         if u_init is None:
             u_init = [1, np.pi / 8]
