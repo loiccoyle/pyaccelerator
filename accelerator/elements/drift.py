@@ -1,4 +1,5 @@
-from typing import Tuple
+from itertools import count
+from typing import Optional
 
 import numpy as np
 from matplotlib import patches
@@ -12,36 +13,56 @@ class Drift(BaseElement):
     """Drift element.
 
     Args:
-        length: Drift length in meters.
+        l: Drift length in meters.
+        name (optional): Element name.
 
     Attributes:
+        l: Element length in meters.
         length: Element length in meters.
         m_h: Element phase space transfer matrix in the horizontal plane.
         m_v: Element phase space transfer matrix in the vertical plane.
+        name: Element name.
     """
 
-    def __init__(self, length: float):
-        super().__init__(length)
+    _instance_count = count(0)
 
-    def transfer_matrix(self) -> Tuple[np.ndarray, np.ndarray]:
+    def __init__(self, l: float, name: Optional[str] = None):
+        super().__init__("l", "name")
+        self.l = l
+        if name is None:
+            name = f"drift_{next(self._instance_count)}"
+        self.name = name
+
+    def _get_length(self) -> float:
+        return self.l
+
+    def _get_transfer_matrix_h(self) -> np.ndarray:
         m_h = np.zeros((2, 2))
         m_h[0][0] = 1
         m_h[0][1] = self.length
         # m_h[1][0] = 0
         m_h[1][1] = 1
-        m_v = m_h
-        return m_h, m_v
+        return m_h
+
+    def _get_transfer_matrix_v(self) -> np.ndarray:
+        # same as horizontal
+        return self._get_transfer_matrix_h()
 
     def slice(self, n_drifts: int) -> Lattice:
         """Slice the element into a many smaller elements.
 
         Args:
-            n_drifts: number of `Drift` elements.
+            n_drifts: Number of :py:class:`Drift` elements.
 
         Returns:
-            `Lattice` of sliced `Drift` elements.
+            :py:class:`~accelerator.lattice.Lattice` of sliced :py:class`Drift`
+            elements.
         """
-        return Lattice([Drift(self.length / n_drifts)] * n_drifts)
+        out = [
+            Drift(self.length / n_drifts, name=f"{self.name}_slice_{i}")
+            for i in range(n_drifts)
+        ]
+        return Lattice(out)
 
     def _get_patch(self, s: float) -> patches.Patch:
         return patches.Rectangle(
@@ -50,6 +71,3 @@ class Drift(BaseElement):
 
     def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
         return straight_element(theta, d_s)
-
-    def __repr__(self):
-        return f"Drift(length={self.length})"

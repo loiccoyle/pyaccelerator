@@ -20,7 +20,7 @@ class TestUtils(TestCase):
         utils.bent_element(np.pi / 4, 1, 1)
 
     def test_deserialize(self):
-        serial = {"element": "Drift", "length": 1}
+        serial = {"element": "Drift", "l": 1}
         drift = utils.deserialize(serial)
         assert isinstance(drift, Drift)
-        assert drift.length == serial["length"]
+        assert drift.length == serial["l"]

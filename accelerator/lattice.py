@@ -318,6 +318,19 @@ class Lattice(list):
         with open(path, "w") as fp:
             json.dump(serializable, fp, indent=4)
 
+    def copy(self, deep=True) -> "Lattice":
+        """Create a copy of the lattice.
+
+        Args:
+            deep: if True create copies of the elements themselves.
+
+        Returns:
+            A copy of the lattice.
+        """
+        if deep:
+            return Lattice([element.copy() for element in self])
+        return Lattice([element for element in self])
+
 
 class Plotter:
     """Lattice plotter.
@@ -402,8 +415,17 @@ class Plotter:
         ax.axes.yaxis.set_visible(False)
         ax.margins(0.05)
         ax.set_xlabel("s [m]")
-        # legend outside of the figure
-        ax.legend(bbox_to_anchor=(1.05, 1), loc="upper left")
+        # remove duplicates from the legend
+        handles, labels = ax.get_legend_handles_labels()
+        unique_indexes = sorted([labels.index(label) for label in set(labels)])
+        new_handles = [handles[i] for i in unique_indexes]
+        new_labels = [labels[i] for i in unique_indexes]
+        ax.legend(
+            handles=new_handles,
+            labels=new_labels,
+            bbox_to_anchor=(1.05, 1),
+            loc="upper left",
+        )
         return fig, ax
 
     def __call__(self, *args, plot_type="lattice", **kwargs):

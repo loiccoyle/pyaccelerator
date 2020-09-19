@@ -1,8 +1,8 @@
-from accelerator.beam import Beam
+from unittest import TestCase
 
 import numpy as np
 
-from unittest import TestCase
+from accelerator.beam import Beam
 
 
 class TestBeam(TestCase):
@@ -51,7 +51,9 @@ class TestBeam(TestCase):
         self.assertAlmostEqual(x.mean(), 0, places=3)
         self.assertAlmostEqual(x.std(), np.sqrt(beam.geo_emittance_h * 1 / 2), places=3)
         self.assertAlmostEqual(x_prime.mean(), 0, places=3)
-        self.assertAlmostEqual(x_prime.std(), np.sqrt(beam.geo_emittance_v * 2), places=3)
+        self.assertAlmostEqual(
+            x_prime.std(), np.sqrt(beam.geo_emittance_v * 2), places=3
+        )
 
     def test_plot(self):
         beam = Beam()

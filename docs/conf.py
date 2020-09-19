@@ -13,6 +13,7 @@
 from datetime import date
 
 import sphinx_rtd_theme
+
 from accelerator import __version__
 
 # -- Project information -----------------------------------------------------

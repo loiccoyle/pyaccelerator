@@ -8,10 +8,10 @@ def to_v_vec(vec: Sequence[float]) -> np.ndarray:
     """Helper function to create 1D vertical arrays.
 
     Args:
-        vec: vector to convert to vertical array.
+        vec: Vector to convert to vertical array.
 
     Returns:
-        Vertical 1D `np.ndarray`.
+        Vertical 1D ``np.ndarray``.
     """
     vec = np.array(vec)
     if np.squeeze(vec).ndim > 1:
@@ -23,10 +23,10 @@ def to_twiss(twiss: Sequence[Union[float, None]]) -> np.ndarray:
     """Helper function to create twiss vectors.
 
     Args:
-        twiss: list of length 3, a single twiss parameter can be None.
+        twiss: List of length 3, a single twiss parameter can be None.
 
     Returns:
-        Completed vertical 1D twiss parameter `np.ndarray`.
+        Completed vertical 1D twiss parameter ``np.ndarray``.
     """
     if len(twiss) != 3:
         raise ValueError("Length of 'twiss' != 3.")
@@ -38,10 +38,10 @@ def to_phase_coord(phase_coord: Sequence[float]) -> np.ndarray:
     """Helper function to create phase space coordinate vectors.
 
     Args:
-        phase_coord: list of length 2.
+        phase_coord: List of length 2.
 
     Returns:
-        Vertical 1D `np.ndarray`.
+        Vertical 1D ``np.ndarray``.
     """
     if len(phase_coord) != 2:
         raise ValueError("Length of 'phase_coord' != 2.")
@@ -56,9 +56,9 @@ def complete_twiss(
     """Given 2 twiss parameters, compute the third.
 
     Args:
-        beta (optional): beta function in meters.
-        alpha (optional): twiss alpha in radians.
-        gamma (optional): twiss gamma in meter^-1.
+        beta (optional): Beta function in meters.
+        alpha (optional): Twiss alpha in radians.
+        gamma (optional): Twiss gamma in meter^-1.
 
     Returns:
         Tuple of completes twiss parameters, (beta, alpha, gamma).
@@ -83,7 +83,7 @@ def compute_one_turn(list_of_m: Sequence[np.array]) -> np.array:
     provided sequence.
 
     Args:
-        list_of_m: sequence of transfer matrices.
+        list_of_m: Sequence of transfer matrices.
 
     Returns:
         Result of the iterative matrix multiplication of the matrices.
@@ -98,7 +98,7 @@ def compute_twiss_clojure(twiss: Sequence[float]) -> float:
     beta * gamma - alpha^2 = 1
 
     Args:
-        twiss: list of twiss parameters, [beta[m], alpha[rad], gamma[m]]
+        twiss: List of twiss parameters, [beta[m], alpha[rad], gamma[m]]
 
     Returns:
         beta * gamma - alpha^2
@@ -111,10 +111,10 @@ def compute_m_twiss(m: np.array) -> np.array:
     matrix.
 
     Args:
-        m: phase space transfer matrix.
+        m: Phase space transfer matrix.
 
     Returns:
-        twiss parameter transfer matrix, (3, 3), beta, alpha, gamma.
+        Twiss parameter transfer matrix, (3, 3), beta, alpha, gamma.
     """
     m_twiss = np.zeros((3, 3))
     m_twiss[0][0] = m[0][0] ** 2
@@ -135,11 +135,11 @@ def compute_invariant(transfer_matrix: np.ndarray, tol: float = 1e-14) -> np.nda
     """Computes the invariant vector(s) for a given transformation matrix.
 
     Args:
-        transfer_matrix: transformation matrix.
-        tol (optional): numerical tolerance.
+        transfer_matrix: Transformation matrix.
+        tol (optional): Numerical tolerance.
 
     Returns:
-        `np.array` of invariant vectors, each column is a vector.
+        ``np.ndarray`` of invariant vectors, each column is a vector.
     """
     eig_values, eig_vectors = np.linalg.eig(transfer_matrix)
     mask = (eig_values < 1 + tol) & (eig_values > 1 - tol)
@@ -155,7 +155,7 @@ def compute_twiss_invariant(
 
     Args:
         twiss_transfer_matrix: (3, 3) transfer matrix.
-        tol (optional): numerical tolerance.
+        tol (optional): Numerical tolerance.
 
     Returns:
         Invariant twiss parameters.

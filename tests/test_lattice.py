@@ -220,9 +220,7 @@ class TestLattice(TestCase):
         )
         n_particles = 10
         beam = Beam(n_particles=n_particles)
-        u, u_prime, s = FODO.transport(
-            beam.match(FODO.m_h.twiss.invariant)
-        )
+        u, u_prime, s = FODO.transport(beam.match(FODO.m_h.twiss.invariant))
         assert u.shape[-1] == len(FODO) + 1
         assert u_prime.shape[-1] == len(FODO) + 1
         assert len(s) == len(FODO) + 1
@@ -265,13 +263,31 @@ class TestLattice(TestCase):
         assert lat_loaded[0].length, 1
         assert lat_loaded[1].f, 0.5
 
-    @classmethod
-    def tearDownClass(cls):
-        rmtree(cls.test_folder)
-
     def test_plot(self):
         lat = Lattice([Drift(1), Quadrupole(0.8)])
         lat.plot()
+
+    def test_copy(self):
+        lat = Lattice([Drift(1), Quadrupole(0.8), Dipole(1, 1)])
+        lat_copy = lat.copy()
+        assert len(lat) == len(lat_copy)
+        assert lat[0].l == lat_copy[0].l
+        assert lat[0].name == lat_copy[0].name
+        assert lat[1].f == lat_copy[1].f
+        assert lat[1].name == lat_copy[1].name
+        assert lat[2].rho == lat_copy[2].rho
+        assert lat[2].theta == lat_copy[2].theta
+        assert lat[2].name == lat_copy[2].name
+        # new element instances are created
+        assert not any([id(orig) == id(copy) for orig, copy in zip(lat, lat_copy)])
+
+        lat_shallow_copy = lat.copy(deep=False)
+        # the same instances are in both lattices
+        assert all([id(orig) == id(copy) for orig, copy in zip(lat, lat_shallow_copy)])
+
+    @classmethod
+    def tearDownClass(cls):
+        rmtree(cls.test_folder)
 
 
 # I don't really know how to test the correctness of plots...

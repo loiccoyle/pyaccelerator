@@ -16,8 +16,9 @@ class TestDipole(TestCase):
     def test_init(self):
         dipole = Dipole(rho_dipole, angle_dipole)
         assert dipole.length == l_dipole
-        assert dipole._m_h == None
-        assert dipole._m_v == None
+        assert dipole.name.startswith("dipole_")
+        dipole = Dipole(rho_dipole, angle_dipole, name="some_name")
+        assert dipole.name == "some_name"
 
     def test_transfer_matrix(self):
         dipole = Dipole(rho_dipole, angle_dipole)
@@ -25,11 +26,11 @@ class TestDipole(TestCase):
             [[0.5, 1.37832224e02], [-5.44139809e-03, 0.5]]
         )
         expected_transfer_matrix_v = np.array([[1, l_dipole], [0, 1]])
-        out = dipole.transfer_matrix()
-        assert np.allclose(out[0], expected_transfer_matrix_h)
-        assert np.allclose(out[1], expected_transfer_matrix_v)
-        assert np.allclose(dipole.m_h, out[0])
-        assert np.allclose(dipole.m_v, out[1])
+        m_h, m_v = dipole._get_transfer_matrix_h(), dipole._get_transfer_matrix_v()
+        assert np.allclose(m_h, expected_transfer_matrix_h)
+        assert np.allclose(m_v, expected_transfer_matrix_v)
+        assert np.allclose(dipole.m_h, m_h)
+        assert np.allclose(dipole.m_v, m_v)
 
     def test_slice(self):
         dipole = Dipole(rho_dipole, angle_dipole)
@@ -37,6 +38,7 @@ class TestDipole(TestCase):
         assert isinstance(dipole.slice(10), Lattice)
         assert np.allclose(dipole.slice(10).m_h, dipole.m_h)
         assert np.allclose(dipole.slice(10).m_v, dipole.m_v)
+        assert dipole.slice(10)[0].name == dipole.name + "_slice_0"
 
     def test_repr(self):
         repr(Dipole(rho_dipole, angle_dipole))
@@ -47,12 +49,41 @@ class TestDipole(TestCase):
         dipole._dxztheta_ds(0, l_dipole)
 
     def test_serialize(self):
-        dip = Dipole(rho_dipole, angle_dipole)
-        dic = dip._serialize()
+        dipole = Dipole(rho_dipole, angle_dipole)
+        dic = dipole._serialize()
         assert dic["element"] == "Dipole"
         assert dic["rho"] == rho_dipole
         assert dic["theta"] == angle_dipole
+        assert dic["name"] == dipole.name
+
+        # make sure that if the instance's attribute is changed
+        # the serialization takes the new values.
+        dipole = Dipole(rho_dipole, angle_dipole)
+        dipole.rho = 2 * dipole.rho
+        dipole.theta = 2 * dipole.theta
+        dic = dipole._serialize()
+        assert dic["element"] == "Dipole"
+        assert dic["rho"] == dipole.rho
+        assert dic["theta"] == dipole.theta
+        assert dic["name"] == dipole.name
 
     def test_plot(self):
         dipole = Dipole(rho_dipole, angle_dipole)
         dipole.plot()
+
+    def test_copy(self):
+        dipole = Dipole(rho_dipole, angle_dipole)
+        copy = dipole.copy()
+        assert copy.rho == dipole.rho
+        assert copy.theta == dipole.theta
+        assert copy.name == dipole.name
+
+        # make sure that if the instance's attribute is changed
+        # copying takes the new values.
+        dipole = Dipole(rho_dipole, angle_dipole)
+        dipole.rho = 2 * dipole.rho
+        dipole.theta = 2 * dipole.theta
+        copy = dipole.copy()
+        assert copy.rho == dipole.rho
+        assert copy.theta == dipole.theta
+        assert copy.name == dipole.name
