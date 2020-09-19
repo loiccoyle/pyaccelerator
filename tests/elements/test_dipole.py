@@ -16,6 +16,9 @@ class TestDipole(TestCase):
     def test_init(self):
         dipole = Dipole(rho_dipole, angle_dipole)
         assert dipole.length == l_dipole
+        assert dipole.name.startswith("dipole_")
+        dipole = Dipole(rho_dipole, angle_dipole, name="some_name")
+        assert dipole.name == "some_name"
 
     def test_transfer_matrix(self):
         dipole = Dipole(rho_dipole, angle_dipole)
@@ -35,6 +38,7 @@ class TestDipole(TestCase):
         assert isinstance(dipole.slice(10), Lattice)
         assert np.allclose(dipole.slice(10).m_h, dipole.m_h)
         assert np.allclose(dipole.slice(10).m_v, dipole.m_v)
+        assert dipole.slice(10)[0].name == dipole.name + "_slice_0"
 
     def test_repr(self):
         repr(Dipole(rho_dipole, angle_dipole))

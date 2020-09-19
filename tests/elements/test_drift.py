@@ -10,6 +10,9 @@ class TestDrift(TestCase):
     def test_init(self):
         drift = Drift(1)
         assert drift.length == 1
+        assert drift.name.startswith("drift_")
+        drift = Drift(1, name="some_name")
+        assert drift.name == "some_name"
 
     def test_transfer_matrix(self):
         drift = Drift(1)
@@ -26,6 +29,7 @@ class TestDrift(TestCase):
         assert isinstance(drift.slice(10), Lattice)
         assert np.allclose(drift.slice(10).m_h, drift.m_h)
         assert np.allclose(drift.slice(10).m_v, drift.m_v)
+        assert drift.slice(10)[0].name == drift.name + "_slice_0"
 
     def test_repr(self):
         repr(Drift(1))

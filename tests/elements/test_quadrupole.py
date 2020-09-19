@@ -9,6 +9,9 @@ class TestQuadrupole(TestCase):
     def test_init(self):
         quadrupole = Quadrupole(1)
         assert quadrupole.length == 0
+        assert quadrupole.name.startswith("quadrupole_")
+        quadrupole = Quadrupole(1, name="quad_f")
+        assert quadrupole.name == "quad_f"
 
     def test_transfer_matrix(self):
         quadrupole = Quadrupole(1)
