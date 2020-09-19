@@ -61,7 +61,7 @@ class Dipole(BaseElement):
         """Slice the element into a many smaller elements.
 
         Args:
-            n_dipoles: number of :py:class:`Dipole` elements.
+            n_dipoles: Number of :py:class:`Dipole` elements.
 
         Returns:
             :py:class:`~accelerator.lattice.Lattice` of sliced :py:class:`Dipole` elements.

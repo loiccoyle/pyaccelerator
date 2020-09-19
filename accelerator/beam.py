@@ -82,7 +82,7 @@ class Beam:
         Args:
             twiss: Twiss parameters, beta[m], alpha[rad], gamma[m^-1], one
                 twiss parameter can be None.
-            plane (optional): Plane of interest, either 'h' or 'v'.
+            plane (optional): Plane of interest, either "h" or "v".
             closure_tol (optional): Numerical tolerance on the twiss closure
                 condition.
             n_angles (optional): Number of angles for which to compute the ellipse.
@@ -153,10 +153,10 @@ class Beam:
 
         Args:
             twiss: Twiss parameters to match the distribution.
-            args, kwargs: Passed to `plt.scatter`.
+            args, kwargs: Passed to ``plt.scatter``.
 
         Returns:
-            The plotted `plt.Figure` and a `np.ndarray` of the `plt.Axes`.
+            The plotted ``plt.Figure`` and a ``np.ndarray`` of the ``plt.Axes``.
         """
         fig, axes = plt.subplots(1, 2)
         fig.suptitle("Unmatched phase space beam ditributions")

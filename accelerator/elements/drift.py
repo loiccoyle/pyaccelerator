@@ -52,10 +52,11 @@ class Drift(BaseElement):
         """Slice the element into a many smaller elements.
 
         Args:
-            n_drifts: number of `Drift` elements.
+            n_drifts: Number of :py:class:`Drift` elements.
 
         Returns:
-            `Lattice` of sliced `Drift` elements.
+            :py:class:`~accelerator.lattice.Lattice` of sliced :py:class`Drift`
+            elements.
         """
         out = [
             Drift(self.length / n_drifts, name=f"{self.name}_slice_{i}")

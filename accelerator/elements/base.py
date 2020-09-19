@@ -12,7 +12,7 @@ class BaseElement:
     """Base class of a lattice element.
 
     Args:
-        *instance_args: arguments required to make the instance of this
+        *instance_args: Arguments required to make the instance of this
             class's subclasses.
     """
 
@@ -48,11 +48,14 @@ class BaseElement:
 
     @abstractmethod
     def _get_patch(self, s: float) -> Patch:
-        """Generate a `matplotlib.patches.Patch` object to represent the
+        """Generate a ``matplotlib.patches.Patch`` object to represent the
         element when plotting the lattice.
 
         Args:
             s: s coordinate where the patch should appear.
+
+        Returns:
+            ``matplotlib.patches.Patch`` which represents the element.
         """
 
     def _serialize(self) -> Dict[str, Any]:
@@ -76,12 +79,12 @@ class BaseElement:
         """Plot the effect of the element on the phase space coords.
 
         Args:
-            u_init: initial phase space coords, defaults to [1, np.pi/8].
-            plane: ether "h" or "v".
-            args, kwargs: plotting args/kwargs.
+            u_init: Initial phase space coords, defaults to [1, np.pi/8].
+            plane: Ether "h" or "v".
+            args, kwargs: Passed to ``matplotlib.pyplot.plot``.
 
         Returns:
-            Plotted Figure and array of axes.
+            Plotted ``plt.Figure` and array of ``plt.Axes``.
         """
         if u_init is None:
             u_init = [1, np.pi / 8]

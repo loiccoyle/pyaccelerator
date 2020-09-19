@@ -25,7 +25,7 @@ def deserialize(dic: Dict[str, Any]) -> "BaseElement":
     """Deserialize a element dictionary into an element instance.
 
     Args:
-        dic: element dict.
+        dic: Element dict.
 
     Returns:
         Element instance.
