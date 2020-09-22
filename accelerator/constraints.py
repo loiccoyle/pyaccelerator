@@ -1,4 +1,3 @@
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Union
 
 import numpy as np
@@ -12,38 +11,40 @@ if TYPE_CHECKING:  # pragma: no cover
     from .lattice import Lattice
 
 
-@dataclass
 class Target:
     """Constraint target."""
 
-    element: Union[str, "BaseElement"]
-    value: Sequence[float]
-    init: Union[str, Sequence[float]]
-    plane: str = "h"
-
-    def __post_init__(self):
-        self.init = tuple(self.init)
-        self.plane = self.plane.lower()
-        self.value = np.array(self.value)
-        if isinstance(self.element, BaseElement):
-            self.element = self.element.name
-        if len(self.init) != len(self.value):
+    def __init__(
+        self,
+        element: Union[str, "BaseElement"],
+        value: Sequence[float],
+        init: Union[str, Sequence[float]],
+        plane: str = "h",
+    ):
+        init = tuple(init)
+        plane = plane.lower()
+        value = np.array(value)
+        if isinstance(element, BaseElement):
+            element = element.name
+        if len(init) != len(value):
             raise ValueError(
-                f"Length of value: {repr(self.value)} does not match "
-                f"length of init: {repr(self.init)}"
+                f"Length of value: {repr(value)} does not match "
+                f"length of init: {repr(init)}"
             )
+        self.element = element
+        self.value = value
+        self.init = init
+        self.plane = plane
 
 
-@dataclass
 class FreeParameter:
     """Constraint free parameter."""
 
-    element: Union[str, "BaseElement"]
-    attribute: Sequence[float]
-
-    def __post_init__(self):
-        if isinstance(self.element, BaseElement):
-            self.element = self.element.name
+    def __init__(self, element: Union[str, "BaseElement"], attribute: str):
+        if isinstance(element, BaseElement):
+            element = element.name
+        self.element = element
+        self.attribute = attribute
 
 
 class Constraints:
