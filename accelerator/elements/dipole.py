@@ -79,3 +79,37 @@ class Dipole(BaseElement):
 
     def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
         return bent_element(theta, d_s, self.rho)
+
+
+class DipoleThin(BaseElement):
+    _instance_count = count(0)
+    def __init__(self, theta: float, name: Optional[str] = None):
+        self.theta = theta
+        if name is None:
+            name = f"dipole_thin_{next(self._instance_count)}"
+        super().__init__("theta", "name")
+        self.name = name
+
+    def _get_length(self) -> float:
+        return 0
+
+    def _get_transfer_matrix_h(self) -> np.ndarray:
+        # horizontal
+        return np.identity(2)
+
+    def _get_transfer_matrix_v(self) -> np.ndarray:
+        # vertical
+        return np.identity(2)
+
+    def _get_patch(self, s: float) -> patches.Patch:
+        return patches.FancyArrowPatch(
+            (s, 1),
+            (s, -1),
+            arrowstyle=patches.ArrowStyle("-"),
+            label="Thin Dipole",
+            edgecolor="lightcoral",
+            facecolor="lightcoral",
+        )
+
+    def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
+        return np.array([0, 0, self.theta])
