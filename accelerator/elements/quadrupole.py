@@ -73,3 +73,6 @@ class Quadrupole(BaseElement):
             edgecolor=colour,
             facecolor=colour,
         )
+
+    def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
+        return np.array([0, 0, 0])
