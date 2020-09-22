@@ -285,6 +285,20 @@ class TestLattice(TestCase):
         # the same instances are in both lattices
         assert all([id(orig) == id(copy) for orig, copy in zip(lat, lat_shallow_copy)])
 
+    def test_search(self):
+        lat = Lattice([Drift(1), Quadrupole(0.8), Dipole(1, 1)])
+        assert lat.search("drift") == [0]
+        assert lat.search("quadrupole") == [1]
+        assert lat.search("dipole") == [2]
+
+        lat = Lattice([Quadrupole(0.8, name="quad_f"), Quadrupole(-0.8, name="quad_d")])
+        assert lat.search("quad_f") == [0]
+        assert lat.search("quad_d") == [1]
+        assert lat.search("quad_[fd]") == [0, 1]
+
+        with self.assertRaises(ValueError):
+            lat.search("drift")
+
     @classmethod
     def tearDownClass(cls):
         rmtree(cls.test_folder)

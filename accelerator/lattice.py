@@ -1,12 +1,12 @@
 """Accelerator lattice"""
 import json
 import os
+import re
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import minimize, OptimizeResult
 
 from .transfer_matrix import TransferMatrix
 from .utils import compute_one_turn, to_phase_coord, to_twiss
@@ -258,140 +258,25 @@ class Lattice(list):
         u_prime_coords = np.vstack(u_prime_coords).T
         return u_coords, u_prime_coords, np.array(s_coords)
 
-    def match(
-        self,
-        free_parameters: Dict["BaseElement", str],
-        target: Sequence[float],
-        location: Union["BaseElement", int],
-        plane: str = "h",
-        init: Union[Sequence[float], str] = "solution",
-        **kwargs,
-    ) -> OptimizeResult:
-        """Match lattice properties to constraints.
-
-        Modifies the lattice in place.
+    def search(self, pattern: str, *args, **kwargs) -> List[int]:
+        """Search the lattice for elements with `name` matching the pattern.
 
         Args:
-            free_parameters: dictionary of lattice elements, and strings of its
-                attributes, to be considers as free parameters when optimizing
-                for the constraint.
-            target: target twiss or phase space coords.
-            location: location where the target whould be reached.
-            plane (optional): either "h" or "v".
-            init (optional): initial twiss or phase space coords, if "solution"
-                the optimization will assume twiss parameters and use the
-                prediodic twiss solutions.
-            kwargs: passed to :py:meth:`scipy.optimize.minimize`.
+            pattern: RegEx pattern.
+            *args: Passed to ``re.search``.
+            **kwargs: Passed to ``re.search``.
 
-        Returns:
-            Result of the optimization.
+        Raises:
+            ValueError: If not elements match the provided pattern.
 
-        Examples:
-            Compute :py:class:`~accelerator.elements.drift.Drift` length to
-            reach a x coord of 10 meters:
-
-                >>> d = Drift(1)
-                >>> lat = Lattice([d])
-                >>> opt_result = lat.match({d: "length"}, init=[0, 1], target=[10, None], location=d, plane="h")
-                >>> lat
-                [Drift(length=10)]
-
-            Compute :py:class:`~accelerator.elements.drift.Drift` length to
-            reach a beta of 5 meters:
-
-                >>> d = Drift(1)
-                >>> lat = Lattice([d])
-                >>> opt_result = lat.match({d: "length"}, init=[1, 0, 1], target=[5, None, None], location=d, plane="h")
-                >>> lat
-                [Drift(length=2)]
-
-            Compute :py:class:`~accelerator.elements.drift.Drift` length to
-            reach a x coord of 5 meters after the first Drift:
-
-                >>> d = Drift(1)
-                >>> lat = Lattice([d, d])
-                >>> opt_result = lat.match({d: "length"}, init=[0, 1], target=[5, None], location=0, plane="h")
-                >>> lat
-                [Drift(length=5), Drift(length=5)]
-
-            Compute :py:class:`~accelerator.elements.drift.Drift` length to
-            reach a x coord of 5 meters after the second Drift:
-
-                >>> d = Drift(1)
-                >>> lat = Lattice([d, d])
-                >>> opt_result = lat.match({d: "length"}, init=[0, 1], target=[5, None], location=1, plane="h")
-                >>> lat
-                [Drift(length=2.5), Drift(length=2.5)]
-
-            Compute the :py:class:`~accelerator.elements.quadrupole.Quadrupole`
-            strengths of a FODO cell to achieve a minimum beta of 0.5 meters:
-
-                >>> q_f = Quadrupole(1.6)
-                >>> q_d = Quadrupole(-0.8)
-                >>> d = Drift(1)
-                >>> lat = Lattice([q_f, d, q_d, d, q_f])
-                >>> opt_result = lat.match({q_f: "f", q_d: "f"}, init="solution", target=[0.5, None, None], location=q_d, plane="h")
-                >>> lat
-                [Quadrupole(f=1.323...), Drift(length=1), Quadrupole(f=-0.828...), Drift(1), Quadrupole(f=1.323...)]
+        Return:
+            List of indexes in the lattice where the element's name matches the pattern.
         """
-        # TODO: Matching might be too complex to a single method, it might be
-        # worth having a Constraints class which takes a lattice (similar to the
-        # Plotter class bellow) and it having matching related methods.
-        # The interface would look something like this:
-        #   lattice.constraints.add(free_param, target, location, ...)
-        #   lattice.constraints.add(free_param, target, location, ...)
-        #   lattice.constraints.add(free_param, target, location, ...)
-        #   lattice.constraints.add(free_param, target, location, ...)
-        #   lattice.constraints.match()
-        # TODO: The minimization modifies the lattice in place which might be
-        # confusing for ppl new to programming/python? This means that if the
-        # matching is impossible, thus the minimization fails, then the lattice
-        # will still be modified.
-
-        if not isinstance(location, int):
-            location = self.index(location) + 1
-        else:
-            # add 1 because we also have the initial parameters
-            location += 1
-
-        periodic = init == "solution"
-        if periodic and len(target) == 2:
-            raise ValueError(
-                "When using init='solution' target must be twiss parameters."
-            )
-        transfer_matrix = "m_" + plane.lower()
-        init_parameters = [
-            getattr(element, attribute)
-            for element, attribute in free_parameters.items()
-        ]
-        not_none = [i for i, value in enumerate(target) if value is not None]
-        target = np.array(target)[not_none]
-
-        def func(param_guess: Sequence[float]):
-            # update the parameters of this lattice
-            for new_value, (element, attribute) in zip(
-                param_guess, free_parameters.items()
-            ):
-                setattr(element, attribute, new_value)
-            self._clear_cache()
-            if periodic:
-                # compute the periodic twiss solution
-                init = getattr(self, transfer_matrix).twiss.invariant
-                if init is None:
-                    # return a non 0 value so that the optimization continues
-                    # but this messes up the gradients (depending on the
-                    # optimization method) so it might cause issues
-                    # TODO: there must be a better way of doing this...
-                    return 1
-
-            *transported, _ = self.transport(init, plane=plane)
-            # get the values at the requested location and only keep the
-            # parameters which are not None in the target list.
-            transported = np.vstack(transported)[not_none, location]
-            # l2 norm to minimize
-            return np.linalg.norm(transported - target, 2)
-
-        return minimize(func, init_parameters, **kwargs)
+        pattern = re.compile(pattern)
+        out = [i for i, element in enumerate(self) if re.search(pattern, element.name)]
+        if not out:
+            raise ValueError(f"'{pattern}' does not match with any elements in {self}")
+        return out
 
     # Very ugly way of clearing cached one turn matrices on in place
     # modification of the sequence.
