@@ -3,11 +3,12 @@ import json
 import os
 import re
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, Dict, Sequence, Tuple, Type, Union
+from typing import TYPE_CHECKING, List, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 
+from .constraints import Constraints
 from .transfer_matrix import TransferMatrix
 from .utils import compute_one_turn, to_phase_coord, to_twiss
 
@@ -57,6 +58,7 @@ class Lattice(list):
         self._m_h = None
         self._m_v = None
         self.plot = Plotter(self)
+        self.constraints = Constraints(self)
 
     @property
     def m_h(self):
@@ -353,7 +355,10 @@ class Lattice(list):
         """
         if deep:
             return Lattice([element.copy() for element in self])
-        return Lattice([element for element in self])
+        return Lattice(self)
+
+    def __repr__(self):
+        return f"Lattice({super().__repr__()})"
 
 
 class Plotter:
@@ -454,3 +459,6 @@ class Plotter:
 
     def __call__(self, *args, plot_type="lattice", **kwargs):
         return getattr(self, plot_type)(*args, **kwargs)
+
+    def __repr__(self):
+        return f"Plotter({repr(self._lattice)})"
