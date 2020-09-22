@@ -13,12 +13,12 @@ class Beam:
     """Represents one beam.
 
     Args:
-        energy (optional): Beam energy in GeV.
-        mass (optional): Particle mass in kg.
-        n_particles (optional): Number of particles in the beam.
-        emittance (optional): Normalized beam emittance in meters, to specify
-            horizontal and vertical emittances use a tuple.
-        sampling (optional): distribution sampling method.
+        energy: Beam energy in GeV, defaults to 65000.
+        mass: Particle mass in kg, defaults to proton mass.
+        n_particles: Number of particles in the beam, defaults to 1000.
+        emittance: Normalized beam emittance in meters, to specify horizontal
+            and vertical emittances use a tuple, defaults to 3.5e-6.
+        sampling: distribution sampling method, defaults to "bigaussian".
 
     Examples:
         Beam with even emittances:
@@ -82,10 +82,11 @@ class Beam:
         Args:
             twiss: Twiss parameters, beta[m], alpha[rad], gamma[m^-1], one
                 twiss parameter can be None.
-            plane (optional): Plane of interest, either "h" or "v".
-            closure_tol (optional): Numerical tolerance on the twiss closure
-                condition.
-            n_angles (optional): Number of angles for which to compute the ellipse.
+            plane: Plane of interest, either "h" or "v", defaults to "h".
+            closure_tol: Numerical tolerance on the twiss closure condition,
+                defaults to 1e-9.
+            n_angles: Number of angles for which to compute the ellipse,
+                defaults to 1e3.
 
         Returns:
             Position and angle phase space coordrinates of the ellipse.
@@ -115,7 +116,7 @@ class Beam:
 
         Args:
             twiss: Initial twiss parameters.
-            plane (optional): Plane of interest, either "h" or "v".
+            plane: Plane of interest, either "h" or "v", defaults to "h".
 
         Returns:
             Position and angle phase space coordinates.
@@ -153,7 +154,8 @@ class Beam:
 
         Args:
             twiss: Twiss parameters to match the distribution.
-            args, kwargs: Passed to ``plt.scatter``.
+            *args:  Passed to ``plt.scatter``.
+            **kwargs: Passed to ``plt.scatter``.
 
         Returns:
             The plotted ``plt.Figure`` and a ``np.ndarray`` of the ``plt.Axes``.

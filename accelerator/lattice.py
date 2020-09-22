@@ -25,7 +25,7 @@ class Lattice(list):
         Create a simple lattice.
 
            >>> Lattice([Drift(1), Quadrupole(0.8)])
-           [Drift(1), Quadrupole(0.8)]
+           Lattice([Drift(l=1, name="drift_0"), Quadrupole(f=0.8, name="quadrupole_0")])
     """
 
     @classmethod
@@ -33,7 +33,7 @@ class Lattice(list):
         """Load a lattice from a file.
 
         Args:
-            path: file path.
+            path: File path.
 
         Returns:
             Loaded :py:class:`Lattice` instance.
@@ -84,8 +84,8 @@ class Lattice(list):
         """Slice the `element_type` elements of the lattice into `n_element`.
 
         Args:
-            element_type: element class to slice.
-            n_element: slice `element_type` into `n_element` smaller elements.
+            element_type: Element class to slice.
+            n_element: Slice `element_type` into `n_element` smaller elements.
 
         Returns:
             Sliced :py:class:`Lattice`.
@@ -96,7 +96,9 @@ class Lattice(list):
 
                 >>> lat = Lattice([Drift(1), Quadrupole(0.8)])
                 >>> lat.slice(Drift, 2)
-                [Drift(length=0.5), Drift(length=0.5), Quadrupole(f=0.8)]
+                Lattice([Drift(l=0.5, name="drift_0_slice_0"),
+                         Drift(l=0.5, name="drift_0_slice_1"),
+                         Quadrupole(f=0.8, name="quadrupole_0")])
         """
         new_lattice = []
         for element in self:
@@ -115,9 +117,13 @@ class Lattice(list):
             value: To transport phase space coords, provide a sequence of 2
                 floats. To transport twiss parameters, provide a sequence of 3
                 floats. To transport a distribution of phase space coords
-                provide a sequence of 2 1D :py:class:`numpy.ndarray`, the position and angle
-                coordinates.
-            plane: the plane of interest, either "h" or "v".
+                provide a sequence of 2 1D :py:class:`numpy.ndarray`, the
+                position and angle coordinates.
+            plane: the plane of interest, either "h" or "v", defaults
+                to "h".
+
+        Raises:
+            ValueError: If unable to infer the provided coordinates.
 
         Returns:
             If a phase space coordinate is provided, returns the phase space
@@ -129,9 +135,6 @@ class Lattice(list):
             If a distribution of phase space coordinates is provided, returns
             the position distribution, the angle distribution and the s
             coordinate along the lattice.
-
-        Raises:
-            ValueError: If unable to infer the provided coordinates.
 
         Examples:
             Transport phase space coords through a
@@ -194,12 +197,12 @@ class Lattice(list):
 
         Args:
             init: list of phase space coordinates, position[m] and angle[rad],
-                if `twiss` is True, `init` should be the initial
-                twiss parameters a list [beta, alpha, gamma], one twiss
-                parameter can be None.
-            plane (optional): plane of interest.
-            twiss (optional): if True will use the twiss parameter transfer
-                matrices.
+                if `twiss` is True, `init` should be the initial twiss
+                parameters a list [beta, alpha, gamma], one twiss parameter can
+                be None.
+            plane: plane of interest, defaults to "h".
+            twiss: If True will use the twiss parameter transfer matrices,
+                defaults to False.
 
         Returns:
             `*coords`, `s`, with `coords` the phase space coordinates or twiss
@@ -233,7 +236,7 @@ class Lattice(list):
         Args:
             u: phase space position[m] coordinates, 1D array same length as `u_prime`.
             u_prime: phase space angle[rad] coordinate, 1D array same length as `u`.
-            plane (optional): plane of interest, either "h" or "v".
+            plane: plane of interest, either "h" or "v".
 
         Returns:
             `u_coords`, `u_prime_coords`, `s`, with `u_coords` the position
@@ -442,7 +445,7 @@ class Lattice(list):
         """Save a lattice to file.
 
         Args:
-            path: file path.
+            path: File path.
 
         Examples:
             Save a lattice:
@@ -458,7 +461,7 @@ class Lattice(list):
         """Create a copy of the lattice.
 
         Args:
-            deep: if True create copies of the elements themselves.
+            deep: If True create copies of the elements themselves.
 
         Returns:
             A copy of the lattice.
@@ -472,7 +475,7 @@ class Plotter:
     """Lattice plotter.
 
     Args:
-        lattice: :py:class:`Lattice` instance.
+        Lattice: :py:class:`Lattice` instance.
 
     Examples:
         Plot a lattice:
@@ -498,7 +501,7 @@ class Plotter:
         """Plot the s coordinate in the horizontal plane of the lattice.
 
         Args:
-            n_s_per_element: number of steps along the s coordinate for each
+            n_s_per_element: Number of steps along the s coordinate for each
                 element in the lattice.
 
         Returns:
