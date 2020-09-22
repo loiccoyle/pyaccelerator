@@ -285,6 +285,10 @@ class TestLattice(TestCase):
         # the same instances are in both lattices
         assert all([id(orig) == id(copy) for orig, copy in zip(lat, lat_shallow_copy)])
 
+    def test_repr_(self):
+        lat = Lattice([Drift(1), Quadrupole(0.8), Dipole(1, 1)])
+        repr(lat)
+
     def test_search(self):
         lat = Lattice([Drift(1), Quadrupole(0.8), Dipole(1, 1)])
         assert lat.search("drift") == [0]
@@ -339,3 +343,8 @@ class TestPlotter(TestCase):
         fig, axes = plotter.top_down()
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, plt.Axes)
+
+    def test_repr(self):
+        lat = Lattice([Drift(1)])
+        plotter = Plotter(lat)
+        repr(plotter)
