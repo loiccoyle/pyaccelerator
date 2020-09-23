@@ -69,5 +69,6 @@ class Drift(BaseElement):
             (s, -0.5), self.length, 1, facecolor="tab:gray", alpha=0.5, label="Drift"
         )
 
-    def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
+    @staticmethod
+    def _dxztheta_ds(theta: float, d_s: float) -> np.ndarray:
         return straight_element(theta, d_s)

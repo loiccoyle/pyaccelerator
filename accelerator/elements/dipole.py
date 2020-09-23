@@ -74,7 +74,7 @@ class Dipole(BaseElement):
 
     def _get_patch(self, s: float) -> patches.Patch:
         return patches.Rectangle(
-            (s, -0.5), self.length, 1, facecolor="lightcoral", label="Dipole"
+            (s, -0.75), self.length, 1.5, facecolor="lightcoral", label="Dipole"
         )
 
     def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
@@ -82,7 +82,22 @@ class Dipole(BaseElement):
 
 
 class DipoleThin(BaseElement):
+    """Thin Dipole element.
+
+    Args:
+        theta: Bending angle in radians.
+        name (optional): Element name.
+
+    Attributes:
+        length: Element length in meters.
+        theta: Bending angle in radians.
+        m_h: Element phase space transfer matrix in the horizontal plane.
+        m_v: Element phase space transfer matrix in the vertical plane.
+        name: Element name.
+    """
+
     _instance_count = count(0)
+
     def __init__(self, theta: float, name: Optional[str] = None):
         self.theta = theta
         if name is None:
@@ -103,13 +118,15 @@ class DipoleThin(BaseElement):
 
     def _get_patch(self, s: float) -> patches.Patch:
         return patches.FancyArrowPatch(
-            (s, 1),
-            (s, -1),
+            (s, 0.75),
+            (s, -0.75),
             arrowstyle=patches.ArrowStyle("-"),
             label="Thin Dipole",
             edgecolor="lightcoral",
             facecolor="lightcoral",
         )
 
-    def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
+    def _dxztheta_ds(
+        self, theta: float, d_s: float  # pylint: disable=unused-argument
+    ) -> np.ndarray:
         return np.array([0, 0, self.theta])
