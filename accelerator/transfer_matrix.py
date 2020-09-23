@@ -24,7 +24,9 @@ class TransferMatrix(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
-        if obj is None:
+        # I don't what this does but I found this snippet in the numpy docs
+        # and I'm scared to remove it
+        if obj is None:  # pragma: no cover
             return
         # pylint: disable=attribute-defined-outside-init
         setattr(self.__class__, "twiss", getattr(obj.__class__, "twiss", None))
@@ -55,7 +57,9 @@ class TwissTransferMatrix(np.ndarray):
         return obj
 
     def __array_finalize__(self, obj):
-        if obj is None:
+        # I don't what this does but I found this snippet in the numpy docs
+        # and I'm scared to remove it
+        if obj is None:  # pragma: no cover
             return
         # pylint: disable=attribute-defined-outside-init
         setattr(self.__class__, "invariant", getattr(obj.__class__, "invariant", None))
