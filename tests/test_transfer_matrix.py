@@ -3,7 +3,7 @@ from unittest import TestCase
 import numpy as np
 
 from accelerator.elements.drift import Drift
-from accelerator.elements.quadrupole import Quadrupole
+from accelerator.elements.quadrupole import QuadrupoleThin
 from accelerator.lattice import Lattice
 from accelerator.transfer_matrix import TransferMatrix, TwissTransferMatrix
 
@@ -51,11 +51,11 @@ class TestTwissTransferMatrix(TestCase):
         L = 1
         f = 0.8
         FODO = [
-            Quadrupole(f * 2),
+            QuadrupoleThin(f * 2),
             Drift(L),
-            Quadrupole(-f),
+            QuadrupoleThin(-f),
             Drift(L),
-            Quadrupole(f * 2),
+            QuadrupoleThin(f * 2),
         ]
         FODO = Lattice(FODO)
 
