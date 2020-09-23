@@ -4,7 +4,7 @@ import numpy as np
 
 from accelerator import utils
 from accelerator.elements.drift import Drift
-from accelerator.elements.quadrupole import Quadrupole
+from accelerator.elements.quadrupole import QuadrupoleThin
 from accelerator.lattice import Lattice
 
 
@@ -79,11 +79,11 @@ class TestUtils(TestCase):
         # TODO: make sure this is correct
         transfer_matrix_fodo = Lattice(
             [
-                Quadrupole(2 * 0.8),
+                QuadrupoleThin(2 * 0.8),
                 Drift(1),
-                Quadrupole(-0.8),
+                QuadrupoleThin(-0.8),
                 Drift(1),
-                Quadrupole(2 * 0.8),
+                QuadrupoleThin(2 * 0.8),
             ]
         ).m_h.twiss
         expected = np.array([[3.33066560e00], [1.11528141e-16], [3.00240288e-01]])

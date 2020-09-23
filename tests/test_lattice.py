@@ -6,9 +6,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from accelerator.beam import Beam
-from accelerator.elements.dipole import Dipole
+from accelerator.elements.dipole import Dipole, DipoleThin
 from accelerator.elements.drift import Drift
-from accelerator.elements.quadrupole import Quadrupole
+from accelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
 from accelerator.lattice import Lattice, Plotter
 
 
@@ -29,12 +29,12 @@ class TestLattice(TestCase):
         assert np.allclose(lat.m_h, Drift(2).m_h)
         assert np.allclose(lat.m_v, Drift(2).m_v)
 
-        lat = Lattice([Drift(1), Quadrupole(0.8)])
-        assert np.allclose(lat.m_h, Quadrupole(0.8).m_h @ Drift(1).m_h)
-        assert np.allclose(lat.m_v, Quadrupole(0.8).m_v @ Drift(1).m_v)
+        lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
+        assert np.allclose(lat.m_h, QuadrupoleThin(0.8).m_h @ Drift(1).m_h)
+        assert np.allclose(lat.m_v, QuadrupoleThin(0.8).m_v @ Drift(1).m_v)
 
     def test_slice(self):
-        lat = Lattice([Drift(1), Quadrupole(0.8)])
+        lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
         lat_sliced = lat.slice(Drift, 10)
         assert len(lat_sliced) == 11
         assert all([isinstance(element, Drift) for element in lat_sliced[:10]])
@@ -61,7 +61,7 @@ class TestLattice(TestCase):
         assert np.allclose(lat.m_h, Drift(2).m_h)
 
         drift = Drift(1)
-        quad = Quadrupole(0.8)
+        quad = QuadrupoleThin(0.8)
         lat = Lattice([drift, quad])
         assert lat[0] == drift
         assert lat[1] == quad
@@ -91,10 +91,10 @@ class TestLattice(TestCase):
         assert np.allclose(lat.m_v, Drift(2).m_v)
 
         lat = Lattice([Drift(1)])
-        lat.insert(0, Quadrupole(0.8))
+        lat.insert(0, QuadrupoleThin(0.8))
         assert len(lat) == 2
-        assert np.allclose(lat.m_h, Drift(1).m_h @ Quadrupole(0.8).m_h)
-        assert np.allclose(lat.m_v, Drift(1).m_v @ Quadrupole(0.8).m_v)
+        assert np.allclose(lat.m_h, Drift(1).m_h @ QuadrupoleThin(0.8).m_h)
+        assert np.allclose(lat.m_v, Drift(1).m_v @ QuadrupoleThin(0.8).m_v)
 
         lat = Lattice([Drift(1)])
         popped = lat.pop(0)
@@ -147,12 +147,12 @@ class TestLattice(TestCase):
         l = 1
         FODO = Lattice(
             [
-                Quadrupole(2 * f),
+                QuadrupoleThin(2 * f),
                 Drift(l),
                 # expected beta minimum
-                Quadrupole(-f),
+                QuadrupoleThin(-f),
                 Drift(l),
-                Quadrupole(2 * f),
+                QuadrupoleThin(2 * f),
             ]
         )
         beta, alpha, gamma, s = FODO.transport(FODO.m_h.twiss.invariant)
@@ -189,11 +189,11 @@ class TestLattice(TestCase):
         n_angles = 100
         FODO = Lattice(
             [
-                Quadrupole(2 * f),
+                QuadrupoleThin(2 * f),
                 Drift(l),
-                Quadrupole(-f),
+                QuadrupoleThin(-f),
                 Drift(l),
-                Quadrupole(2 * f),
+                QuadrupoleThin(2 * f),
             ]
         )
         beam = Beam()
@@ -211,11 +211,11 @@ class TestLattice(TestCase):
         l = 1
         FODO = Lattice(
             [
-                Quadrupole(2 * f),
+                QuadrupoleThin(2 * f),
                 Drift(l),
-                Quadrupole(f),
+                QuadrupoleThin(f),
                 Drift(l),
-                Quadrupole(2 * f),
+                QuadrupoleThin(2 * f),
             ]
         )
         n_particles = 10
@@ -253,22 +253,22 @@ class TestLattice(TestCase):
             lat.transport(np.ones((2, 2, 2)))
 
     def test_save_load(self):
-        lat = Lattice([Drift(1), Quadrupole(0.5)])
+        lat = Lattice([Drift(1), QuadrupoleThin(0.5)])
         save_file = self.test_folder / "lattice.json"
         lat.save(save_file)
         assert save_file.is_file()
         lat_loaded = Lattice.load(save_file)
         assert isinstance(lat_loaded[0], Drift)
-        assert isinstance(lat_loaded[1], Quadrupole)
+        assert isinstance(lat_loaded[1], QuadrupoleThin)
         assert lat_loaded[0].length, 1
         assert lat_loaded[1].f, 0.5
 
     def test_plot(self):
-        lat = Lattice([Drift(1), Quadrupole(0.8)])
+        lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
         lat.plot()
 
     def test_copy(self):
-        lat = Lattice([Drift(1), Quadrupole(0.8), Dipole(1, 1)])
+        lat = Lattice([Drift(1), QuadrupoleThin(0.8), Dipole(1, 1)])
         lat_copy = lat.copy()
         assert len(lat) == len(lat_copy)
         assert lat[0].l == lat_copy[0].l
@@ -314,11 +314,14 @@ class TestPlotter(TestCase):
         lat = Lattice(
             [
                 Drift(1),
-                Quadrupole(0.6),
-                Drift(1),
-                Quadrupole(-0.6),
+                Quadrupole(1/100, 1),
+                Quadrupole(-1/100, 1),
+                Quadrupole(0, 1),
+                QuadrupoleThin(0.6),
+                QuadrupoleThin(-0.6),
+                QuadrupoleThin(0),
                 Dipole(1, np.pi / 2),
-                Quadrupole(0),
+                DipoleThin(np.pi/16)
             ]
         )
         plotter = Plotter(lat)
