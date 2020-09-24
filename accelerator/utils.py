@@ -131,12 +131,12 @@ def compute_m_twiss(m: np.array) -> np.array:
     return m_twiss
 
 
-def compute_invariant(transfer_matrix: np.ndarray, tol: float = 1e-14) -> np.ndarray:
+def compute_invariant(transfer_matrix: np.ndarray, tol: float = 1e-10) -> np.ndarray:
     """Computes the invariant vector(s) for a given transformation matrix.
 
     Args:
         transfer_matrix: Transformation matrix.
-        tol (optional): Numerical tolerance.
+        tol: Numerical tolerance, defaults to 1e-10.
 
     Returns:
         ``np.ndarray`` of invariant vectors, each column is a vector.
@@ -149,22 +149,23 @@ def compute_invariant(transfer_matrix: np.ndarray, tol: float = 1e-14) -> np.nda
 
 
 def compute_twiss_invariant(
-    twiss_transfer_matrix: np.ndarray, tol: float = 1e-14
+    twiss_transfer_matrix: np.ndarray, tol: float = 1e-10
 ) -> np.ndarray:
     """Find twiss parameters which are invariant under the provided transfer matrix.
 
     Args:
         twiss_transfer_matrix: (3, 3) transfer matrix.
-        tol (optional): Numerical tolerance.
+        tol: Numerical tolerance, defaults to 1e-10.
 
     Returns:
         Invariant twiss parameters.
     """
     if twiss_transfer_matrix.shape[0] != 3 or twiss_transfer_matrix.shape[1] != 3:
         raise ValueError("'twiss_transfer_matrix' is not of shape (3, 3).")
-    invariants = compute_invariant(twiss_transfer_matrix)
-    potential_twiss = np.apply_along_axis(compute_twiss_clojure, 0, invariants) > tol
-    if sum(potential_twiss) == 0:
+    invariants = compute_invariant(twiss_transfer_matrix, tol=tol)
+    twiss_clojures = np.apply_along_axis(compute_twiss_clojure, 0, invariants)
+    potential_twiss = (twiss_clojures > tol)
+    if not any(potential_twiss):
         raise ValueError(
             "No eigen vectors are compatible with twiss clojure condition."
         )

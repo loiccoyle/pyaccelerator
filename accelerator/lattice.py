@@ -23,8 +23,8 @@ class Lattice(list):
     Examples:
         Create a simple lattice.
 
-           >>> Lattice([Drift(1), Quadrupole(0.8)])
-           [Drift(1), Quadrupole(0.8)]
+           >>> Lattice([Drift(1), QuadrupoleThin(0.8)])
+           [Drift(1), QuadrupoleThin(0.8)]
     """
 
     @classmethod
@@ -93,9 +93,9 @@ class Lattice(list):
             Slice the :py:class:`~accelerator.elements.drift.Drift` elements
             into 2:
 
-                >>> lat = Lattice([Drift(1), Quadrupole(0.8)])
+                >>> lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
                 >>> lat.slice(Drift, 2)
-                [Drift(length=0.5), Drift(length=0.5), Quadrupole(f=0.8)]
+                [Drift(length=0.5), Drift(length=0.5), QuadrupoleThin(f=0.8)]
         """
         new_lattice = []
         for element in self:
@@ -341,7 +341,7 @@ class Plotter:
     Examples:
         Plot a lattice:
 
-            >>> lat = Lattice([Quadrupole(-0.6), Drift(1), Quadrupole(0.6)])
+            >>> lat = Lattice([QuadrupoleThin(-0.6), Drift(1), QuadrupoleThin(0.6)])
             >>> lat.plot.lattice()  # or lat.plot("lattice")
             ...
 
@@ -371,12 +371,14 @@ class Plotter:
         xztheta = [np.array([0, 0, np.pi / 2])]
         s_start = 0
         for element in self._lattice:
-            # skip thin elements
             if element.length == 0:
-                continue
-            d_s = element.length / n_s_per_element
-            for _ in range(n_s_per_element):
-                xztheta.append(xztheta[-1] + element._dxztheta_ds(xztheta[-1][2], d_s))
+                # thin elements don't waste time on slicing them and running
+                # this many times
+                xztheta.append(xztheta[-1] + element._dxztheta_ds(xztheta[-1][2], 0))
+            else:
+                d_s = element.length / n_s_per_element
+                for _ in range(n_s_per_element):
+                    xztheta.append(xztheta[-1] + element._dxztheta_ds(xztheta[-1][2], d_s))
             s_start += element.length
         xztheta = np.vstack(xztheta)
 

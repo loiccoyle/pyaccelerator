@@ -16,14 +16,20 @@ class TransferMatrix(np.ndarray):
         if obj.shape[0] != 2:
             raise ValueError(f"'{obj}' should be of shape (2, 2)")
 
-        obj.twiss = TwissTransferMatrix(compute_m_twiss(obj))
+        @property
+        def twiss(obj):
+            return TwissTransferMatrix(compute_m_twiss(obj))
+
+        setattr(obj.__class__, "twiss", twiss)
         return obj
 
     def __array_finalize__(self, obj):
-        # if obj is None:
-        #     return
+        # I don't what this does but I found this snippet in the numpy docs
+        # and I'm scared to remove it
+        if obj is None:  # pragma: no cover
+            return
         # pylint: disable=attribute-defined-outside-init
-        self.twiss = getattr(obj, "twiss", None)
+        setattr(self.__class__, "twiss", getattr(obj.__class__, "twiss", None))
 
 
 class TwissTransferMatrix(np.ndarray):
@@ -39,14 +45,21 @@ class TwissTransferMatrix(np.ndarray):
         if obj.shape[0] != 3:
             raise ValueError(f"'{obj}' should be of shape (3, 3)")
 
-        try:
-            obj.invariant = compute_twiss_invariant(obj)
-        except ValueError:
-            obj.invariant = None
+        @property
+        def invariant(obj):
+            try:
+                out = compute_twiss_invariant(obj)
+            except ValueError:
+                out = None
+            return out
+
+        setattr(obj.__class__, "invariant", invariant)
         return obj
 
     def __array_finalize__(self, obj):
-        # if obj is None:
-        #     return
+        # I don't what this does but I found this snippet in the numpy docs
+        # and I'm scared to remove it
+        if obj is None:  # pragma: no cover
+            return
         # pylint: disable=attribute-defined-outside-init
-        self.invariant = getattr(obj, "invariant", None)
+        setattr(self.__class__, "invariant", getattr(obj.__class__, "invariant", None))

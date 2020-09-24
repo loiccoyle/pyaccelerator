@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.elements.dipole import Dipole
+from accelerator.elements.dipole import DipoleThin, Dipole
 from accelerator.lattice import Lattice
 
 n_dipoles = 6
@@ -85,5 +85,66 @@ class TestDipole(TestCase):
         dipole.theta = 2 * dipole.theta
         copy = dipole.copy()
         assert copy.rho == dipole.rho
+        assert copy.theta == dipole.theta
+        assert copy.name == dipole.name
+
+
+class TestDipoleThin(TestCase):
+    def test_init(self):
+        dipole = DipoleThin(angle_dipole)
+        assert dipole.length == 0
+        assert dipole.name.startswith("dipole_thin_")
+        dipole = DipoleThin(angle_dipole, name="some_name")
+        assert dipole.name == "some_name"
+
+    def test_transfer_matrix(self):
+        dipole = DipoleThin(angle_dipole)
+        expected_transfer_matrix_h = np.array([[1, 0], [0, 1]])
+        expected_transfer_matrix_v = np.array([[1, 0], [0, 1]])
+        m_h, m_v = dipole._get_transfer_matrix_h(), dipole._get_transfer_matrix_v()
+        assert np.allclose(m_h, expected_transfer_matrix_h)
+        assert np.allclose(m_v, expected_transfer_matrix_v)
+        assert np.allclose(dipole.m_h, m_h)
+        assert np.allclose(dipole.m_v, m_v)
+
+    def test_repr(self):
+        repr(DipoleThin(angle_dipole))
+
+    def test_dxztheta_ds(self):
+        dipole = DipoleThin(angle_dipole)
+        # TODO: do the math to check this.
+        dipole._dxztheta_ds(0, l_dipole)
+
+    def test_serialize(self):
+        dipole = DipoleThin(angle_dipole)
+        dic = dipole._serialize()
+        assert dic["element"] == "DipoleThin"
+        assert dic["theta"] == angle_dipole
+        assert dic["name"] == dipole.name
+
+        # make sure that if the instance's attribute is changed
+        # the serialization takes the new values.
+        dipole = DipoleThin(angle_dipole)
+        dipole.theta = 2 * dipole.theta
+        dic = dipole._serialize()
+        assert dic["element"] == "DipoleThin"
+        assert dic["theta"] == dipole.theta
+        assert dic["name"] == dipole.name
+
+    def test_plot(self):
+        dipole = DipoleThin(angle_dipole)
+        dipole.plot()
+
+    def test_copy(self):
+        dipole = DipoleThin(angle_dipole)
+        copy = dipole.copy()
+        assert copy.theta == dipole.theta
+        assert copy.name == dipole.name
+
+        # make sure that if the instance's attribute is changed
+        # copying takes the new values.
+        dipole = DipoleThin(angle_dipole)
+        dipole.theta = 2 * dipole.theta
+        copy = dipole.copy()
         assert copy.theta == dipole.theta
         assert copy.name == dipole.name

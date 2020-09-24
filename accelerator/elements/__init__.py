@@ -1,6 +1,6 @@
 """Accelerator elements."""
-from .dipole import Dipole
+from .dipole import Dipole, DipoleThin
 from .drift import Drift
-from .quadrupole import Quadrupole
+from .quadrupole import Quadrupole, QuadrupoleThin
 
-__all__ = ["Dipole", "Drift", "Quadrupole"]
+__all__ = ["Dipole", "DipoleThin", "Drift", "Quadrupole", "QuadrupoleThin"]
