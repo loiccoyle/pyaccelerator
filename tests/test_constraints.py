@@ -4,7 +4,7 @@ import numpy as np
 
 from accelerator.constraints import Constraints, FreeParameter, Target
 from accelerator.elements.drift import Drift
-from accelerator.elements.quadrupole import Quadrupole
+from accelerator.elements.quadrupole import QuadrupoleThin
 from accelerator.lattice import Lattice
 
 
@@ -42,14 +42,14 @@ class TestFreeParameter(TestCase):
 
 class TestConstraints(TestCase):
     def test_init(self):
-        lat = Lattice([Drift(1), Quadrupole(0.8)])
+        lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
         cons = Constraints(lat)
         assert cons.targets == []
         assert cons.free_parameters == []
         assert cons._lattice == lat
 
     def test_add_target(self):
-        lat = Lattice([Drift(1), Quadrupole(0.8)])
+        lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
         cons = Constraints(lat)
         cons.add_target("quadrupole", [10, 1], [0, 1], plane="h")
         assert cons.targets[0].element == "quadrupole"
@@ -58,14 +58,14 @@ class TestConstraints(TestCase):
         assert cons.targets[0].plane == "h"
 
     def test_add_free_parameter(self):
-        lat = Lattice([Drift(1), Quadrupole(0.8)])
+        lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
         cons = Constraints(lat)
         cons.add_free_parameter("drift", "l")
         assert cons.free_parameters[0].element == "drift"
         assert cons.free_parameters[0].attribute == "l"
 
     def test_clear(self):
-        lat = Lattice([Drift(1), Quadrupole(0.8)])
+        lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
         cons = Constraints(lat)
         cons.add_free_parameter("drift", "l")
         cons.add_target("quadrupole", [10, 1], [0, 1], plane="h")
@@ -74,7 +74,7 @@ class TestConstraints(TestCase):
         assert cons.free_parameters == []
 
     def test_repr(self):
-        lat = Lattice([Drift(1), Quadrupole(0.8)])
+        lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
         cons = Constraints(lat)
         repr(cons)
 
