@@ -23,8 +23,8 @@ class Lattice(list):
     Examples:
         Create a simple lattice.
 
-           >>> Lattice([Drift(1), Quadrupole(0.8)])
-           [Drift(1), Quadrupole(0.8)]
+           >>> Lattice([Drift(1), QuadrupoleThin(0.8)])
+           [Drift(1), QuadrupoleThin(0.8)]
     """
 
     @classmethod
@@ -93,9 +93,9 @@ class Lattice(list):
             Slice the :py:class:`~accelerator.elements.drift.Drift` elements
             into 2:
 
-                >>> lat = Lattice([Drift(1), Quadrupole(0.8)])
+                >>> lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
                 >>> lat.slice(Drift, 2)
-                [Drift(length=0.5), Drift(length=0.5), Quadrupole(f=0.8)]
+                [Drift(length=0.5), Drift(length=0.5), QuadrupoleThin(f=0.8)]
         """
         new_lattice = []
         for element in self:
@@ -341,7 +341,7 @@ class Plotter:
     Examples:
         Plot a lattice:
 
-            >>> lat = Lattice([Quadrupole(-0.6), Drift(1), Quadrupole(0.6)])
+            >>> lat = Lattice([QuadrupoleThin(-0.6), Drift(1), QuadrupoleThin(0.6)])
             >>> lat.plot.lattice()  # or lat.plot("lattice")
             ...
 
