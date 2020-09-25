@@ -27,6 +27,10 @@ class TestTarget(TestCase):
         with self.assertRaises(ValueError):
             Target("element", [1, 0, 1], [1, 1], "h")
 
+    def test_repr(self):
+        target = Target("element", [1, 2, 3], [1, 0, 1], "h")
+        repr(target)
+
 
 class TestFreeParameter(TestCase):
     def test_init(self):
@@ -38,6 +42,10 @@ class TestFreeParameter(TestCase):
         param = FreeParameter(drift, "l")
         assert param.element == drift.name
         assert param.attribute == "l"
+
+    def test_repr(self):
+        param = FreeParameter("element", "attribute")
+        repr(param)
 
 
 class TestConstraints(TestCase):
@@ -82,6 +90,21 @@ class TestConstraints(TestCase):
         lat = Lattice([Drift(1)])
         with self.assertRaises(ValueError):
             lat.constraints.match()
+        lat.constraints.add_free_parameter("drift", "l")
+        with self.assertRaises(ValueError):
+            # missing target
+            lat.constraints.match()
+        lat.constraints.clear()
+        lat.constraints.add_target("drift", [2, None], [1, 1])
+        with self.assertRaises(ValueError):
+            # missing free parameter
+            lat.constraints.match()
+
+        lat.constraints.clear()
+        with self.assertRaises(ValueError):
+            lat.constraints.add_target("drift", [1, None], init="twiss_solution")
+        with self.assertRaises(ValueError):
+            lat.constraints.add_target("drift", [1, None], init="solution")
 
         # Compute drift length to reach a x coord of 10 meters:
         lat = Lattice([Drift(1)])
@@ -135,3 +158,33 @@ class TestConstraints(TestCase):
         # make sure the original did not change.
         assert lat[0].l == 1
         assert lat[1].l == 1
+
+        # Compute the quad strengths of a fodo to get a beta min of 0.5 meters
+        lat = Lattice(
+            [
+                QuadrupoleThin(1.6, name="quad_f"),
+                Drift(1),
+                QuadrupoleThin(-0.8, name="quad_d"),
+                Drift(1),
+                QuadrupoleThin(1.6, name="quad_f"),
+            ]
+        )
+        lat.constraints.add_free_parameter("quad_f", "f")
+        lat.constraints.add_free_parameter("quad_d", "f")
+        lat.constraints.add_target("quad_d", [0.5, None, None], "twiss_solution", "h")
+        matched, opt_res = lat.constraints.match()
+        beta, _, _, s = matched.transport(matched.m_h.twiss.invariant)
+        self.assertAlmostEqual(min(beta), 0.5)
+
+        # same thing but now with constraints such that the magnet strengths are
+        # equal
+        matched, opt_res = lat.constraints.match(
+            constraints=({"type": "eq", "fun": lambda x: 2 * x[0] + x[1]})
+        )
+        beta, _, _, s = matched.transport(matched.m_h.twiss.invariant)
+        self.assertAlmostEqual(min(beta), 0.5)
+        assert 2 * matched[0].f == -matched[2].f
+
+    def test_repr(self):
+        lat = Lattice([Drift(1)])
+        repr(lat.constraints)
