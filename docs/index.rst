@@ -16,6 +16,7 @@
    :caption: Contents:
 
    autoapi/accelerator/lattice/index
+   autoapi/accelerator/constraints/index
    autoapi/accelerator/beam/index
    autoapi/accelerator/elements/index
    autoapi/index
