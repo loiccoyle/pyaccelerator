@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.elements.dipole import DipoleThin, Dipole
+from accelerator.elements.dipole import Dipole, DipoleThin
 from accelerator.lattice import Lattice
 
 n_dipoles = 6
