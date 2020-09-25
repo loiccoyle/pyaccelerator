@@ -407,7 +407,9 @@ class Plotter:
             else:
                 d_s = element.length / n_s_per_element
                 for _ in range(n_s_per_element):
-                    xztheta.append(xztheta[-1] + element._dxztheta_ds(xztheta[-1][2], d_s))
+                    xztheta.append(
+                        xztheta[-1] + element._dxztheta_ds(xztheta[-1][2], d_s)
+                    )
             s_start += element.length
         xztheta = np.vstack(xztheta)
 

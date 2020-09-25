@@ -164,7 +164,7 @@ def compute_twiss_invariant(
         raise ValueError("'twiss_transfer_matrix' is not of shape (3, 3).")
     invariants = compute_invariant(twiss_transfer_matrix, tol=tol)
     twiss_clojures = np.apply_along_axis(compute_twiss_clojure, 0, invariants)
-    potential_twiss = (twiss_clojures > tol)
+    potential_twiss = twiss_clojures > tol
     if not any(potential_twiss):
         raise ValueError(
             "No eigen vectors are compatible with twiss clojure condition."

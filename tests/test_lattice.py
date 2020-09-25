@@ -295,7 +295,9 @@ class TestLattice(TestCase):
         assert lat.search("quadrupole") == [1]
         assert lat.search("dipole") == [2]
 
-        lat = Lattice([QuadrupoleThin(0.8, name="quad_f"), QuadrupoleThin(-0.8, name="quad_d")])
+        lat = Lattice(
+            [QuadrupoleThin(0.8, name="quad_f"), QuadrupoleThin(-0.8, name="quad_d")]
+        )
         assert lat.search("quad_f") == [0]
         assert lat.search("quad_d") == [1]
         assert lat.search("quad_[fd]") == [0, 1]
@@ -314,14 +316,14 @@ class TestPlotter(TestCase):
         lat = Lattice(
             [
                 Drift(1),
-                Quadrupole(1/100, 1),
-                Quadrupole(-1/100, 1),
+                Quadrupole(1 / 100, 1),
+                Quadrupole(-1 / 100, 1),
                 Quadrupole(0, 1),
                 QuadrupoleThin(0.6),
                 QuadrupoleThin(-0.6),
                 QuadrupoleThin(0),
                 Dipole(1, np.pi / 2),
-                DipoleThin(np.pi/16)
+                DipoleThin(np.pi / 16),
             ]
         )
         plotter = Plotter(lat)
