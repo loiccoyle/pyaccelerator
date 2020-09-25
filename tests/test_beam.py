@@ -57,4 +57,8 @@ class TestBeam(TestCase):
 
     def test_plot(self):
         beam = Beam()
-        fig, axes = beam.plot([1, 0, 1])
+        beam.plot([1, 0, 1])
+
+    def test_repr(self):
+        beam = Beam()
+        repr(beam)

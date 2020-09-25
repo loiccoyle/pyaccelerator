@@ -2,8 +2,8 @@ from unittest import TestCase
 
 import numpy as np
 
+from accelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
 from accelerator.lattice import Lattice
-from accelerator.elements.quadrupole import QuadrupoleThin, Quadrupole
 
 
 class TestQuadrupole(TestCase):
@@ -40,8 +40,8 @@ class TestQuadrupole(TestCase):
             [[1.00500417, 1.0016675], [0.01001668, 1.00500417]]
         )
         expected_transfer_matrix_v = np.array(
-                [[0.99500417, 0.99833417], [-0.00998334, 0.99500417]]
-                )
+            [[0.99500417, 0.99833417], [-0.00998334, 0.99500417]]
+        )
         assert np.allclose(m_h, expected_transfer_matrix_h)
         assert np.allclose(m_v, expected_transfer_matrix_v)
         assert np.allclose(quadrupole.m_h, m_h)
