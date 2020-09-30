@@ -142,7 +142,7 @@ def compute_dispersion_solution(
         tol: Numerical tolerance.
 
     Returns:
-        Disppersion vector.
+        Dispersion vector.
     """
     disp_prime_denom = (
         1 - transfer_m[0, 0] - transfer_m[1, 1] + np.linalg.det(transfer_m[:2, :2])
@@ -162,7 +162,7 @@ def compute_twiss_solution(transfer_m: np.ndarray, tol: float = 1e-10) -> np.nda
 
     Args:
         transfer_m: 3x3 transfer matrix.
-        tol: Numerical tol.
+        tol: Numerical tolerance.
 
     Returns:
         Twiss vector, beta, alpha, gamma.
