@@ -16,7 +16,7 @@ class TestDrift(TestCase):
 
     def test_transfer_matrix(self):
         drift = Drift(1)
-        expected_transfer_matrix = np.array([[1, 1], [0, 1]])
+        expected_transfer_matrix = np.array([[1, 1, 0], [0, 1, 0], [0, 0, 1]])
         m_h, m_v = drift._get_transfer_matrix_h(), drift._get_transfer_matrix_v()
         assert np.allclose(m_h, expected_transfer_matrix)
         assert np.allclose(m_v, expected_transfer_matrix)

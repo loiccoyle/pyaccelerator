@@ -23,9 +23,13 @@ class TestDipole(TestCase):
     def test_transfer_matrix(self):
         dipole = Dipole(rho_dipole, angle_dipole)
         expected_transfer_matrix_h = np.array(
-            [[0.5, 1.37832224e02], [-5.44139809e-03, 0.5]]
+            [
+                [0.5, 1.37832224e02, 7.95774715e01],
+                [-5.44139809e-03, 0.5, 8.66025404e-01],
+                [0, 0, 1],
+            ]
         )
-        expected_transfer_matrix_v = np.array([[1, l_dipole], [0, 1]])
+        expected_transfer_matrix_v = np.array([[1, l_dipole, 0], [0, 1, 0], [0, 0, 1]])
         m_h, m_v = dipole._get_transfer_matrix_h(), dipole._get_transfer_matrix_v()
         assert np.allclose(m_h, expected_transfer_matrix_h)
         assert np.allclose(m_v, expected_transfer_matrix_v)
@@ -99,8 +103,8 @@ class TestDipoleThin(TestCase):
 
     def test_transfer_matrix(self):
         dipole = DipoleThin(angle_dipole)
-        expected_transfer_matrix_h = np.array([[1, 0], [0, 1]])
-        expected_transfer_matrix_v = np.array([[1, 0], [0, 1]])
+        expected_transfer_matrix_h = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
+        expected_transfer_matrix_v = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
         m_h, m_v = dipole._get_transfer_matrix_h(), dipole._get_transfer_matrix_v()
         assert np.allclose(m_h, expected_transfer_matrix_h)
         assert np.allclose(m_v, expected_transfer_matrix_v)

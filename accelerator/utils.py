@@ -131,21 +131,50 @@ def compute_m_twiss(m: np.array) -> np.array:
     return m_twiss
 
 
-def compute_dispersion_solution(transfer_m: np.ndarray) -> np.ndarray:
-    # TODO: add numerical tolerances on the == 0 conditions
-    disp_prime_denom = 1 - transfer_m[0, 0] - transfer_m[1, 1] + np.linalg.det(transfer_m[:2, :2])
-    disp_denom = (1 - transfer_m[0, 0])
-    if disp_prime_denom == 0 or disp_denom == 0:
+def compute_dispersion_solution(
+    transfer_m: np.ndarray, tol: float = 1e-10
+) -> np.ndarray:
+    """Compute the periodic dispersion solution for the provided transfer
+    matrix.
+
+    Args:
+        transfer_m: 3x3 transfer matrix.
+        tol: Numerical tolerance.
+
+    Returns:
+        Disppersion vector.
+    """
+    disp_prime_denom = (
+        1 - transfer_m[0, 0] - transfer_m[1, 1] + np.linalg.det(transfer_m[:2, :2])
+    )
+    disp_denom = 1 - transfer_m[0, 0]
+    if -tol < disp_prime_denom < tol or -tol < disp_denom < tol:
         raise ValueError("Matrix has no periodic dispersion solution.")
-    disp_prime = (transfer_m[1, 0] * transfer_m[0, 2] + transfer_m[1, 2] * (1 - transfer_m[0, 0])) / disp_prime_denom
+    disp_prime = (
+        transfer_m[1, 0] * transfer_m[0, 2] + transfer_m[1, 2] * (1 - transfer_m[0, 0])
+    ) / disp_prime_denom
     disp = (transfer_m[0, 1] * disp_prime + transfer_m[0, 2]) / disp_denom
     return to_v_vec((disp, disp_prime, 1))
 
 
-def compute_twiss_solution(transfer_m: np.ndarray) -> np.ndarray:
-    # TODO: add numerical tolerances on the < 0 condition
-    denom = 1 - transfer_m[0, 0] ** 2 - 2 * transfer_m[0, 1] * transfer_m[1, 0] - transfer_m[1, 1]**2 + np.linalg.det(transfer_m[:2, :2])
-    if denom < 0:
+def compute_twiss_solution(transfer_m: np.ndarray, tol: float = 1e-10) -> np.ndarray:
+    """Compute the periodic twiss solution for the provided transfer matrix.
+
+    Args:
+        transfer_m: 3x3 transfer matrix.
+        tol: Numerical tol.
+
+    Returns:
+        Twiss vector, beta, alpha, gamma.
+    """
+    denom = (
+        1
+        - transfer_m[0, 0] ** 2
+        - 2 * transfer_m[0, 1] * transfer_m[1, 0]
+        - transfer_m[1, 1] ** 2
+        + np.linalg.det(transfer_m[:2, :2])
+    )
+    if denom < 0 + tol:
         raise ValueError("Matrix has no prediodic twiss solution.")
     denom = np.sqrt(denom)
     beta = 2 * transfer_m[0, 1] / denom

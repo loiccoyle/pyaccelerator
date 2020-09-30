@@ -1,6 +1,6 @@
 import numpy as np
 
-from .utils import compute_m_twiss, compute_twiss_solution, compute_dispersion_solution
+from .utils import compute_dispersion_solution, compute_m_twiss, compute_twiss_solution
 
 
 class TransferMatrix(np.ndarray):
@@ -48,8 +48,16 @@ class TransferMatrix(np.ndarray):
             return
         # pylint: disable=attribute-defined-outside-init
         setattr(self.__class__, "twiss", getattr(obj.__class__, "twiss", None))
-        setattr(self.__class__, "twiss_solution", getattr(obj.__class__, "twiss_solution", None))
-        setattr(self.__class__, "dispersion_solution", getattr(obj.__class__, "dispersion_solution", None))
+        setattr(
+            self.__class__,
+            "twiss_solution",
+            getattr(obj.__class__, "twiss_solution", None),
+        )
+        setattr(
+            self.__class__,
+            "dispersion_solution",
+            getattr(obj.__class__, "dispersion_solution", None),
+        )
 
 
 class TwissTransferMatrix(np.ndarray):

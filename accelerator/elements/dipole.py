@@ -44,7 +44,7 @@ class Dipole(BaseElement):
         m_h = np.zeros((3, 3))
         m_h[0][0] = np.cos(self.theta)
         m_h[0][1] = self.rho * np.sin(self.theta)
-        m_h[0][2] = self.rho * (1-np.cos(self.theta))
+        m_h[0][2] = self.rho * (1 - np.cos(self.theta))
         m_h[1][0] = -(1 / self.rho) * np.sin(self.theta)
         m_h[1][1] = np.cos(self.theta)
         m_h[1][2] = np.sin(self.theta)
@@ -60,8 +60,8 @@ class Dipole(BaseElement):
         # m_v[1][0] = 0
         m_v[1][1] = 1
         # m_v[1][2] = 0
-        m_h[1][2] = np.sin(self.theta)
-        m_h[2][2] = 1
+        # m_v[1][2] = 0
+        m_v[2][2] = 1
         return m_v
 
     def slice(self, n_dipoles: int) -> Lattice:

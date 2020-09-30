@@ -21,10 +21,10 @@ class TestQuadrupole(TestCase):
             quadrupole._get_transfer_matrix_v(),
         )
         expected_transfer_matrix_h = np.array(
-            [[0.99500417, 0.99833417], [-0.00998334, 0.99500417]]
+            [[0.99500417, 0.99833417, 0], [-0.00998334, 0.99500417, 0], [0, 0, 1]]
         )
         expected_transfer_matrix_v = np.array(
-            [[1.00500417, 1.0016675], [0.01001668, 1.00500417]]
+            [[1.00500417, 1.0016675, 0], [0.01001668, 1.00500417, 0], [0, 0, 1]]
         )
         assert np.allclose(m_h, expected_transfer_matrix_h)
         assert np.allclose(m_v, expected_transfer_matrix_v)
@@ -37,10 +37,10 @@ class TestQuadrupole(TestCase):
             quadrupole._get_transfer_matrix_v(),
         )
         expected_transfer_matrix_h = np.array(
-            [[1.00500417, 1.0016675], [0.01001668, 1.00500417]]
+            [[1.00500417, 1.0016675, 0], [0.01001668, 1.00500417, 0], [0, 0, 1]]
         )
         expected_transfer_matrix_v = np.array(
-            [[0.99500417, 0.99833417], [-0.00998334, 0.99500417]]
+            [[0.99500417, 0.99833417, 0], [-0.00998334, 0.99500417, 0], [0, 0, 1]]
         )
         assert np.allclose(m_h, expected_transfer_matrix_h)
         assert np.allclose(m_v, expected_transfer_matrix_v)
@@ -107,8 +107,8 @@ class TestQuadrupoleThin(TestCase):
 
     def test_transfer_matrix(self):
         quadrupole = QuadrupoleThin(1)
-        expected_transfer_matrix_h = np.array([[1, 0], [-1, 1]])
-        expected_transfer_matrix_v = np.array([[1, 0], [1, 1]])
+        expected_transfer_matrix_h = np.array([[1, 0, 0], [-1, 1, 0], [0, 0, 1]])
+        expected_transfer_matrix_v = np.array([[1, 0, 0], [1, 1, 0], [0, 0, 1]])
         m_h, m_v = (
             quadrupole._get_transfer_matrix_h(),
             quadrupole._get_transfer_matrix_v(),
