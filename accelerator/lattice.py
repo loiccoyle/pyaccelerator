@@ -111,7 +111,7 @@ class Lattice(list):
         return Lattice(new_lattice)
 
     def transport(
-        self, value: Sequence[Union[float, np.ndarray]], plane: str = "h"
+        self, value: Sequence[Union[float, np.ndarray]], plane: str = "h", **kwargs
     ) -> Tuple[np.ndarray, ...]:
         """Transport phase space coordinates or twiss parameters along the lattice.
 
@@ -143,7 +143,7 @@ class Lattice(list):
             :py:class:`~accelerator.elements.drift.Drift`:
 
                 >>> lat = Lattice([Drift(1)])
-                >>> lat.transport([1, 1])
+                >>> lat.transport([1, 1, 0])
                 (array([1., 2.]), array([1., 1.]), array([0, 1]))
 
             Transport twiss parameters through a
@@ -170,22 +170,19 @@ class Lattice(list):
                 >>> plt.plot(u, u_prime)
                 ...
         """
+        # TODO: update the docstring
+        # TODO: decide if maybe keeping the twiss transport and the phase space
+        # transport separate might be clearer.
         # TODO: the _transport and the _transport_distribution share a lot of
         # code they could easily be merged.
         plane = plane.lower()
-        if not all([isinstance(v, Iterable) and len(v) > 1 for v in value]):
-            # either a single phase space coord or a single twiss parameter
-            if len(value) == 2:
-                # phasespace coords
-                return self._transport(value, twiss=False, plane=plane)
-            if len(value) == 3:
-                # twiss parameters
-                return self._transport(value, twiss=True, plane=plane)
-        else:
-            # a distribution
-            if len(value) == 2:
+        if len(value) == 3:
+            if all([isinstance(v, Iterable) and len(v) > 1 for v in value]):
                 # distribution of phase space coords
                 return self._transport_distribution(*value, plane=plane)
+            else:
+                # either twiss params or a phase space coords
+                return self._transport(value, plane=plane, **kwargs)
 
         raise ValueError(f'Failed determine how to transport "{value}".')
 
@@ -231,6 +228,7 @@ class Lattice(list):
         self,
         u: np.ndarray,
         u_prime: np.ndarray,
+        dp: np.ndarray,
         plane: str = "h",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Transport a distribution of in phase space along the lattice.
@@ -246,7 +244,7 @@ class Lattice(list):
                 (len(`u`), number of elements in the lattice + 1) and `s` the s
                 coordinate along the lattice.
         """
-        coords = np.vstack([u, u_prime])
+        coords = np.vstack([u, u_prime, dp])
         out = [coords]
         s_coords = [0]
         transfer_matrix = "m_" + plane
@@ -254,11 +252,11 @@ class Lattice(list):
         for i, m in enumerate(transfer_ms):
             out.append(m @ out[i])
             s_coords.append(s_coords[i] + self[i].length)
-        u_coords = [o[0] for o in out]
-        u_prime_coords = [o[1] for o in out]
+        u_coords, u_prime_coords, dp_coords = zip(*out)
         u_coords = np.vstack(u_coords).T
         u_prime_coords = np.vstack(u_prime_coords).T
-        return u_coords, u_prime_coords, np.array(s_coords)
+        dp_coords = np.vstack(dp_coords).T
+        return u_coords, u_prime_coords, dp_coords, np.array(s_coords)
 
     def search(self, pattern: str, *args, **kwargs) -> List[int]:
         """Search the lattice for elements with `name` matching the pattern.

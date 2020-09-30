@@ -103,7 +103,8 @@ class Beam:
         # TODO: make sure these equations are correct
         u = np.sqrt(emit * beta) * np.cos(angles)
         u_prime = -(alpha / beta) * u - np.sqrt(emit / beta) * np.sin(angles)
-        return u, u_prime
+        dp = np.zeros(u_prime.shape)
+        return u, u_prime, dp
 
     def match(
         self,
@@ -121,6 +122,7 @@ class Beam:
         Returns:
             Position and angle phase space coordinates.
         """
+        # TODO: add energy spread
         plane = plane.lower()
         twiss = to_twiss(twiss)
         beta, alpha, _ = twiss.T[0]  # pylint: disable=unsubscriptable-object
@@ -133,7 +135,9 @@ class Beam:
         u_pre, u_prime_pre = self.sampling(self.n_particles, (0, 0), emit)
         u = np.sqrt(beta) * u_pre
         u_prime = -(alpha / np.sqrt(beta)) * u_pre + (1.0 / np.sqrt(beta)) * u_prime_pre
-        return u, u_prime
+        # temporary dp = 0
+        dp = np.zeros(u_prime.shape)
+        return u, u_prime, dp
 
     def __repr__(self) -> str:
         args = {
