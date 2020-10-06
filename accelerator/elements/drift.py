@@ -58,7 +58,7 @@ class Drift(BaseElement):
             n_drifts: Number of :py:class:`Drift` elements.
 
         Returns:
-            :py:class:`~accelerator.lattice.Lattice` of sliced :py:class`Drift`
+            :py:class:`~accelerator.lattice.Lattice` of sliced :py:class:`Drift`
             elements.
         """
         out = [
