@@ -38,13 +38,13 @@ def to_phase_coord(phase_coord: Sequence[float]) -> np.ndarray:
     """Helper function to create phase space coordinate vectors.
 
     Args:
-        phase_coord: List of length 2.
+        phase_coord: List of length 3.
 
     Returns:
         Vertical 1D ``np.ndarray``.
     """
-    if len(phase_coord) != 2:
-        raise ValueError("Length of 'phase_coord' != 2.")
+    if len(phase_coord) != 3:
+        raise ValueError("Length of 'phase_coord' != 3, u, u_prime, dp/p.")
     return to_v_vec(phase_coord)
 
 
@@ -131,49 +131,56 @@ def compute_m_twiss(m: np.array) -> np.array:
     return m_twiss
 
 
-def compute_invariant(transfer_matrix: np.ndarray, tol: float = 1e-10) -> np.ndarray:
-    """Computes the invariant vector(s) for a given transformation matrix.
-
-    Args:
-        transfer_matrix: Transformation matrix.
-        tol: Numerical tolerance, defaults to 1e-10.
-
-    Returns:
-        ``np.ndarray`` of invariant vectors, each column is a vector.
-    """
-    eig_values, eig_vectors = np.linalg.eig(transfer_matrix)
-    mask = (eig_values < 1 + tol) & (eig_values > 1 - tol)
-    if sum(mask) == 0:
-        raise ValueError("'transfer_matrix' does not have any invariant points.")
-    return eig_vectors[:, mask]
-
-
-def compute_twiss_invariant(
-    twiss_transfer_matrix: np.ndarray, tol: float = 1e-10
+def compute_dispersion_solution(
+    transfer_m: np.ndarray, tol: float = 1e-10
 ) -> np.ndarray:
-    """Find twiss parameters which are invariant under the provided transfer matrix.
+    """Compute the periodic dispersion solution for the provided transfer
+    matrix.
 
     Args:
-        twiss_transfer_matrix: (3, 3) transfer matrix.
-        tol: Numerical tolerance, defaults to 1e-10.
+        transfer_m: 3x3 transfer matrix.
+        tol: Numerical tolerance.
 
     Returns:
-        Invariant twiss parameters.
+        Dispersion vector.
     """
-    if twiss_transfer_matrix.shape[0] != 3 or twiss_transfer_matrix.shape[1] != 3:
-        raise ValueError("'twiss_transfer_matrix' is not of shape (3, 3).")
-    invariants = compute_invariant(twiss_transfer_matrix, tol=tol)
-    twiss_clojures = np.apply_along_axis(compute_twiss_clojure, 0, invariants)
-    potential_twiss = twiss_clojures > tol
-    if not any(potential_twiss):
-        raise ValueError(
-            "No eigen vectors are compatible with twiss clojure condition."
-        )
-    index = np.where(potential_twiss)[0][0]
-    twiss = to_twiss(invariants[:, index].real)
-    clojure = compute_twiss_clojure(twiss)
-    if clojure != 1:
-        twiss /= np.sqrt(clojure)
-    if twiss[0][0] < 0:
-        twiss *= -1
-    return twiss
+    disp_prime_denom = (
+        1 - transfer_m[0, 0] - transfer_m[1, 1] + np.linalg.det(transfer_m[:2, :2])
+    )
+    disp_denom = 1 - transfer_m[0, 0]
+    if -tol < disp_prime_denom < tol or -tol < disp_denom < tol:
+        raise ValueError("Matrix has no periodic dispersion solution.")
+    disp_prime = (
+        transfer_m[1, 0] * transfer_m[0, 2] + transfer_m[1, 2] * (1 - transfer_m[0, 0])
+    ) / disp_prime_denom
+    disp = (transfer_m[0, 1] * disp_prime + transfer_m[0, 2]) / disp_denom
+    return to_v_vec((disp, disp_prime, 1))
+
+
+def compute_twiss_solution(transfer_m: np.ndarray, tol: float = 1e-10) -> np.ndarray:
+    """Compute the periodic twiss solution for the provided transfer matrix.
+
+    Args:
+        transfer_m: 3x3 transfer matrix.
+        tol: Numerical tolerance.
+
+    Returns:
+        Twiss vector, beta, alpha, gamma.
+    """
+    denom = (
+        1
+        - transfer_m[0, 0] ** 2
+        - 2 * transfer_m[0, 1] * transfer_m[1, 0]
+        - transfer_m[1, 1] ** 2
+        + np.linalg.det(transfer_m[:2, :2])
+    )
+    if denom < 0 + tol:
+        raise ValueError("Matrix has no prediodic twiss solution.")
+    denom = np.sqrt(denom)
+    beta = 2 * transfer_m[0, 1] / denom
+    alpha = (transfer_m[0, 0] - transfer_m[1, 1]) / denom
+    gamma = (1 + alpha ** 2) / beta
+    out = to_v_vec((beta, alpha, gamma))
+    if out[0, 0] < 0:
+        out *= -1
+    return out

@@ -37,11 +37,14 @@ class Drift(BaseElement):
         return self.l
 
     def _get_transfer_matrix_h(self) -> np.ndarray:
-        m_h = np.zeros((2, 2))
-        m_h[0][0] = 1
-        m_h[0][1] = self.length
-        # m_h[1][0] = 0
-        m_h[1][1] = 1
+        m_h = np.zeros((3, 3))
+        m_h[0, 0] = 1
+        m_h[0, 1] = self.length
+        # m_h[0, 2] = 0
+        # m_h[1, 0] = 0
+        m_h[1, 1] = 1
+        # m_h[1, 2] = 0
+        m_h[2, 2] = 1
         return m_h
 
     def _get_transfer_matrix_v(self) -> np.ndarray:

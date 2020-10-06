@@ -79,7 +79,7 @@ class BaseElement:
         """Plot the effect of the element on the phase space coords.
 
         Args:
-            u_init (optional): Initial phase space coords, defaults to [1, np.pi/8].
+            u_init (optional): Initial phase space coords, defaults to [1, np.pi/8, 0].
             plane: Ether "h" or "v", defaults to "h".
             *args: Passed to ``matplotlib.pyplot.plot``.
             **kwargs: Passed to ``matplotlib.pyplot.plot``.
@@ -88,7 +88,7 @@ class BaseElement:
             Plotted ``plt.Figure`` and array of ``plt.Axes``.
         """
         if u_init is None:
-            u_init = [1, np.pi / 8]
+            u_init = [1, np.pi / 8, 0]
         plane_map = {"h": self.m_h, "v": self.m_v}
         coord_map = {"h": "x", "v": "y"}
         coord = coord_map[plane]

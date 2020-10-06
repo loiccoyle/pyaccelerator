@@ -3,6 +3,7 @@ from unittest import TestCase
 import numpy as np
 
 from accelerator import utils
+from accelerator.elements.dipole import Dipole
 from accelerator.elements.drift import Drift
 from accelerator.elements.quadrupole import QuadrupoleThin
 from accelerator.lattice import Lattice
@@ -27,9 +28,11 @@ class TestUtils(TestCase):
             utils.to_twiss([1, 2, 3, 4])
 
     def test_to_phase_coord(self):
-        assert np.allclose(utils.to_phase_coord([1, 2]), np.array([1, 2]).reshape(2, 1))
+        assert np.allclose(
+            utils.to_phase_coord([1, 2, 0]), np.array([1, 2, 0]).reshape(3, 1)
+        )
         with self.assertRaises(ValueError):
-            utils.to_phase_coord([1, 2, 3])
+            utils.to_phase_coord([1, 2])
 
     def test_complete_twiss(self):
         assert utils.complete_twiss(beta=1, alpha=0, gamma=1) == (1, 0, 1)
@@ -60,21 +63,10 @@ class TestUtils(TestCase):
         twiss = np.array([[1, -2, 1], [0, 1, -1], [0, 0, 1]])
         assert np.allclose(utils.compute_m_twiss(transfer_matrix), twiss)
 
-    def test_compute_invariant(self):
-        transfer_matrix = np.array([[1, 1], [0, 1]])
-        np.testing.assert_almost_equal(
-            utils.compute_invariant(transfer_matrix), [[1, -1], [0, 0]]
-        )
-        # no invariants
+    def test_compute_twiss_solution(self):
+        transfer_matrix = np.array([[1, 1, 0], [0, 1, 0], [0, 0, 1]])
         with self.assertRaises(ValueError):
-            utils.compute_invariant(np.array([[1, 1], [1, 1]]))
-
-    def test_compute_twiss_invariant(self):
-        with self.assertRaises(ValueError):
-            utils.compute_twiss_invariant(np.array([[1, 2], [3, 4]]))
-        transfer_matrix = utils.compute_m_twiss(np.array([[1, 1], [0, 1]]))
-        with self.assertRaises(ValueError):
-            utils.compute_twiss_invariant(transfer_matrix)
+            utils.compute_twiss_solution(transfer_matrix)
 
         # TODO: make sure this is correct
         transfer_matrix_fodo = Lattice(
@@ -85,8 +77,24 @@ class TestUtils(TestCase):
                 Drift(1),
                 QuadrupoleThin(2 * 0.8),
             ]
-        ).m_h.twiss
+        ).m_h
         expected = np.array([[3.33066560e00], [1.11528141e-16], [3.00240288e-01]])
+        assert np.allclose(utils.compute_twiss_solution(transfer_matrix_fodo), expected)
+
+    def test_compute_dispersion_solution(self):
+        transfer_matrix_dipole = Lattice(
+            [
+                Dipole(100, np.pi / 2),
+                Drift(100),
+                Dipole(100, np.pi / 2),
+                Drift(100),
+                Dipole(100, np.pi / 2),
+                Drift(100),
+                Dipole(100, np.pi / 2),
+                Drift(100),
+            ]
+        ).m_h
+        expected = np.array([[100], [0], [1]])
         assert np.allclose(
-            utils.compute_twiss_invariant(transfer_matrix_fodo), expected
+            expected, utils.compute_dispersion_solution(transfer_matrix_dipole)
         )

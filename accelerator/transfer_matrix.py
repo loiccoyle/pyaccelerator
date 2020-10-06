@@ -1,6 +1,6 @@
 import numpy as np
 
-from .utils import compute_m_twiss, compute_twiss_invariant
+from .utils import compute_dispersion_solution, compute_m_twiss, compute_twiss_solution
 
 
 class TransferMatrix(np.ndarray):
@@ -13,14 +13,32 @@ class TransferMatrix(np.ndarray):
             raise ValueError(f"'{obj}' should be 2D.")
         if obj.shape[0] != obj.shape[1]:
             raise ValueError(f"'{obj}' is not square.")
-        if obj.shape[0] != 2:
-            raise ValueError(f"'{obj}' should be of shape (2, 2)")
+        if obj.shape[0] != 3:
+            raise ValueError(f"'{obj}' should be of shape (3, 3)")
 
         @property
         def twiss(obj):
             return TwissTransferMatrix(compute_m_twiss(obj))
 
+        @property
+        def twiss_solution(obj):
+            try:
+                out = compute_twiss_solution(obj)
+            except ValueError:
+                out = None
+            return out
+
+        @property
+        def dispersion_solution(obj):
+            try:
+                out = compute_dispersion_solution(obj)
+            except ValueError:
+                out = None
+            return out
+
         setattr(obj.__class__, "twiss", twiss)
+        setattr(obj.__class__, "twiss_solution", twiss_solution)
+        setattr(obj.__class__, "dispersion_solution", dispersion_solution)
         return obj
 
     def __array_finalize__(self, obj):
@@ -30,6 +48,16 @@ class TransferMatrix(np.ndarray):
             return
         # pylint: disable=attribute-defined-outside-init
         setattr(self.__class__, "twiss", getattr(obj.__class__, "twiss", None))
+        setattr(
+            self.__class__,
+            "twiss_solution",
+            getattr(obj.__class__, "twiss_solution", None),
+        )
+        setattr(
+            self.__class__,
+            "dispersion_solution",
+            getattr(obj.__class__, "dispersion_solution", None),
+        )
 
 
 class TwissTransferMatrix(np.ndarray):
@@ -44,16 +72,6 @@ class TwissTransferMatrix(np.ndarray):
             raise ValueError(f"'{obj}' is not square.")
         if obj.shape[0] != 3:
             raise ValueError(f"'{obj}' should be of shape (3, 3)")
-
-        @property
-        def invariant(obj):
-            try:
-                out = compute_twiss_invariant(obj)
-            except ValueError:
-                out = None
-            return out
-
-        setattr(obj.__class__, "invariant", invariant)
         return obj
 
     def __array_finalize__(self, obj):
@@ -61,5 +79,3 @@ class TwissTransferMatrix(np.ndarray):
         # and I'm scared to remove it
         if obj is None:  # pragma: no cover
             return
-        # pylint: disable=attribute-defined-outside-init
-        setattr(self.__class__, "invariant", getattr(obj.__class__, "invariant", None))

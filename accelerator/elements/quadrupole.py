@@ -52,21 +52,27 @@ class Quadrupole(BaseElement):
     def __focussing(self, k) -> np.ndarray:
         """Compute a foccusing matrix, with k >= 0."""
         sqrt_k = np.sqrt(k)
-        m_f = np.zeros((2, 2))
-        m_f[0][0] = np.cos(sqrt_k * self.l)
-        m_f[0][1] = (1 / sqrt_k) * np.sin(sqrt_k * self.l)
-        m_f[1][0] = -sqrt_k * np.sin(sqrt_k * self.l)
-        m_f[1][1] = np.cos(sqrt_k * self.l)
+        m_f = np.zeros((3, 3))
+        m_f[0, 0] = np.cos(sqrt_k * self.l)
+        m_f[0, 1] = (1 / sqrt_k) * np.sin(sqrt_k * self.l)
+        # m_f[0, 2] = 0
+        m_f[1, 0] = -sqrt_k * np.sin(sqrt_k * self.l)
+        m_f[1, 1] = np.cos(sqrt_k * self.l)
+        # m_f[1, 2] = 0
+        m_f[2, 2] = 1
         return m_f
 
     def __defocussing(self, k) -> np.ndarray:
         """Compute a defoccusing matrix, with k < 0."""
         sqrt_k = np.sqrt(abs(k))
-        m_d = np.zeros((2, 2))
-        m_d[0][0] = np.cosh(sqrt_k * self.l)
-        m_d[0][1] = (1 / sqrt_k) * np.sinh(sqrt_k * self.l)
-        m_d[1][0] = (sqrt_k) * np.sinh(sqrt_k * self.l)
-        m_d[1][1] = np.cosh(sqrt_k * self.l)
+        m_d = np.zeros((3, 3))
+        m_d[0, 0] = np.cosh(sqrt_k * self.l)
+        m_d[0, 1] = (1 / sqrt_k) * np.sinh(sqrt_k * self.l)
+        # m_d[0, 2] = 0
+        m_d[1, 0] = (sqrt_k) * np.sinh(sqrt_k * self.l)
+        m_d[1, 1] = np.cosh(sqrt_k * self.l)
+        # m_d[1, 2] = 0
+        m_d[2, 2] = 1
         return m_d
 
     def slice(self, n_quadrupoles: int) -> Lattice:
@@ -133,19 +139,25 @@ class QuadrupoleThin(BaseElement):
         return 0
 
     def _get_transfer_matrix_h(self) -> np.ndarray:
-        m_h = np.zeros((2, 2))
-        m_h[0][0] = 1
-        # m_h[0][1] = 0
-        m_h[1][0] = -1 / self.f
-        m_h[1][1] = 1
+        m_h = np.zeros((3, 3))
+        m_h[0, 0] = 1
+        # m_h[0, 1] = 0
+        # m_h[0, 2] = 0
+        m_h[1, 0] = -1 / self.f
+        m_h[1, 1] = 1
+        # m_h[1, 2] = 0
+        m_h[2, 2] = 1
         return m_h
 
     def _get_transfer_matrix_v(self) -> np.ndarray:
-        m_v = np.zeros((2, 2))
-        m_v[0][0] = 1
-        # m_v[0][1] = 0
-        m_v[1][0] = 1 / self.f
-        m_v[1][1] = 1
+        m_v = np.zeros((3, 3))
+        m_v[0, 0] = 1
+        # m_v[0, 1] = 0
+        # m_v[0, 2] = 0
+        m_v[1, 0] = 1 / self.f
+        m_v[1, 1] = 1
+        # m_v[1, 2] = 0
+        m_v[2, 2] = 1
         return m_v
 
     def _get_patch(self, s: float) -> Union[None, patches.Patch]:

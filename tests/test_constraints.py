@@ -10,22 +10,22 @@ from accelerator.lattice import Lattice
 
 class TestTarget(TestCase):
     def test_init(self):
-        target = Target("element", [1, 2, 3], [1, 0, 1], "h")
-        assert target.init == (1, 0, 1)
+        target = Target("element", [1, 2, 3], twiss=[1, 0, 1], plane="h")
+        assert target.twiss == (1, 0, 1)
+        assert target.phasespace == None
         assert np.allclose(target.value, np.array([1, 2, 3]))
 
-        target = Target("element", [10, 1], [0, 1], "h")
-        assert target.init == (0, 1)
-        assert np.allclose(target.value, np.array([10, 1]))
+        target = Target("element", [10, 1, 0], phasespace=[0, 1, 0], plane="h")
+        assert target.twiss == None
+        assert target.phasespace == (0, 1, 0)
+        assert np.allclose(target.value, np.array([10, 1, 0]))
 
         drift = Drift(1)
-        target = Target(drift, [10, 1], [0, 1], "h")
+        target = Target(drift, [10, 1, 0], phasespace=[0, 1, 0], plane="h")
         assert target.element == drift.name
-        assert target.init == (0, 1)
-        assert np.allclose(target.value, np.array([10, 1]))
-
-        with self.assertRaises(ValueError):
-            Target("element", [1, 0, 1], [1, 1], "h")
+        assert target.phasespace == (0, 1, 0)
+        assert target.twiss == None
+        assert np.allclose(target.value, np.array([10, 1, 0]))
 
     def test_repr(self):
         target = Target("element", [1, 2, 3], [1, 0, 1], "h")
@@ -59,10 +59,10 @@ class TestConstraints(TestCase):
     def test_add_target(self):
         lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
         cons = Constraints(lat)
-        cons.add_target("quadrupole", [10, 1], [0, 1], plane="h")
+        cons.add_target("quadrupole", [10, 1, 0], phasespace=[0, 1, 0], plane="h")
         assert cons.targets[0].element == "quadrupole"
-        assert np.allclose(cons.targets[0].value, np.array([10, 1]))
-        assert cons.targets[0].init == (0, 1)
+        assert np.allclose(cons.targets[0].value, np.array([10, 1, 0]))
+        assert cons.targets[0].phasespace == (0, 1, 0)
         assert cons.targets[0].plane == "h"
 
     def test_add_free_parameter(self):
@@ -95,22 +95,20 @@ class TestConstraints(TestCase):
             # missing target
             lat.constraints.match()
         lat.constraints.clear()
-        lat.constraints.add_target("drift", [2, None], [1, 1])
+        lat.constraints.add_target("drift", [2, None, None], phasespace=[1, 1, 0])
         with self.assertRaises(ValueError):
             # missing free parameter
             lat.constraints.match()
 
         lat.constraints.clear()
         with self.assertRaises(ValueError):
-            lat.constraints.add_target("drift", [1, None], init="twiss_solution")
-        with self.assertRaises(ValueError):
-            lat.constraints.add_target("drift", [1, None], init="solution")
+            lat.constraints.add_target("drift", [1, None, None], twiss="twiss_solution")
 
         # Compute drift length to reach a x coord of 10 meters:
         lat = Lattice([Drift(1)])
         lat.constraints.add_free_parameter(element="drift", attribute="l")
         lat.constraints.add_target(
-            element="drift", value=[10, None], init=[0, 1], plane="h"
+            element="drift", value=[10, None, None], phasespace=[0, 1, 0], plane="h"
         )
         matched_lat, res = lat.constraints.match()
         assert res.success
@@ -122,7 +120,7 @@ class TestConstraints(TestCase):
         # parameters [1, 0, 1]:
         lat = Lattice([Drift(1)])
         lat.constraints.add_free_parameter("drift", "l")
-        lat.constraints.add_target("drift", [5, None, None], [1, 0, 1], "h")
+        lat.constraints.add_target("drift", [5, None, None], twiss=[1, 0, 1], plane="h")
         matched_lat, res = lat.constraints.match()
         assert res.success
         self.assertAlmostEqual(matched_lat[0].l, 2)
@@ -135,7 +133,9 @@ class TestConstraints(TestCase):
         drift_1 = Drift(1)
         lat = Lattice([drift_0, drift_1])
         lat.constraints.add_free_parameter(drift_0, "l")
-        lat.constraints.add_target(drift_0, [5, None], [0, 1], "h")
+        lat.constraints.add_target(
+            drift_0, [5, None, None], phasespace=[0, 1, 0], plane="h"
+        )
         matched_lat, res = lat.constraints.match()
         assert res.success
         self.assertAlmostEqual(matched_lat[0].l, 5)
@@ -150,7 +150,9 @@ class TestConstraints(TestCase):
         drift_1 = Drift(1)
         lat = Lattice([drift_0, drift_1])
         lat.constraints.add_free_parameter("drift", "l")
-        lat.constraints.add_target(drift_1, [5, None], [0, 1], "h")
+        lat.constraints.add_target(
+            drift_1, [5, None, None], phasespace=[0, 1, 0], plane="h"
+        )
         matched_lat, res = lat.constraints.match()
         assert res.success
         self.assertAlmostEqual(matched_lat[0].l, 2.5)
@@ -171,9 +173,11 @@ class TestConstraints(TestCase):
         )
         lat.constraints.add_free_parameter("quad_f", "f")
         lat.constraints.add_free_parameter("quad_d", "f")
-        lat.constraints.add_target("quad_d", [0.5, None, None], "twiss_solution", "h")
+        lat.constraints.add_target(
+            "quad_d", [0.5, None, None], twiss="solution", plane="h"
+        )
         matched, opt_res = lat.constraints.match()
-        beta, _, _, s = matched.transport(matched.m_h.twiss.invariant)
+        beta, *_, s = matched.transport(twiss=matched.m_h.twiss_solution)
         self.assertAlmostEqual(min(beta), 0.5)
 
         # same thing but now with constraints such that the magnet strengths are
@@ -181,7 +185,7 @@ class TestConstraints(TestCase):
         matched, opt_res = lat.constraints.match(
             constraints=({"type": "eq", "fun": lambda x: x[0] + 2*x[1]})
         )
-        beta, _, _, s = matched.transport(matched.m_h.twiss.invariant)
+        beta, *_, s = matched.transport(twiss=matched.m_h.twiss_solution)
         self.assertAlmostEqual(min(beta), 0.5)
         assert matched[0].f == -2*matched[2].f
 

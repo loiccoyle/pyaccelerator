@@ -3,7 +3,7 @@ import json
 import os
 import re
 from collections.abc import Iterable
-from typing import TYPE_CHECKING, List, Sequence, Tuple, Type, Union
+from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -111,46 +111,53 @@ class Lattice(list):
         return Lattice(new_lattice)
 
     def transport(
-        self, value: Sequence[Union[float, np.ndarray]], plane: str = "h"
+        self,
+        phasespace: Optional[Sequence[Union[float, np.ndarray]]] = None,
+        twiss: Optional[Union[str, Sequence[Union[float, np.ndarray]]]] = None,
+        plane: str = "h",
     ) -> Tuple[np.ndarray, ...]:
         """Transport phase space coordinates or twiss parameters along the lattice.
 
         Args:
-            value: To transport phase space coords, provide a sequence of 2
-                floats. To transport twiss parameters, provide a sequence of 3
-                floats. To transport a distribution of phase space coords
-                provide a sequence of 2 1D :py:class:`numpy.ndarray`, the
-                position and angle coordinates.
+            phasespace (optional): phase space coords to transport through
+                the lattice, a sequence of u[m], u_prime[rad], dp/p.
+            twiss (optional): twiss parameters to transport through the
+                lattice, a sequence of beta[m], alpha[rad], gamma[m^-1].
+                If "solution" is provided or if neither `phasespace` nor
+                `twiss` is provided, the twiss periodic solution is computed
+                and used for the transport.
             plane: the plane of interest, either "h" or "v", defaults
                 to "h".
 
         Raises:
-            ValueError: If unable to infer the provided coordinates.
+            ValueError: if both `phasespace` and `twiss` are provided.
+            ValueError: if the twiss solution computation fails.
 
         Returns:
-            If a phase space coordinate is provided, returns the phase space
-            position, angle and s coordinates along the lattice.
+            If `phasespace` is provided, returns the phase space position, angle, dp/p
+            and s coordinates along the lattice.
 
-            If a twiss parameter is provided, returns the twiss parameters,
-            beta, alpha, gamma and the s coordinate along the lattice.
+            If `phasespace` is a distribution of phase space coordinates,
+            returns the position distribution, the angle distribution, the dp/p
+            distribution and the s coordinate along the lattice.
 
-            If a distribution of phase space coordinates is provided, returns
-            the position distribution, the angle distribution and the s
-            coordinate along the lattice.
+            If a `twiss` is provided, returns the twiss parameters, beta,
+            alpha, gamma and the s coordinate along the lattice.
+
 
         Examples:
             Transport phase space coords through a
             :py:class:`~accelerator.elements.drift.Drift`:
 
                 >>> lat = Lattice([Drift(1)])
-                >>> lat.transport([1, 1])
-                (array([1., 2.]), array([1., 1.]), array([0, 1]))
+                >>> lat.transport(phasespace=[1, 1, 0])
+                (array([1., 2.]), array([1., 1.]), array([0., 0.]), array([0, 1]))
 
             Transport twiss parameters through a
             :py:class:`~accelerator.elements.drift.Drift`:
 
                 >>> lat = Lattice([Drift(1)])
-                >>> lat.transport([1, 0, 1])
+                >>> lat.transport(twiss=[1, 0, 1])
                 (array([1., 2.]), array([ 0., -1.]), array([1., 1.]), array([0, 1]))
 
             Transport a distribution of phase space coordinates through the
@@ -158,36 +165,42 @@ class Lattice(list):
 
                 >>> beam = Beam()
                 >>> lat = Lattice([Drift(1)])
-                >>> u, u_prime, s = lat.transport(beam.match([1, 0, 1]))
-                >>> plt.plot(u, u_prime)
+                >>> u, u_prime, dp, s = lat.transport(phasespace=beam.match([1, 0, 1]))
+                >>> plt.plot(s, u)
                 ...
 
             Transport a phase space ellipse's coordinates through the lattice:
 
                 >>> beam = Beam()
                 >>> lat = Lattice([Drift(1)])
-                >>> u, u_prime, s = lat.transport(beam.ellipse([1, 0, 1]))
+                >>> u, u_prime, dp, s = lat.transport(phasespace=beam.ellipse([1, 0, 1]))
                 >>> plt.plot(u, u_prime)
                 ...
         """
         # TODO: the _transport and the _transport_distribution share a lot of
         # code they could easily be merged.
-        plane = plane.lower()
-        if not all([isinstance(v, Iterable) and len(v) > 1 for v in value]):
-            # either a single phase space coord or a single twiss parameter
-            if len(value) == 2:
-                # phasespace coords
-                return self._transport(value, twiss=False, plane=plane)
-            if len(value) == 3:
-                # twiss parameters
-                return self._transport(value, twiss=True, plane=plane)
-        else:
-            # a distribution
-            if len(value) == 2:
-                # distribution of phase space coords
-                return self._transport_distribution(*value, plane=plane)
+        if twiss is not None and phasespace is not None:
+            raise ValueError("Provide either 'twiss' or 'phasespace'.")
+        if (isinstance(twiss, str) and twiss == "solution") or (
+            twiss is None and phasespace is None
+        ):
+            twiss = self.m_h.twiss_solution
+            if twiss is None:
+                raise ValueError("Lattice has no periodic twiss solution.")
 
-        raise ValueError(f'Failed determine how to transport "{value}".')
+        twiss_bool = twiss is not None
+        plane = plane.lower()
+
+        if twiss_bool:
+            # tranporting twiss
+            return self._transport(twiss, plane=plane, twiss=twiss_bool)
+        else:
+            if all([isinstance(v, Iterable) and len(v) > 1 for v in phasespace]):
+                # distribution of phase space coords
+                return self._transport_distribution(*phasespace, plane=plane)
+            else:
+                # transport phase space coords
+                return self._transport(phasespace, plane=plane, twiss=twiss_bool)
 
     def _transport(
         self,
@@ -231,6 +244,7 @@ class Lattice(list):
         self,
         u: np.ndarray,
         u_prime: np.ndarray,
+        dp: np.ndarray,
         plane: str = "h",
     ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """Transport a distribution of in phase space along the lattice.
@@ -246,7 +260,7 @@ class Lattice(list):
                 (len(`u`), number of elements in the lattice + 1) and `s` the s
                 coordinate along the lattice.
         """
-        coords = np.vstack([u, u_prime])
+        coords = np.vstack([u, u_prime, dp])
         out = [coords]
         s_coords = [0]
         transfer_matrix = "m_" + plane
@@ -254,11 +268,11 @@ class Lattice(list):
         for i, m in enumerate(transfer_ms):
             out.append(m @ out[i])
             s_coords.append(s_coords[i] + self[i].length)
-        u_coords = [o[0] for o in out]
-        u_prime_coords = [o[1] for o in out]
+        u_coords, u_prime_coords, dp_coords = zip(*out)
         u_coords = np.vstack(u_coords).T
         u_prime_coords = np.vstack(u_prime_coords).T
-        return u_coords, u_prime_coords, np.array(s_coords)
+        dp_coords = np.vstack(dp_coords).T
+        return u_coords, u_prime_coords, dp_coords, np.array(s_coords)
 
     def search(self, pattern: str, *args, **kwargs) -> List[int]:
         """Search the lattice for elements with `name` matching the pattern.
