@@ -2,11 +2,37 @@ from collections import namedtuple
 from functools import reduce
 from typing import Optional, Sequence, Tuple, Union
 
+import matplotlib.pyplot as plt
+
 import numpy as np
 
 # some named tuples to make the interface friendlier
 TransportedTwiss = namedtuple("TransportedTwiss", ["s", "beta", "alpha", "gamma"])
 TransportedPhasespace = namedtuple("TransportedPhasespace", ["s", "u", "u_prime", "dp"])
+
+
+def plot_twiss(self):
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(self.s, self.beta, label="beta")
+    ax.plot(self.s, self.alpha, label="alpha")
+    ax.plot(self.s, self.gamma, label="gamma")
+    ax.set_xlabel('s [m]')
+    ax.legend()
+    return fig, ax
+
+
+def plot_phasespace(self):
+    fig, ax = plt.subplots(1, 1)
+    ax.plot(self.s, self.u, label="u")
+    ax.plot(self.s, self.u_prime, label="u_prime")
+    ax.plot(self.s, self.dp, label="dp")
+    ax.set_xlabel('s [m]')
+    ax.legend()
+    return fig, ax
+
+
+TransportedPhasespace.plot = plot_phasespace
+TransportedTwiss.plot = plot_twiss
 
 
 def to_v_vec(vec: Sequence[float]) -> np.ndarray:
