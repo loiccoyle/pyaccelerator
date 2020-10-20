@@ -250,7 +250,7 @@ class Lattice(list):
             out.append(m @ out[i])
             s_coords.append(s_coords[i] + self[i].length)
         out = np.hstack(out)
-        return out_class(s_coords, *out)
+        return out_class(np.array(s_coords), *out)
 
     def _transport_distribution(
         self,
