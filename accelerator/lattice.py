@@ -10,7 +10,13 @@ import numpy as np
 
 from .constraints import Constraints
 from .transfer_matrix import TransferMatrix
-from .utils import compute_one_turn, to_phase_coord, to_twiss
+from .utils import (
+    TransportedPhasespace,
+    TransportedTwiss,
+    compute_one_turn,
+    to_phase_coord,
+    to_twiss,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     from .elements.base import BaseElement
@@ -115,7 +121,7 @@ class Lattice(list):
         phasespace: Optional[Sequence[Union[float, np.ndarray]]] = None,
         twiss: Optional[Union[str, Sequence[Union[float, np.ndarray]]]] = None,
         plane: str = "h",
-    ) -> Tuple[np.ndarray, ...]:
+    ) -> Union[TransportedTwiss, TransportedPhasespace]:
         """Transport phase space coordinates or twiss parameters along the lattice.
 
         Args:
@@ -134,15 +140,18 @@ class Lattice(list):
             ValueError: if the twiss solution computation fails.
 
         Returns:
-            If `phasespace` is provided, returns the phase space position, angle, dp/p
-            and s coordinates along the lattice.
+            If `phasespace` is provided, returns a named tuple containing the
+            coordinates along the lattice, phase space position, angle and
+            dp/p, named 's', 'u', 'u_prime' and 'dp' respectively.
 
             If `phasespace` is a distribution of phase space coordinates,
-            returns the position distribution, the angle distribution, the dp/p
-            distribution and the s coordinate along the lattice.
+            returns a named tuple containing the coordinate along the lattice,
+            the position distribution, the angle distribution, the dp/p
+            distribution and , named 's', 'u', 'u_prime', and 'dp' respectively.
 
-            If a `twiss` is provided, returns the twiss parameters, beta,
-            alpha, gamma and the s coordinate along the lattice.
+            If a `twiss` is provided, returns a named tuple containing the
+            coordinate along the lattice and the twiss parameters, beta, alpha,
+            gamma, named 's', 'beta', 'alpha', and 'gamma' respectively.
 
 
         Examples:
@@ -151,30 +160,30 @@ class Lattice(list):
 
                 >>> lat = Lattice([Drift(1)])
                 >>> lat.transport(phasespace=[1, 1, 0])
-                (array([1., 2.]), array([1., 1.]), array([0., 0.]), array([0, 1]))
+                TransportedPhasespace(s=array([0, 1], u=array([1., 2.]), u_prime=array([1., 1.]), dp=array([0., 0.]))
 
             Transport twiss parameters through a
             :py:class:`~accelerator.elements.drift.Drift`:
 
                 >>> lat = Lattice([Drift(1)])
                 >>> lat.transport(twiss=[1, 0, 1])
-                (array([1., 2.]), array([ 0., -1.]), array([1., 1.]), array([0, 1]))
+                TransportedTwiss(s=array([0, 1]), beta=array([1., 2.]), alpha=array([ 0., -1.]), gamma=array([1., 1.]))
 
             Transport a distribution of phase space coordinates through the
             lattice:
 
                 >>> beam = Beam()
                 >>> lat = Lattice([Drift(1)])
-                >>> u, u_prime, dp, s = lat.transport(phasespace=beam.match([1, 0, 1]))
-                >>> plt.plot(s, u)
+                >>> tranported = lat.transport(phasespace=beam.match([1, 0, 1]))
+                >>> plt.plot(tranported.s, tranported.u)
                 ...
 
             Transport a phase space ellipse's coordinates through the lattice:
 
                 >>> beam = Beam()
                 >>> lat = Lattice([Drift(1)])
-                >>> u, u_prime, dp, s = lat.transport(phasespace=beam.ellipse([1, 0, 1]))
-                >>> plt.plot(u, u_prime)
+                >>> tranported = lat.transport(phasespace=beam.ellipse([1, 0, 1]))
+                >>> plt.plot(tranported.u, tranported.u_prime)
                 ...
         """
         # TODO: the _transport and the _transport_distribution share a lot of
@@ -192,7 +201,7 @@ class Lattice(list):
         twiss_bool = twiss is not None
 
         if twiss_bool:
-            # tranporting twiss
+            # transporting twiss
             return self._transport(twiss, plane=plane, twiss=twiss_bool)
         else:
             if all([isinstance(v, Iterable) and len(v) > 1 for v in phasespace]):
@@ -207,7 +216,7 @@ class Lattice(list):
         init: Sequence[float],
         plane: str = "h",
         twiss: bool = False,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    ) -> np.recarray:
         """Transport the given phase space along the lattice.
 
         Args:
@@ -220,14 +229,17 @@ class Lattice(list):
                 defaults to False.
 
         Returns:
-            `*coords`, `s`, with `coords` the phase space coordinates or twiss
+            named tuple containing 's', '*coords', with 'coords' the phase
+                space coordinates ('u', 'u_prime', 'dp') or the twiss
                 parameters, depending on the `twiss` flag. along the lattice and
-                `s` the s coordinates.
+                's' the coordinates along the ring.
         """
         if twiss:
             init = to_twiss(init)
+            out_class = TransportedTwiss
         else:
             init = to_phase_coord(init)
+            out_class = TransportedPhasespace
         out = [init]
         s_coords = [0]
         transfer_matrix = "m_" + plane
@@ -238,7 +250,7 @@ class Lattice(list):
             out.append(m @ out[i])
             s_coords.append(s_coords[i] + self[i].length)
         out = np.hstack(out)
-        return tuple([*out] + [np.array(s_coords)])
+        return out_class(s_coords, *out)
 
     def _transport_distribution(
         self,
@@ -246,19 +258,20 @@ class Lattice(list):
         u_prime: np.ndarray,
         dp: np.ndarray,
         plane: str = "h",
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> np.recarray:
         """Transport a distribution of in phase space along the lattice.
 
         Args:
-            u: phase space position[m] coordinates, 1D array same length as `u_prime`.
-            u_prime: phase space angle[rad] coordinate, 1D array same length as `u`.
+            u: phase space position[m] coordinates, 1D array same length as
+                `u_prime`.
+            u_prime: phase space angle[rad] coordinate, 1D array same length as
+                `u`.
             plane: plane of interest, either "h" or "v".
 
         Returns:
-            `u_coords`, `u_prime_coords`, `s`, with `u_coords` the position
-                array and `u_prime_coords` the angle array, both of shape
-                (len(`u`), number of elements in the lattice + 1) and `s` the s
-                coordinate along the lattice.
+            named tuple containing 's' the coordinate along the lattice, 'u'
+                the position array and 'u_prime' the angle array and 'dp' the
+                momentum deviation.
         """
         coords = np.vstack([u, u_prime, dp])
         out = [coords]
@@ -272,7 +285,9 @@ class Lattice(list):
         u_coords = np.vstack(u_coords).T
         u_prime_coords = np.vstack(u_prime_coords).T
         dp_coords = np.vstack(dp_coords).T
-        return u_coords, u_prime_coords, dp_coords, np.array(s_coords)
+        return TransportedPhasespace(
+            np.array(s_coords), u_coords, u_prime_coords, dp_coords
+        )
 
     def search(self, pattern: str, *args, **kwargs) -> List[int]:
         """Search the lattice for elements with `name` matching the pattern.

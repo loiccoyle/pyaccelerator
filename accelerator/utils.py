@@ -1,7 +1,12 @@
+from collections import namedtuple
 from functools import reduce
 from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
+
+# some named tuples to make the interface friendlier
+TransportedTwiss = namedtuple("TransportedTwiss", ["s", "beta", "alpha", "gamma"])
+TransportedPhasespace = namedtuple("TransportedPhasespace", ["s", "u", "u_prime", "dp"])
 
 
 def to_v_vec(vec: Sequence[float]) -> np.ndarray:
