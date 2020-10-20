@@ -65,7 +65,7 @@ class Beam:
 
     @property
     def gamma_relativistic(self):
-        return self.energy / self.mass
+        return (self.mass + self.energy) / self.mass
 
     @property
     def beta_relativistic(self):
