@@ -58,6 +58,9 @@ class BaseElement:
             ``matplotlib.patches.Patch`` which represents the element.
         """
 
+    def _non_linear_term(self, phase_coords: np.ndarray) -> np.ndarray:
+        return np.zeros_like(phase_coords)
+
     def _serialize(self) -> Dict[str, Any]:
         """Serialize the element.
 
@@ -89,11 +92,12 @@ class BaseElement:
         """
         if u_init is None:
             u_init = [1, np.pi / 8, 0]
+        u_init = np.vstack(u_init)
         plane_map = {"h": self.m_h, "v": self.m_v}
         coord_map = {"h": "x", "v": "y"}
         coord = coord_map[plane]
         m = plane_map[plane]
-        u_1 = m @ u_init
+        u_1 = m @ u_init + self._non_linear_term(u_init)
         x_axis = [0, self.length]
         fig, axes = plt.subplots(2, 1, sharex=True)
         axes[0].plot(x_axis, [u_init[0], u_1[0]], *args, label=coord, **kwargs)
