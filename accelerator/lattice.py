@@ -179,17 +179,17 @@ class Lattice(list):
         """
         # TODO: the _transport and the _transport_distribution share a lot of
         # code they could easily be merged.
+        plane = plane.lower()
         if twiss is not None and phasespace is not None:
             raise ValueError("Provide either 'twiss' or 'phasespace'.")
         if (isinstance(twiss, str) and twiss == "solution") or (
             twiss is None and phasespace is None
         ):
-            twiss = self.m_h.twiss_solution
+            twiss = getattr(self, "m_" + plane).twiss_solution
             if twiss is None:
                 raise ValueError("Lattice has no periodic twiss solution.")
 
         twiss_bool = twiss is not None
-        plane = plane.lower()
 
         if twiss_bool:
             # tranporting twiss
