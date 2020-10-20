@@ -202,31 +202,22 @@ class Lattice(list):
 
         if twiss_bool:
             # transporting twiss
-            return self._transport(twiss, plane=plane, twiss=twiss_bool)
+            return self._transport_twiss(twiss, plane=plane)
         else:
-            if all([isinstance(v, Iterable) and len(v) > 1 for v in phasespace]):
-                # distribution of phase space coords
-                return self._transport_distribution(*phasespace, plane=plane)
-            else:
-                # transport phase space coords
-                return self._transport(phasespace, plane=plane, twiss=twiss_bool)
+            # transport phasespace coords
+            return self._transport_phasespace(*phasespace, plane=plane)
 
-    def _transport(
+    def _transport_twiss(
         self,
-        init: Sequence[float],
+        twiss: Sequence[float],
         plane: str = "h",
-        twiss: bool = False,
     ) -> np.recarray:
-        """Transport the given phase space along the lattice.
+        """Transport the given twiss parameters along the lattice.
 
         Args:
-            init: list of phase space coordinates, position[m] and angle[rad],
-                if `twiss` is True, `init` should be the initial twiss
-                parameters a list [beta, alpha, gamma], one twiss parameter can
-                be None.
+            twiss: list of twiss parameters, beta[m], alpha[rad], and
+                gamma[m^-1], one twiss parameter can be None.
             plane: plane of interest, defaults to "h".
-            twiss: If True will use the twiss parameter transfer matrices,
-                defaults to False.
 
         Returns:
             named tuple containing 's', '*coords', with 'coords' the phase
@@ -234,25 +225,18 @@ class Lattice(list):
                 parameters, depending on the `twiss` flag. along the lattice and
                 's' the coordinates along the ring.
         """
-        if twiss:
-            init = to_twiss(init)
-            out_class = TransportedTwiss
-        else:
-            init = to_phase_coord(init)
-            out_class = TransportedPhasespace
-        out = [init]
+        twiss = to_twiss(twiss)
+        out = [twiss]
         s_coords = [0]
         transfer_matrix = "m_" + plane
-        transfer_ms = [getattr(element, transfer_matrix) for element in self]
-        if twiss:
-            transfer_ms = [m.twiss for m in transfer_ms]
+        transfer_ms = [getattr(element, transfer_matrix).twiss for element in self]
         for i, m in enumerate(transfer_ms):
             out.append(m @ out[i])
             s_coords.append(s_coords[i] + self[i].length)
         out = np.hstack(out)
-        return out_class(np.array(s_coords), *out)
+        return TransportedTwiss(np.array(s_coords), *out)
 
-    def _transport_distribution(
+    def _transport_phasespace(
         self,
         u: np.ndarray,
         u_prime: np.ndarray,
@@ -277,14 +261,19 @@ class Lattice(list):
         out = [coords]
         s_coords = [0]
         transfer_matrix = "m_" + plane
-        transfer_ms = [getattr(element, transfer_matrix) for element in self]
-        for i, m in enumerate(transfer_ms):
-            out.append(m @ out[i])
+        transfer_ms = [
+            (getattr(element, transfer_matrix), element._non_linear_term)
+            for element in self
+        ]
+        for i, (m, non_linear) in enumerate(transfer_ms):
+            # for most elements there are no non linear effects
+            post_element = (m @ out[i]) + non_linear(out[i])
+            out.append(post_element)
             s_coords.append(s_coords[i] + self[i].length)
         u_coords, u_prime_coords, dp_coords = zip(*out)
-        u_coords = np.vstack(u_coords).T
-        u_prime_coords = np.vstack(u_prime_coords).T
-        dp_coords = np.vstack(dp_coords).T
+        u_coords = np.vstack(u_coords).squeeze()
+        u_prime_coords = np.vstack(u_prime_coords).squeeze()
+        dp_coords = np.vstack(dp_coords).squeeze()
         return TransportedPhasespace(
             np.array(s_coords), u_coords, u_prime_coords, dp_coords
         )
