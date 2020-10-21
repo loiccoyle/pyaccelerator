@@ -3,34 +3,77 @@ from functools import reduce
 from typing import Optional, Sequence, Tuple, Union
 
 import matplotlib.pyplot as plt
-
 import numpy as np
 
 # some named tuples to make the interface friendlier
+PhasespaceDistribution = namedtuple("PhasespaceDistribution", ["u", "u_prime", "dp"])
 TransportedTwiss = namedtuple("TransportedTwiss", ["s", "beta", "alpha", "gamma"])
 TransportedPhasespace = namedtuple("TransportedPhasespace", ["s", "u", "u_prime", "dp"])
 
 
 def plot_twiss(self):
+    """Plot the evolution of twiss parameters through the lattice.
+
+    Return:
+        The plotted ``plt.Figure`` and ``plt.Axes``.
+    """
     fig, ax = plt.subplots(1, 1)
     ax.plot(self.s, self.beta, label="beta")
     ax.plot(self.s, self.alpha, label="alpha")
     ax.plot(self.s, self.gamma, label="gamma")
-    ax.set_xlabel('s [m]')
+    ax.set_xlabel("s [m]")
     ax.legend()
     return fig, ax
 
 
 def plot_phasespace(self):
+    """Plot the evolution of phase space coordinates through the lattice.
+
+    Return:
+        The plotted ``plt.Figure`` and ``plt.Axes``.
+    """
     fig, ax = plt.subplots(1, 1)
-    ax.plot(self.s, self.u, label="u")
-    ax.plot(self.s, self.u_prime, label="u_prime")
-    ax.plot(self.s, self.dp, label="dp")
-    ax.set_xlabel('s [m]')
-    ax.legend()
+    if self.u.ndim > 1 and self.u_prime.ndim > 1 and self.dp.ndim > 1:
+        # if the data contains multiple particles, plot in phase space
+        # TODO: this could be split into multiple subplots like what Michael did
+        # in the notebook.
+        lines = ax.plot(self.u, self.u_prime, linewidth=0, marker=".")
+        ax.set_xlabel("u [m]")
+        ax.set_ylabel("u' [rad]")
+        ax.set_aspect("equal")
+        ax.legend(lines, [f"s={s}" for s in self.s])
+    else:
+        # else plot the evolution of the particle coordinates
+        ax.plot(self.s, self.u, label="u")
+        ax.plot(self.s, self.u_prime, label="u_prime")
+        ax.plot(self.s, self.dp, label="dp")
+        ax.set_xlabel("s [m]")
+        ax.legend()
     return fig, ax
 
 
+def plot_phasespace_distribution(self):
+    """Plot the phase space coordinates distribution.
+
+    Return:
+        The plotted ``plt.Figure`` and ``plt.Axes``.
+    """
+    fig, ax = plt.subplots(1, 1)
+    if (self.dp == 0).all():
+        # if all the dp/p are 0 then don't change color based on dp/p
+        ax.scatter(self.u, self.u_prime, s=4)
+    else:
+        # else add colour and colour bar w.r.t. to dp/p
+        scatter = ax.scatter(self.u, self.u_prime, c=self.dp, s=4)
+        cbar = fig.colorbar(scatter, ax=ax)
+        cbar.set_label("dp/p", rotation=270)
+    ax.set_xlabel("u [m]")
+    ax.set_ylabel("u' [rad]")
+    ax.set_aspect("equal")
+    return fig, ax
+
+
+PhasespaceDistribution.plot = plot_phasespace_distribution
 TransportedPhasespace.plot = plot_phasespace
 TransportedTwiss.plot = plot_twiss
 
