@@ -98,3 +98,39 @@ class TestUtils(TestCase):
         assert np.allclose(
             expected, utils.compute_dispersion_solution(transfer_matrix_dipole)
         )
+
+    def test_namedtuples(self):
+        # just testing the plotting, these values are nonsense
+        distribution = utils.PhasespaceDistribution(
+            np.array([1, 2, 3]), np.array([1, 1, 1]), np.array([0, 0, 0])
+        )
+        distribution.plot()
+
+        distribution = utils.PhasespaceDistribution(
+            np.array([1, 2, 3]), np.array([1, 1, 1]), np.array([0, 0.1, 0.2])
+        )
+        distribution.plot()
+
+        transported_phasespace = utils.TransportedPhasespace(
+            np.array([0, 1, 2]),
+            np.array([1, 2, 3]),
+            np.array([1, 1, 1]),
+            np.array([0, 0, 0]),
+        )
+        transported_phasespace.plot()
+
+        transported_distribution = utils.TransportedPhasespace(
+            np.array([0, 1, 2]),
+            np.array([[1, 2, 3], [1, 2, 3]]),
+            np.array([[1, 1, 1], [1, 1, 1]]),
+            np.array([[0, 0, 0], [0, 0, 0]]),
+        )
+        transported_distribution.plot()
+
+        transported_twiss = utils.TransportedTwiss(
+            np.array([0, 1, 2]),
+            np.array([1, 2, 3]),
+            np.array([1, 1, 1]),
+            np.array([0, 0, 0]),
+        )
+        transported_twiss.plot()
