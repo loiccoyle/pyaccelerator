@@ -6,7 +6,7 @@ import numpy as np
 from scipy.constants import physical_constants
 
 from .sampling import bigaussian
-from .utils import compute_twiss_clojure, to_twiss
+from .utils import PhasespaceDistribution, compute_twiss_clojure, to_twiss
 
 
 class Beam:
@@ -95,7 +95,7 @@ class Beam:
         plane: str = "h",
         closure_tol: float = 1e-10,
         n_angles: int = 1e3,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> PhasespaceDistribution:
         """Compute the beam's phase space ellipse given the twiss parameters.
 
         Args:
@@ -103,12 +103,13 @@ class Beam:
                 twiss parameter can be None.
             plane: Plane of interest, either "h" or "v", defaults to "h".
             closure_tol: Numerical tolerance on the twiss closure condition,
-                defaults to 1e-9.
+                defaults to 1e-10.
             n_angles: Number of angles for which to compute the ellipse,
                 defaults to 1e3.
 
         Returns:
-            Position and angle phase space coordrinates of the ellipse.
+            Position, angle phase and dp/p space coordrinates of the ellipse.
+                Note, dp/p will be set to 0.
         """
         twiss = to_twiss(twiss)
         beta, alpha, _ = twiss.T[0]  # pylint: disable=unsubscriptable-object
@@ -123,14 +124,14 @@ class Beam:
         u = np.sqrt(emit * beta) * np.cos(angles)
         u_prime = -(alpha / beta) * u - np.sqrt(emit / beta) * np.sin(angles)
         dp = np.zeros(u_prime.shape)
-        return u, u_prime, dp
+        return PhasespaceDistribution(u, u_prime, dp)
 
     def match(
         self,
         twiss: Sequence[float],
         plane: str = "h",
         closure_tol: float = 1e-10,
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> PhasespaceDistribution:
         """Generate a matched beam phase space distribution to the provided
         `twiss` parameters.
 
@@ -141,7 +142,7 @@ class Beam:
                 defaults to 1e-10.
 
         Returns:
-            Position and angle phase space coordinates.
+            Position, angle and dp/p phase space coordinates.
         """
         plane = plane.lower()
         twiss = to_twiss(twiss)
@@ -160,7 +161,7 @@ class Beam:
         u_prime = -(alpha / np.sqrt(beta)) * u_pre + (1.0 / np.sqrt(beta)) * u_prime_pre
         # turn dp into dp/p
         dp /= self.p
-        return u, u_prime, dp
+        return PhasespaceDistribution(u, u_prime, dp)
 
     def __repr__(self) -> str:
         args = {
