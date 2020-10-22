@@ -11,7 +11,7 @@ TransportedTwiss = namedtuple("TransportedTwiss", ["s", "beta", "alpha", "gamma"
 TransportedPhasespace = namedtuple("TransportedPhasespace", ["s", "u", "u_prime", "dp"])
 
 
-def plot_twiss(self):
+def plot_twiss(self) -> Tuple[plt.Figure, plt.Axes]:
     """Plot the evolution of twiss parameters through the lattice.
 
     Return:
@@ -26,7 +26,7 @@ def plot_twiss(self):
     return fig, ax
 
 
-def plot_phasespace(self):
+def plot_phasespace(self) -> Tuple[plt.Figure, plt.Axes]:
     """Plot the evolution of phase space coordinates through the lattice.
 
     Return:
@@ -52,7 +52,7 @@ def plot_phasespace(self):
     return fig, ax
 
 
-def plot_phasespace_distribution(self):
+def plot_phasespace_distribution(self) -> Tuple[plt.Figure, plt.Axes]:
     """Plot the phase space coordinates distribution.
 
     Return:
