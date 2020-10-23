@@ -6,7 +6,6 @@ from matplotlib import patches
 
 from ..lattice import Lattice
 from .base import BaseElement
-from .utils import NonLinearTerm
 
 
 class SextupoleThin(BaseElement):
@@ -29,12 +28,12 @@ class SextupoleThin(BaseElement):
     def __init__(self, k: float, name: Optional[str] = None):
         self.k = k
         if name is None:
-            name = f"sextupole_{next(self._instance_count)}"
+            name = f"sextupole_thin_{next(self._instance_count)}"
         super().__init__("k", "name")
         self.name = name
 
     def _non_linear_term(self, phase_coord: np.ndarray) -> np.ndarray:
-        out = np.zeros_like(phase_coord)
+        out = np.zeros(phase_coord.shape)
         out[1] = -(1 / 2) * self.k * phase_coord[0] ** 2
         return out
 
@@ -56,12 +55,6 @@ class SextupoleThin(BaseElement):
         return self._get_transfer_matrix_h()
 
     def _get_patch(self, s: float) -> patches.Patch:
-        # if self.k < 0:
-        #     label = "Defocussing Quad"
-        #     colour = "tab:red"
-        # elif self.k > 0:
-        #     label = "Focussing Quad"
-        #     colour = "tab:blue"
         label = "Thin Sextupole"
         colour = "tab:green"
         return patches.FancyArrowPatch(
