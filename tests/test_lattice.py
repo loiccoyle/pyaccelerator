@@ -9,6 +9,8 @@ from accelerator.beam import Beam
 from accelerator.elements.dipole import Dipole, DipoleThin
 from accelerator.elements.drift import Drift
 from accelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
+from accelerator.elements.sextupole import SextupoleThin
+from accelerator.elements.custom import CustomThin
 from accelerator.lattice import Lattice, Plotter
 
 
@@ -330,6 +332,8 @@ class TestPlotter(TestCase):
                 QuadrupoleThin(0),
                 Dipole(1, np.pi / 2),
                 DipoleThin(np.pi / 16),
+                SextupoleThin(1),
+                CustomThin([[1, 0, 0], [0, 1, 0], [0, 0, 1]]),
             ]
         )
         plotter = Plotter(lat)
