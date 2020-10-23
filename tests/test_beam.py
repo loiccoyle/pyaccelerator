@@ -10,18 +10,18 @@ class TestBeam(TestCase):
         beam = Beam(emittance=3.5e-6)
         assert beam.emittance_h == 3.5e-6
         assert beam.emittance_v == 3.5e-6
-        assert beam.gamma_relativistic == 6927.628011131436
-        assert beam.beta_relativistic == 0.9999999895816034
-        assert beam.geo_emittance_h == 5.052234373497719e-10
-        assert beam.geo_emittance_v == 5.052234373497719e-10
+        assert beam.gamma_relativistic == 6928.628011131436
+        assert beam.beta_relativistic == 0.9999999895846106
+        assert beam.geo_emittance_h == 5.05150519097116e-10
+        assert beam.geo_emittance_v == 5.05150519097116e-10
 
         beam = Beam(emittance=(3.5e-6, 2.5e-6))
         assert beam.emittance_h == 3.5e-6
         assert beam.emittance_v == 2.5e-6
-        assert beam.gamma_relativistic == 6927.628011131436
-        assert beam.beta_relativistic == 0.9999999895816034
-        assert beam.geo_emittance_h == 5.052234373497719e-10
-        assert beam.geo_emittance_v == 3.6087388382126567e-10
+        assert beam.gamma_relativistic == 6928.628011131436
+        assert beam.beta_relativistic == 0.9999999895846106
+        assert beam.geo_emittance_h == 5.05150519097116e-10
+        assert beam.geo_emittance_v == 3.608217993550829e-10
 
     def test_ellipse(self):
         beam = Beam()
