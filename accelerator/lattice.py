@@ -211,7 +211,7 @@ class Lattice(list):
         self,
         twiss: Sequence[float],
         plane: str = "h",
-    ) -> np.recarray:
+    ) -> TransportedTwiss:
         """Transport the given twiss parameters along the lattice.
 
         Args:
@@ -242,7 +242,7 @@ class Lattice(list):
         u_prime: np.ndarray,
         dp: np.ndarray,
         plane: str = "h",
-    ) -> np.recarray:
+    ) -> TransportedPhasespace:
         """Transport a distribution of in phase space along the lattice.
 
         Args:
