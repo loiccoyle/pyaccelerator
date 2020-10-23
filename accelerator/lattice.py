@@ -216,7 +216,7 @@ class Lattice(list):
         init: Sequence[float],
         plane: str = "h",
         twiss: bool = False,
-    ) -> np.recarray:
+    ) -> Union[TransportedPhasespace, TransportedTwiss]:
         """Transport the given phase space along the lattice.
 
         Args:
@@ -258,7 +258,7 @@ class Lattice(list):
         u_prime: np.ndarray,
         dp: np.ndarray,
         plane: str = "h",
-    ) -> np.recarray:
+    ) -> TransportedPhasespace:
         """Transport a distribution of in phase space along the lattice.
 
         Args:
