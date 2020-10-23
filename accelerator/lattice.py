@@ -271,9 +271,9 @@ class Lattice(list):
             out.append(post_element)
             s_coords.append(s_coords[i] + self[i].length)
         u_coords, u_prime_coords, dp_coords = zip(*out)
-        u_coords = np.vstack(u_coords).squeeze()
-        u_prime_coords = np.vstack(u_prime_coords).squeeze()
-        dp_coords = np.vstack(dp_coords).squeeze()
+        u_coords = np.vstack(u_coords).squeeze().T
+        u_prime_coords = np.vstack(u_prime_coords).squeeze().T
+        dp_coords = np.vstack(dp_coords).squeeze().T
         return TransportedPhasespace(
             np.array(s_coords), u_coords, u_prime_coords, dp_coords
         )
