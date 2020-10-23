@@ -6,11 +6,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from accelerator.beam import Beam
+from accelerator.elements.custom import CustomThin
 from accelerator.elements.dipole import Dipole, DipoleThin
 from accelerator.elements.drift import Drift
 from accelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
 from accelerator.elements.sextupole import SextupoleThin
-from accelerator.elements.custom import CustomThin
 from accelerator.lattice import Lattice, Plotter
 
 

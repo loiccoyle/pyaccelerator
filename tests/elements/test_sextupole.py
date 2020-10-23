@@ -29,7 +29,7 @@ class TestSextupoleThin(TestCase):
         assert np.allclose(sextupole.m_v, m_v)
 
         # now the non linear part
-        matrix = sextupole._non_linear_term(np.array([1., 1., 0.]))
+        matrix = sextupole._non_linear_term(np.array([1.0, 1.0, 0.0]))
         assert np.allclose(matrix, np.array([[0, -1 / 2, 0]]))
 
     def test_repr(self):

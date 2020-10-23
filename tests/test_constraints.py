@@ -177,17 +177,17 @@ class TestConstraints(TestCase):
             "quad_d", [0.5, None, None], twiss="solution", plane="h"
         )
         matched, opt_res = lat.constraints.match()
-        s, beta, *_= matched.transport(twiss=matched.m_h.twiss_solution)
+        s, beta, *_ = matched.transport(twiss=matched.m_h.twiss_solution)
         self.assertAlmostEqual(min(beta), 0.5)
 
         # same thing but now with constraints such that the magnet strengths are
         # equal
         matched, opt_res = lat.constraints.match(
-            constraints=({"type": "eq", "fun": lambda x: x[0] + 2*x[1]})
+            constraints=({"type": "eq", "fun": lambda x: x[0] + 2 * x[1]})
         )
         s, beta, *_ = matched.transport(twiss=matched.m_h.twiss_solution)
         self.assertAlmostEqual(min(beta), 0.5)
-        assert matched[0].f == -2*matched[2].f
+        assert matched[0].f == -2 * matched[2].f
 
     def test_repr(self):
         lat = Lattice([Drift(1)])
