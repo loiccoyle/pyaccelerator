@@ -113,7 +113,7 @@ class TestLattice(TestCase):
     def test_tranport_phasespace(self):
         # transporting phase space coords:
         lat = Lattice([Drift(1)])
-        u, u_prime, dp, s = lat.transport(phasespace=[1, 0, 0])
+        s, u, u_prime, dp = lat.transport(phasespace=[1, 0, 0])
         assert len(u) == 2
         assert len(u_prime) == 2
         assert len(s) == 2
@@ -122,7 +122,7 @@ class TestLattice(TestCase):
         assert np.allclose(s, np.array([0, 1]))
         assert dp.shape == u.shape
 
-        u, u_prime, dp, s = lat.transport([1, 1, 0])
+        s, u, u_prime, dp = lat.transport([1, 1, 0])
         assert len(u) == 2
         assert len(u_prime) == 2
         assert len(s) == 2
@@ -133,9 +133,9 @@ class TestLattice(TestCase):
 
         # make sure the transport is consistent:
         lat = Lattice([Drift(2)])
-        u_1, u_prime_1, dp, s_1 = lat.transport([1, 1, 0])
+        s_1, u_1, u_prime_1, dp = lat.transport([1, 1, 0])
         lat = Lattice([Drift(1), Drift(1)])
-        u_2, u_prime_2, dp, s_2 = lat.transport([1, 1, 0])
+        s_2, u_2, u_prime_2, dp = lat.transport([1, 1, 0])
         assert len(u_2) == 3
         assert len(u_prime_2) == 3
         assert len(s_2) == 3
@@ -158,13 +158,13 @@ class TestLattice(TestCase):
                 QuadrupoleThin(2 * f),
             ]
         )
-        beta, alpha, gamma, s = FODO.transport(twiss=FODO.m_h.twiss_solution)
+        s, beta, alpha, gamma = FODO.transport(twiss=FODO.m_h.twiss_solution)
         assert len(beta) == len(FODO) + 1
         assert len(alpha) == len(FODO) + 1
         assert len(gamma) == len(FODO) + 1
         assert len(s) == len(FODO) + 1
         # make sure the default is correct
-        beta_2, alpha_2, gamma_2, s_2 = FODO.transport()
+        s_2, beta_2, alpha_2, gamma_2 = FODO.transport()
         assert np.allclose(beta, beta_2)
         assert np.allclose(alpha, alpha_2)
         assert np.allclose(gamma, gamma_2)
@@ -178,7 +178,7 @@ class TestLattice(TestCase):
         assert np.argmin(beta) == 2
 
         # now in the v plane
-        beta, alpha, gamma, s = FODO.transport(twiss=FODO.m_v.twiss_solution, plane="v")
+        s, beta, alpha, gamma = FODO.transport(twiss=FODO.m_v.twiss_solution, plane="v")
         assert len(beta) == len(FODO) + 1
         assert len(alpha) == len(FODO) + 1
         assert len(gamma) == len(FODO) + 1
@@ -206,7 +206,7 @@ class TestLattice(TestCase):
             ]
         )
         beam = Beam()
-        u, u_prime, dp, s = FODO.transport(
+        s, u, u_prime, dp = FODO.transport(
             beam.ellipse(FODO.m_h.twiss_solution, n_angles=n_angles)
         )
         assert u.shape[-1] == len(FODO) + 1
@@ -229,7 +229,7 @@ class TestLattice(TestCase):
         )
         n_particles = 10
         beam = Beam(n_particles=n_particles)
-        u, u_prime, dp, s = FODO.transport(
+        s, u, u_prime, dp = FODO.transport(
             phasespace=beam.match(FODO.m_h.twiss_solution)
         )
         assert u.shape[-1] == len(FODO) + 1

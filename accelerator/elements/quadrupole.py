@@ -32,7 +32,7 @@ class Quadrupole(BaseElement):
         self.l = l
         self.k = k
         if name is None:
-            name = f"quadrupole_thin_{next(self._instance_count)}"
+            name = f"quadrupole_{next(self._instance_count)}"
         super().__init__("k", "l", "name")
         self.name = name
 
@@ -86,8 +86,8 @@ class Quadrupole(BaseElement):
         """
         out = [
             Quadrupole(
-                self.l / n_quadrupoles,
                 self.k,
+                self.l / n_quadrupoles,
                 name=f"{self.name}_slice_{i}",
             )
             for i in range(n_quadrupoles)

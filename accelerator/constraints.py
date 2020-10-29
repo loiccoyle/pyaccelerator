@@ -276,6 +276,8 @@ class Constraints:
         self, lattice: "Lattice"
     ) -> Dict[str, Dict[Tuple[float, float], np.ndarray]]:
         """Run all the required `Lattice.transport` calls."""
+        # create a set of unique combinations of inputs for lattice.tranport
+        # to not run any transport twice
         inits_planes = {
             (target.twiss, target.phasespace, target.plane) for target in self.targets
         }
@@ -284,7 +286,8 @@ class Constraints:
             if plane not in out.keys():
                 out[plane] = {}
             try:
-                *transported, _ = lattice.transport(
+                # ignore the s coord
+                _, *transported = lattice.transport(
                     twiss=twiss, phasespace=phasespace, plane=plane
                 )
                 transported = np.vstack(transported)
