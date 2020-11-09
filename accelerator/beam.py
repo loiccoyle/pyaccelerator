@@ -18,8 +18,8 @@ class Beam:
         n_particles: Number of particles in the beam, defaults to 1000.
         emittance: Normalized beam emittance in meters, to specify horizontal
             and vertical emittances use a tuple, defaults to 3.5e-6.
-        sigma_energy: Kinetic energy spread in MeV.
-        sampling: distribution sampling method, defaults to "bigaussian".
+        sigma_energy: Relative Kinetic energy spread.
+        sampling: Distribution sampling method, defaults to "bigaussian".
 
     Examples:
         Beam with even emittances:
@@ -86,13 +86,14 @@ class Beam:
 
     @property
     def sigma_p(self):
+        absolute_sigma_e = self.sigma_energy * self.energy
         # in MeV/c
-        return np.sqrt(self.sigma_energy ** 2 + 2 * self.sigma_energy * self.mass)
+        return np.sqrt(absolute_sigma_e ** 2 + 2 * absolute_sigma_e * self.mass)
 
     def ellipse(
         self,
-        twiss: Sequence[float],
-        plane: str = "h",
+        twiss_h: Sequence[float],
+        twiss_v: Optional[Sequence[float]] = None,
         closure_tol: float = 1e-10,
         n_angles: int = 1e3,
     ) -> PhasespaceDistribution:
@@ -111,25 +112,40 @@ class Beam:
             Position, angle phase and dp/p space coordrinates of the ellipse.
                 Note, dp/p will be set to 0.
         """
-        twiss = to_twiss(twiss)
-        beta, alpha, _ = twiss.T[0]  # pylint: disable=unsubscriptable-object
-        closure = compute_twiss_clojure(twiss)
-        if not -closure_tol <= closure - 1 <= closure_tol:
-            raise ValueError(
-                f"Closure condition not met: beta * gamma - alpha**2 = {closure} != 1"
-            )
-        emit = getattr(self, "geo_emittance_" + plane.lower())
+        twiss_h = to_twiss(twiss_h)
+        if twiss_v is None:
+            # if no vertical twiss provided use the same as the horizontal
+            twiss_v = twiss_h
+        else:
+            twiss_v = to_twiss(twiss_v)
+        beta_h, alpha_h, _ = twiss_h.T[0]  # pylint: disable=unsubscriptable-object
+        beta_v, alpha_v, _ = twiss_v.T[0]  # pylint: disable=unsubscriptable-object
+        # check the twiss parameters
+        for twiss in (twiss_h, twiss_v):
+            closure = compute_twiss_clojure(twiss)
+            if not -closure_tol <= closure - 1 <= closure_tol:
+                raise ValueError(
+                    f"Closure condition not met for {twiss}: beta * gamma - alpha**2 = {closure} != 1"
+                )
         angles = np.linspace(0, 2 * np.pi, int(n_angles))
         # TODO: make sure these equations are correct
-        u = np.sqrt(emit * beta) * np.cos(angles)
-        u_prime = -(alpha / beta) * u - np.sqrt(emit / beta) * np.sin(angles)
-        dp = np.zeros(u_prime.shape)
-        return PhasespaceDistribution(u, u_prime, dp)
+        # horizontal phase space ellipse
+        x = np.sqrt(self.geo_emittance_h * beta_h) * np.cos(angles)
+        x_prime = -(alpha_h / beta_h) * x - np.sqrt(
+            self.geo_emittance_h / beta_h
+        ) * np.sin(angles)
+        # vetical phase space ellipse
+        y = np.sqrt(self.geo_emittance_v * beta_v) * np.cos(angles)
+        y_prime = -(alpha_v / beta_v) * y - np.sqrt(
+            self.geo_emittance_v / beta_v
+        ) * np.sin(angles)
+        dp = np.zeros(x_prime.shape)
+        return PhasespaceDistribution(x, x_prime, y, y_prime, dp)
 
     def match(
         self,
-        twiss: Sequence[float],
-        plane: str = "h",
+        twiss_h: Sequence[float],
+        twiss_v: Optional[Sequence[float]] = None,
         closure_tol: float = 1e-10,
     ) -> PhasespaceDistribution:
         """Generate a matched beam phase space distribution to the provided
@@ -144,24 +160,41 @@ class Beam:
         Returns:
             Position, angle and dp/p phase space coordinates.
         """
-        plane = plane.lower()
-        twiss = to_twiss(twiss)
-        beta, alpha, _ = twiss.T[0]  # pylint: disable=unsubscriptable-object
-        closure = compute_twiss_clojure(twiss)
-        if not -closure_tol <= closure - 1 <= closure_tol:
-            raise ValueError(
-                f"Closure condition not met: beta * gamma - alpha**2 = {closure} != 1"
-            )
-        emit = getattr(self, "geo_emittance_" + plane)
-        u_pre, u_prime_pre, dp = self.sampling(
-            self.n_particles, (0, 0, 0), emit, self.sigma_p
+        twiss_h = to_twiss(twiss_h)
+        if twiss_v is None:
+            # if no vertical twiss provided use the same as the horizontal
+            twiss_v = twiss_h
+        else:
+            twiss_v = to_twiss(twiss_v)
+        beta_h, alpha_h, _ = twiss_h.T[0]  # pylint: disable=unsubscriptable-object
+        beta_v, alpha_v, _ = twiss_v.T[0]  # pylint: disable=unsubscriptable-object
+        # check the twiss parameters
+        for twiss in (twiss_h, twiss_v):
+            closure = compute_twiss_clojure(twiss)
+            if not -closure_tol <= closure - 1 <= closure_tol:
+                raise ValueError(
+                    f"Closure condition not met: beta * gamma - alpha**2 = {closure} != 1"
+                )
+        x_pre, x_prime_pre, y_pre, y_prime_pre, dp = self.sampling(
+            self.n_particles,
+            (0, 0, 0, 0, 0),
+            self.geo_emittance_h,
+            self.geo_emittance_v,
+            self.sigma_p,
         )
-        # match circle to the ellipse described by the twiss parameters
-        u = np.sqrt(beta) * u_pre
-        u_prime = -(alpha / np.sqrt(beta)) * u_pre + (1.0 / np.sqrt(beta)) * u_prime_pre
+        # match circle to the ellipse described by the twiss parameters x plane
+        x = np.sqrt(beta_h) * x_pre
+        x_prime = (
+            -(alpha_h / np.sqrt(beta_h)) * x_pre + (1.0 / np.sqrt(beta_h)) * x_prime_pre
+        )
+        # match circle to the ellipse described by the twiss parameters y plane
+        y = np.sqrt(beta_v) * y_pre
+        y_prime = (
+            -(alpha_v / np.sqrt(beta_v)) * y_pre + (1.0 / np.sqrt(beta_v)) * y_prime_pre
+        )
         # turn dp into dp/p
         dp /= self.p
-        return PhasespaceDistribution(u, u_prime, dp)
+        return PhasespaceDistribution(x, x_prime, y, y_prime, dp)
 
     def __repr__(self) -> str:
         args = {
@@ -174,44 +207,3 @@ class Beam:
         }
         arg_str = ",\n".join([f"{key}={repr(value)}" for key, value in args.items()])
         return f"Beam(\n{arg_str})"
-
-    def plot(
-        self,
-        twiss_h: Optional[Sequence[float]] = None,
-        twiss_v: Optional[Sequence[float]] = None,
-        **kwargs,
-    ) -> Tuple[plt.Figure, np.ndarray]:
-        """Plot the particle distribution matched to the `twiss` parameters in
-        both the horizontal and vertical planes.
-
-        Args:
-            twiss_h (optional): Horizontal twiss parameters to match the distribution.
-            twiss_v (optional): Vertical twiss parameters to match the distribution.
-            **kwargs: Passed to ``plt.scatter``.
-
-        Returns:
-            The plotted ``plt.Figure`` and a ``np.ndarray`` of the ``plt.Axes``.
-        """
-        if twiss_h is None and twiss_v is None:
-            raise ValueError("Both 'twiss_h' and 'twiss_h' are None.")
-        n_plots = sum([twiss is not None for twiss in [twiss_h, twiss_v]])
-        current_plot = 0
-        fig, axes = plt.subplots(1, n_plots, sharex=True, sharey=True)
-        if not isinstance(axes, np.ndarray):
-            axes = np.array([axes])
-        fig.suptitle("Phase space beam ditributions")
-        if twiss_h is not None:
-            x, x_prime, _ = self.match(twiss_h, plane="h")
-            axes[current_plot].scatter(x, x_prime, **kwargs)
-            axes[current_plot].set_xlabel("x [m]")
-            axes[current_plot].set_ylabel("x'")
-            axes[current_plot].set_aspect("equal")
-            current_plot += 1
-        if twiss_v is not None:
-            y, y_prime, _ = self.match(twiss_v, plane="v")
-            axes[current_plot].scatter(y, y_prime, **kwargs)
-            axes[current_plot].set_xlabel("y [m]")
-            axes[current_plot].set_ylabel("y'")
-            axes[current_plot].set_aspect("equal")
-        fig.tight_layout()
-        return fig, axes

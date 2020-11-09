@@ -5,10 +5,19 @@ from typing import Optional, Sequence, Tuple, Union
 import matplotlib.pyplot as plt
 import numpy as np
 
+
+# where the x, x' and y, y' are located in the phase space coord vector
+PLANE_INDICES = {"h": [0, 1], "v": [2, 3]}
+PLANE_SLICES = {"h": slice(0, 2), "v": slice(2, 4)}
+
 # some named tuples to make the interface friendlier
-PhasespaceDistribution = namedtuple("PhasespaceDistribution", ["u", "u_prime", "dp"])
+PhasespaceDistribution = namedtuple(
+    "PhasespaceDistribution", ["x", "x_prime", "y", "y_prime", "dp"]
+)
 TransportedTwiss = namedtuple("TransportedTwiss", ["s", "beta", "alpha", "gamma"])
-TransportedPhasespace = namedtuple("TransportedPhasespace", ["s", "u", "u_prime", "dp"])
+TransportedPhasespace = namedtuple(
+    "TransportedPhasespace", ["s", "x", "x_prime", "y", "y_prime", "dp"]
+)
 
 
 def plot_twiss(self) -> Tuple[plt.Figure, plt.Axes]:
@@ -26,50 +35,102 @@ def plot_twiss(self) -> Tuple[plt.Figure, plt.Axes]:
     return fig, ax
 
 
-def plot_phasespace(self) -> Tuple[plt.Figure, plt.Axes]:
+def plot_phasespace(
+    self, plane: str = "both", add_legend=False
+) -> Tuple[plt.Figure, plt.Axes]:
     """Plot the evolution of phase space coordinates through the lattice.
 
     Return:
         The plotted ``plt.Figure`` and ``plt.Axes``.
     """
-    fig, ax = plt.subplots(1, 1)
-    if self.u.ndim > 1 and self.u_prime.ndim > 1 and self.dp.ndim > 1:
-        # if the data contains multiple particles, plot in phase space
-        # TODO: this could be split into multiple subplots like what Michael did
-        # in the notebook.
-        lines = ax.plot(self.u, self.u_prime, linewidth=0, marker=".")
-        ax.set_xlabel("u [m]")
-        ax.set_ylabel("u' [rad]")
-        ax.set_aspect("equal")
-        ax.legend(lines, [f"s={s}" for s in self.s])
+    plane = plane.lower()
+    if plane not in ("h", "v", "both"):
+        raise ValueError("'plane' should be either 'h', 'v' or 'both'.")
+    if plane == "both":
+        n_plots = 2
     else:
-        # else plot the evolution of the particle coordinates
-        ax.plot(self.s, self.u, label="u")
-        ax.plot(self.s, self.u_prime, label="u_prime")
-        ax.plot(self.s, self.dp, label="dp")
-        ax.set_xlabel("s [m]")
-        ax.legend()
+        n_plots = 1
+    fig, ax = plt.subplots(1, n_plots, sharex=True, sharey=True)
+
+    def plot_plane(ax, u, u_prime, plane, add_legend=False):
+        if all([coord.ndim > 1 for coord in (u, u_prime, self.dp)]):
+            # if the data contains multiple particles, plot in phase space
+            # TODO: this could be split into multiple subplots like what Michael did
+            # in the notebook.
+            lines = ax.plot(u, u_prime, linewidth=0, marker=".")
+            ax.set_xlabel(f"{plane} [m]")
+            ax.set_ylabel(f"{plane}'")
+            ax.set_aspect("equal")
+            if add_legend:
+                fig.subplots_adjust(right=0.8)
+                ax.legend(
+                    lines,
+                    [f"s={s}" for s in self.s],
+                    bbox_to_anchor=(1.05, 1),
+                    loc="upper left",
+                )
+        else:
+            # else plot the evolution of the particle coordinates
+            ax.plot(self.s, u, label=f"{plane}")
+            ax.plot(self.s, u_prime, label=f"{plane}_prime")
+            ax.plot(self.s, self.dp, label="dp")
+            ax.set_xlabel("s [m]")
+            ax.set_ylabel(f"{plane} [m]")
+            if add_legend:
+                ax.legend()
+
+    if plane == "h":
+        plot_plane(ax, self.x, self.x_prime, "x", add_legend=add_legend)
+    elif plane == "h":
+        plot_plane(ax[1], self.y, self.y_prime, "y", add_legend=add_legend)
+    elif plane == "both":
+        plot_plane(ax[0], self.x, self.x_prime, "x", add_legend=False)
+        plot_plane(ax[1], self.y, self.y_prime, "y", add_legend=add_legend)
+
     return fig, ax
 
 
-def plot_phasespace_distribution(self) -> Tuple[plt.Figure, plt.Axes]:
+def plot_phasespace_distribution(
+    self, plane: str = "both"
+) -> Tuple[plt.Figure, plt.Axes]:
     """Plot the phase space coordinates distribution.
 
     Return:
         The plotted ``plt.Figure`` and ``plt.Axes``.
     """
-    fig, ax = plt.subplots(1, 1)
-    if (self.dp == 0).all():
-        # if all the dp/p are 0 then don't change color based on dp/p
-        ax.scatter(self.u, self.u_prime, s=4)
+    plane = plane.lower()
+    if plane not in ("h", "v", "both"):
+        raise ValueError("'plane' should be either 'h', 'v' or 'both'.")
+    if plane == "both":
+        n_plots = 2
     else:
-        # else add colour and colour bar w.r.t. to dp/p
-        scatter = ax.scatter(self.u, self.u_prime, c=self.dp, s=4)
-        cbar = fig.colorbar(scatter, ax=ax)
-        cbar.set_label("dp/p", rotation=270)
-    ax.set_xlabel("u [m]")
-    ax.set_ylabel("u' [rad]")
-    ax.set_aspect("equal")
+        n_plots = 1
+    fig, ax = plt.subplots(1, n_plots, sharex=True, sharey=True)
+
+    def plot_plane(ax, u, u_prime, plane, add_cbar=False):
+        if (self.dp == 0).all():
+            # if all the dp/p are 0 then don't change color based on dp/p
+            ax.scatter(u, u_prime, s=4)
+        else:
+            # else add colour and colour bar w.r.t. to dp/p
+            scatter = ax.scatter(u, u_prime, c=self.dp, s=4)
+            if add_cbar:
+                fig.subplots_adjust(right=0.8)
+                cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+                cbar = fig.colorbar(scatter, cax=cbar_ax)
+                cbar.set_label("dp/p", rotation=90)
+        ax.set_xlabel(f"{plane} [m]")
+        ax.set_ylabel(f"{plane}'")
+        ax.set_aspect("equal")
+
+    if plane == "h":
+        plot_plane(ax, self.x, self.x_prime, "x", add_cbar=True)
+    elif plane == "h":
+        plot_plane(ax[1], self.y, self.y_prime, "y", add_cbar=True)
+    elif plane == "both":
+        plot_plane(ax[0], self.x, self.x_prime, "x", add_cbar=False)
+        plot_plane(ax[1], self.y, self.y_prime, "y", add_cbar=True)
+
     return fig, ax
 
 
@@ -181,7 +242,7 @@ def compute_twiss_clojure(twiss: Sequence[float]) -> float:
 
 
 def compute_m_twiss(m: np.array) -> np.array:
-    """Compute the twiss transfer matrix from a (2, 2) phase space transfer
+    """Compute the twiss transfer matrix from a 2x2 phase space transfer
     matrix.
 
     Args:
@@ -203,32 +264,6 @@ def compute_m_twiss(m: np.array) -> np.array:
     m_twiss[2][1] = -2 * m[1][0] * m[1][1]
     m_twiss[2][2] = m[1][1] ** 2
     return m_twiss
-
-
-def compute_dispersion_solution(
-    transfer_m: np.ndarray, tol: float = 1e-10
-) -> np.ndarray:
-    """Compute the periodic dispersion solution for the provided transfer
-    matrix.
-
-    Args:
-        transfer_m: 3x3 transfer matrix.
-        tol: Numerical tolerance.
-
-    Returns:
-        Dispersion vector.
-    """
-    disp_prime_denom = (
-        1 - transfer_m[0, 0] - transfer_m[1, 1] + np.linalg.det(transfer_m[:2, :2])
-    )
-    disp_denom = 1 - transfer_m[0, 0]
-    if -tol < disp_prime_denom < tol or -tol < disp_denom < tol:
-        raise ValueError("Matrix has no periodic dispersion solution.")
-    disp_prime = (
-        transfer_m[1, 0] * transfer_m[0, 2] + transfer_m[1, 2] * (1 - transfer_m[0, 0])
-    ) / disp_prime_denom
-    disp = (transfer_m[0, 1] * disp_prime + transfer_m[0, 2]) / disp_denom
-    return to_v_vec((disp, disp_prime, 1))
 
 
 def compute_twiss_solution(transfer_m: np.ndarray, tol: float = 1e-10) -> np.ndarray:

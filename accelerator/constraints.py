@@ -1,9 +1,11 @@
+from abc import abstractmethod
 from typing import TYPE_CHECKING, Dict, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from scipy.optimize import minimize
 
 from .elements.base import BaseElement
+from .utils import PLANE_INDICES
 
 if TYPE_CHECKING:  # pragma: no cover
     from scipy.optimize import OptimizeResult
@@ -11,56 +13,163 @@ if TYPE_CHECKING:  # pragma: no cover
     from .lattice import Lattice
 
 
-class Target:
+class BaseTarget:
+    @abstractmethod
+    def loss(self, lattice: "Lattice"):
+        pass
+
+
+class TargetPhasespace(BaseTarget):
     """Constraint target.
 
     Args:
         element: Element name pattern or element instance at which the
             `value` should be achieved.
-        value: If `value` is of length 2, phase space parameters are assumed.
-            If `value` is of length 3, twiss parameters are assumed. Use
-            None to ignore parameters.
-        phasespace (optional): Initial phase space coords, a sequence of
+        value: Target value of twiss parameters or phase space coordinates
+            at the given `element`.
+        initial (optional): Initial phase space coords, a sequence of
             u[m], u_prime[rad], dp/p.
-        twiss (optional): Initial twiss parameters, a sequence of beta[m],
-            alpha[rad], gamma[m^-1]. If "solution" is provided or if
-            neither `phasespace` nor `twiss` is provided, the twiss
-            periodic solution is computed and used for the transport.
-        plane: Plane of interest, either "h" or "v", defaults to "h".
+        # twiss (optional): Initial twiss parameters, a sequence of beta[m],
+        #     alpha[rad], gamma[m^-1]. If "solution" is provided or if
+        #     neither `phasespace` nor `twiss` is provided, the twiss
+        #     periodic solution is computed and used for the transport.
     """
 
     def __init__(
         self,
         element: Union[str, "BaseElement"],
         value: Sequence[float],
-        twiss: Optional[Union[str, Sequence[float]]] = None,
-        phasespace: Optional[Sequence[float]] = None,
-        plane: str = "h",
+        initial: Optional[Sequence[float]] = None,
     ):
-        if isinstance(twiss, str):
-            if twiss != "solution":
-                raise ValueError(
-                    f"Unrecognized twiss string: '{twiss}'. Did you mean 'solution'?"
-                )
-        elif twiss is not None:
-            twiss = tuple(twiss)
-        if phasespace is not None:
-            phasespace = tuple(phasespace)
+        if initial is not None:
+            initial = tuple(initial)
 
-        plane = plane.lower()
         value = np.array(value)
         if isinstance(element, BaseElement):
             element = element.name
         self.element = element
         self.value = value
-        self.twiss = twiss
-        self.phasespace = phasespace
-        self.plane = plane.lower()
+        self.initial = initial
+
+    def _transport(self, lattice: "Lattice"):
+        _, *tranported = lattice.transport(self.initial)
+        return np.vstack(tranported)
+
+    def loss(self, lattice: "Lattice") -> float:
+        # if transported is None:
+        #     # is None when 'solution' was specified but the lattice
+        #     # has no twiss periodic solution.
+        #     return np.inf
+        transported = self._transport(lattice)
+
+        transported_columns = [i + 1 for i in lattice.search(self.element)]
+        transported_rows = [
+            i for i, value in enumerate(self.value) if value is not None
+        ]
+        result = transported[transported_rows, transported_columns]
+        # l-2 norm
+        return np.linalg.norm(result - self.value[transported_rows], 2)
 
     def __repr__(self) -> str:
-        args = ["element", "value", "twiss", "phasespace", "plane"]
+        args = ["element", "value", "initial"]
         arg_string = ", ".join([arg + "=" + repr(getattr(self, arg)) for arg in args])
-        return f"Target({arg_string})"
+        return f"TargetPhasespace({arg_string})"
+
+
+class TargetTwiss(BaseTarget):
+    def __init__(
+        self,
+        element: Union[str, "BaseElement"],
+        value: Sequence[float],
+        plane: str = "h",
+    ):
+        value = np.array(value)
+        if isinstance(element, BaseElement):
+            element = element.name
+        self.element = element
+        self.value = value
+        self.plane = plane
+
+    def _transport(self, lattice: "Lattice"):
+        _, *twiss = lattice.twiss(plane=self.plane)
+        return np.vstack(twiss)
+
+    def loss(self, lattice: "Lattice") -> float:
+        # if transported is None:
+        #     # is None when 'solution' was specified but the lattice
+        #     # has no twiss periodic solution.
+        #     return np.inf
+        try:
+            transported = self._transport(lattice)
+        except ValueError:
+            return np.inf
+
+        transported_columns = [i + 1 for i in lattice.search(self.element)]
+        transported_rows = [
+            i for i, value in enumerate(self.value) if value is not None
+        ]
+        result = transported[transported_rows, transported_columns]
+        # l-2 norm
+        return np.linalg.norm(result - self.value[transported_rows], 2)
+
+    def __repr__(self) -> str:
+        args = ["element", "value", "plane"]
+        arg_string = ", ".join([arg + "=" + repr(getattr(self, arg)) for arg in args])
+        return f"TargetTwiss({arg_string})"
+
+
+class TargetDispersion(BaseTarget):
+    def __init__(
+        self,
+        element: Union[str, "BaseElement"],
+        value: float,
+        plane: str = "h",
+    ):
+        value = np.array(value)
+        if isinstance(element, BaseElement):
+            element = element.name
+        self.element = element
+        self.value = value
+        self.plane = plane
+
+    def _transport(self, lattice: "Lattice"):
+        _, *transported = lattice.dispersion(plane=self.plane)
+        dispersion = transported[PLANE_INDICES[self.plane][0]]
+        return np.array(dispersion)
+
+    def loss(self, lattice: "Lattice") -> float:
+        try:
+            transported = self._transport(lattice)
+        except ValueError:
+            return np.inf
+
+        transported_columns = [i + 1 for i in lattice.search(self.element)]
+        transported_rows = [
+            i for i, value in enumerate(self.value) if value is not None
+        ]
+        result = transported[transported_rows, transported_columns]
+        return abs(result - self.value)
+
+    def __repr__(self) -> str:
+        args = ["element", "value", "plane"]
+        arg_string = ", ".join([arg + "=" + repr(getattr(self, arg)) for arg in args])
+        return f"TargetDispersion({arg_string})"
+
+
+class TargetGlobal(BaseTarget):
+    def __init__(self, method: str, value: float, **method_kwargs):
+        self.method = method
+        self.value = value
+        self.method_kwargs = method_kwargs
+
+    def loss(self, lattice: "Lattice"):
+        out = getattr(lattice, self.method)(**self.method_kwargs)
+        return abs(out - self.value)
+
+    def __repr__(self) -> str:
+        args = ["element", "value", "method_kwargs"]
+        arg_string = ", ".join([arg + "=" + repr(getattr(self, arg)) for arg in args])
+        return f"TargetGlobal({arg_string})"
 
 
 class FreeParameter:
@@ -153,22 +262,14 @@ class Constraints:
         self.targets = []
         self.free_parameters = []
 
-    def add_target(
-        self,
-        element: Union[str, "BaseElement"],
-        value: Sequence[float],
-        twiss: Union[str, Sequence[float]] = None,
-        phasespace: Sequence[float] = None,
-        plane: str = "h",
-    ):
+    def add_target(self, target: BaseTarget):
         """Add a constraint target.
 
         Args:
             element: Element name pattern or element instance at which the
                 `value` should be achieved.
-            value: If `value` is of length 2, phase space parameters are assumed.
-                If `value` is of length 3, twiss parameters are assumed. Use
-                None to ignore parameters.
+            value: Target value of twiss parameters or phase space coordinates
+                at the given `element`.
             phasespace (optional): Initial phase space coords, a sequence of
                 u[m], u_prime[rad], dp/p.
             twiss (optional): Initial twiss parameters a sequence of beta[m],
@@ -188,9 +289,16 @@ class Constraints:
                 >>> lat.constraints.add_target("quad_0", [0.6, None, None], twiss=[1, 0 ,1])
                 ... # or lat.constraints.add_target(quad, [0.6, None, None], twiss=[1, 0 ,1])
         """
-        self.targets.append(
-            Target(element, value, twiss=twiss, phasespace=phasespace, plane=plane)
-        )
+        target_dict = {
+            "dispersion": TargetDispersion,
+            "phasespace": TargetPhasespace,
+            "twiss": TargetTwiss,
+            "global": TargetGlobal,
+        }
+        # if target is None:
+        #     target = target_dict[target_type](*args, **kwargs)
+
+        self.targets.append(target)
 
     def add_free_parameter(self, element: str, attribute: str):
         """Add a constraint free parameter.
@@ -250,18 +358,13 @@ class Constraints:
 
         def match_function(new_settings):
             self._set_parameters(new_settings, lattice)
-            transports = self._run_transports(lattice)
             out = []
             for target in self.targets:
-                out.append(
-                    self._transport_to_scalar(
-                        target,
-                        transports[target.plane][(target.twiss, target.phasespace)],
-                        lattice,
-                    )
-                )
-            # mean of the norm of the targets
-            return np.mean(out)
+                out.append(target.loss(lattice))
+            # mean of the losses
+            print(out)
+            print(np.linalg.norm(out, 2))
+            return np.linalg.norm(out, 2)
 
         res = minimize(
             match_function, *args, x0=root_start, method=default_method, **kwargs
@@ -272,36 +375,12 @@ class Constraints:
             self._set_parameters(res.x, lattice)
         return lattice, res
 
-    def _run_transports(
-        self, lattice: "Lattice"
-    ) -> Dict[str, Dict[Tuple[float, float], np.ndarray]]:
-        """Run all the required `Lattice.transport` calls."""
-        # create a set of unique combinations of inputs for lattice.tranport
-        # to not run any transport twice
-        inits_planes = {
-            (target.twiss, target.phasespace, target.plane) for target in self.targets
-        }
-        out = {}
-        for twiss, phasespace, plane in inits_planes:
-            if plane not in out.keys():
-                out[plane] = {}
-            try:
-                # ignore the s coord
-                _, *transported = lattice.transport(
-                    twiss=twiss, phasespace=phasespace, plane=plane
-                )
-                transported = np.vstack(transported)
-            except ValueError:
-                transported = None
-            out[plane][(twiss, phasespace)] = transported
-
-        return out
-
     def _set_parameters(self, new_settings: Sequence[float], lattice: "Lattice"):
         """Set the new lattice settings."""
         for param, value in zip(self.free_parameters, new_settings):
             for i in lattice.search(param.element):
                 setattr(lattice[i], param.attribute, value)
+                # print(lattice[i])
         # TODO: decide if we keep the caching of the one turn matrices?
         lattice._clear_cache()
 
@@ -319,25 +398,6 @@ class Constraints:
                 )
             )
         return out
-
-    @staticmethod
-    def _transport_to_scalar(
-        target: Target, transported: np.ndarray, lattice: "Lattice"
-    ) -> float:
-        """Compute a scalar value from the tranported parameters, for the given
-        constraint.
-        """
-        if transported is None:
-            # is None when 'solution' was specified but the lattice
-            # has no twiss periodic solution.
-            return np.inf
-        transported_columns = [i + 1 for i in lattice.search(target.element)]
-        transported_rows = [
-            i for i, value in enumerate(target.value) if value is not None
-        ]
-        result = transported[transported_rows, transported_columns]
-        # l-2 norm
-        return np.linalg.norm(result - target.value[transported_rows], 2)
 
     def __repr__(self):
         return f"Constraints({repr(self._lattice)})"

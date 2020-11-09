@@ -13,61 +13,36 @@ class CustomThin(BaseElement):
 
     def __init__(
         self,
-        transfer_matrix_h: Optional[np.ndarray] = None,
-        transfer_matrix_v: Optional[np.ndarray] = None,
+        transfer_matrix: np.ndarray,
         name: Optional[str] = None,
     ):
         """Custom element.
 
         Args:
-            transfer_matrix_h: Transfer matrix of the element in the
-                horizonal plane. If only one transfer matrix is provided it will
-                also be used for the other plane.
-            transfer_matrix_v: Transfer matrix of the element in the
-                vertical plane. If only one transfer matrix is provided it will
-                also be used for the other plane.
+            transfer_matrix: Transfer matrix of the element.
             name (optional): Element name.
 
         Attributes:
-            transfer_matrix_h: Element phase space transfer matrix in the
-                horizonal plane.
-            transfer_matrix_v: Element phase space transfer matrix in the
-                vertical plane.
+            transfer_matrix: Element phase space transfer matrix.
             length: Element length in meters.
-            m_h: Element phase space transfer matrix in the horizonal plane.
-            m_h: Element phase space transfer matrix in the vertical plane.
+            m: Element phase space transfer matrix in the horizonal plane.
             name: Element name.
         """
-        if transfer_matrix_h is None and transfer_matrix_v is None:
-            raise ValueError(
-                "Provide at least one of 'transfer_matrix_h', 'transfer_matrix_v'."
-            )
-        if transfer_matrix_h is None:
-            transfer_matrix_h = transfer_matrix_v
-        if transfer_matrix_v is None:
-            transfer_matrix_v = transfer_matrix_h
+        if not isinstance(transfer_matrix, np.ndarray):
+            transfer_matrix = np.array(transfer_matrix)
 
-        if not isinstance(transfer_matrix_h, np.ndarray):
-            transfer_matrix_h = np.array(transfer_matrix_h)
-        if not isinstance(transfer_matrix_v, np.ndarray):
-            transfer_matrix_v = np.array(transfer_matrix_v)
-
-        self.transfer_matrix_h = transfer_matrix_h
-        self.transfer_matrix_v = transfer_matrix_v
+        self.transfer_matrix = transfer_matrix
 
         if name is None:
             name = f"custom_thin_{next(self._instance_count)}"
-        super().__init__("transfer_matrix_h", "transfer_matrix_v", "name")
+        super().__init__("transfer_matrix", "name")
         self.name = name
 
     def _get_length(self) -> float:
         return 0
 
-    def _get_transfer_matrix_h(self) -> np.ndarray:
-        return self.transfer_matrix_h
-
-    def _get_transfer_matrix_v(self) -> np.ndarray:
-        return self.transfer_matrix_v
+    def _get_transfer_matrix(self) -> np.ndarray:
+        return self.transfer_matrix
 
     def _get_patch(self, s: float) -> Union[None, patches.Patch]:
         label = self.name

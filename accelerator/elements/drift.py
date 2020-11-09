@@ -36,6 +36,12 @@ class Drift(BaseElement):
     def _get_length(self) -> float:
         return self.l
 
+    def _get_transfer_matrix(self) -> np.ndarray:
+        out = np.identity(5)
+        out[0, 1] = self.length
+        out[2, 3] = self.length
+        return out
+
     def _get_transfer_matrix_h(self) -> np.ndarray:
         m_h = np.zeros((3, 3))
         m_h[0, 0] = 1

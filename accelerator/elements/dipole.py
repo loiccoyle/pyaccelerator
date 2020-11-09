@@ -39,6 +39,16 @@ class Dipole(BaseElement):
     def _get_length(self) -> float:
         return self.rho * self.theta
 
+    def _get_transfer_matrix(self) -> np.ndarray:
+        out = np.zeros((5, 5))
+        out[0:2, 0:2] = self._get_transfer_matrix_h()[:2, :2]
+        out[2:4, 2:4] = self._get_transfer_matrix_v()[:2, :2]
+
+        out[0, 4] = self.rho * (1 - np.cos(self.theta))
+        out[1, 4] = np.sin(self.theta)
+        out[4, 4] = 1
+        return out
+
     def _get_transfer_matrix_h(self) -> np.ndarray:
         # horizontal
         m_h = np.zeros((3, 3))
@@ -114,6 +124,9 @@ class DipoleThin(BaseElement):
 
     def _get_length(self) -> float:
         return 0
+
+    def _get_transfer_matrix(self) -> np.ndarray:
+        return np.identity(5)
 
     def _get_transfer_matrix_h(self) -> np.ndarray:
         # horizontal

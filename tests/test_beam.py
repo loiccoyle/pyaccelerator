@@ -42,26 +42,26 @@ class TestBeam(TestCase):
         assert dp.shape == x.shape
 
     def test_match(self):
-        beam = Beam(n_particles=int(1e6), sigma_energy=10)
+        beam = Beam(n_particles=int(1e6), sigma_energy=0.001)
+        print(beam.sigma_p)
+        print(beam.p)
         x, x_prime, dp = beam.match(twiss=[1, 0, 1])
         self.assertAlmostEqual(x.mean(), 0, places=3)
         self.assertAlmostEqual(x.std(), np.sqrt(beam.geo_emittance_h), places=3)
         self.assertAlmostEqual(x_prime.mean(), 0, places=3)
-        self.assertAlmostEqual(x_prime.std(), np.sqrt(beam.geo_emittance_v), places=3)
+        self.assertAlmostEqual(x_prime.std(), np.sqrt(beam.geo_emittance_h), places=3)
         assert dp.shape == x.shape
-        self.assertAlmostEqual(dp.max(), beam.sigma_p / beam.p, places=3)
-        self.assertAlmostEqual(dp.min(), beam.sigma_p / beam.p, places=3)
+        self.assertAlmostEqual(dp.std(), beam.sigma_p / beam.p, places=3)
 
         x, x_prime, dp = beam.match(twiss=[1 / 2, 0, 2])
         self.assertAlmostEqual(x.mean(), 0, places=3)
         self.assertAlmostEqual(x.std(), np.sqrt(beam.geo_emittance_h * 1 / 2), places=3)
         self.assertAlmostEqual(x_prime.mean(), 0, places=3)
         self.assertAlmostEqual(
-            x_prime.std(), np.sqrt(beam.geo_emittance_v * 2), places=3
+            x_prime.std(), np.sqrt(beam.geo_emittance_h * 2), places=3
         )
         assert dp.shape == x.shape
-        self.assertAlmostEqual(dp.max(), beam.sigma_p / beam.p, places=3)
-        self.assertAlmostEqual(dp.min(), beam.sigma_p / beam.p, places=3)
+        self.assertAlmostEqual(dp.std(), beam.sigma_p / beam.p, places=3)
 
     def test_plot(self):
         beam = Beam()

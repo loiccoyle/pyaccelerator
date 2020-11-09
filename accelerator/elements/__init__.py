@@ -3,7 +3,7 @@ from .custom import CustomThin
 from .dipole import Dipole, DipoleThin
 from .drift import Drift
 from .quadrupole import Quadrupole, QuadrupoleThin
-from .sextupole import SextupoleThin
+from .sextupole import Sextupole, SextupoleThin
 
 __all__ = [
     "CustomThin",
@@ -12,5 +12,6 @@ __all__ = [
     "Drift",
     "Quadrupole",
     "QuadrupoleThin",
+    "Sextupole",
     "SextupoleThin",
 ]

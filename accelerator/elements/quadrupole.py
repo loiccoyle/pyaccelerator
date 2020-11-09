@@ -36,8 +36,73 @@ class Quadrupole(BaseElement):
         super().__init__("k", "l", "name")
         self.name = name
 
+    def _non_linear_term(self, phase_coords: np.ndarray) -> np.ndarray:
+        # TODO: clean up all the sin cos stuff
+        out = np.zeros(phase_coords.shape)
+        if self.k >= 0:
+            sqrt_k = np.sqrt(self.k)
+            sin_x = np.sin(sqrt_k * self.l) / sqrt_k
+            cos_x = np.cos(sqrt_k * self.l)
+
+            sin_y = np.sinh(sqrt_k * self.l) / sqrt_k
+            cos_y = np.cosh(sqrt_k * self.l)
+        else:
+            sqrt_k = np.sqrt(-self.k)
+            sin_x = np.sinh(sqrt_k * self.l) / sqrt_k
+            cos_x = np.cosh(sqrt_k * self.l)
+
+            sin_y = np.sin(sqrt_k * self.l) / sqrt_k
+            cos_y = np.cos(sqrt_k * self.l)
+
+        # p_0 =
+        # print(1 - phase_coords[4])
+
+        out[0] = 0.5 * (
+            self.k * self.l * sin_x * phase_coords[0] * phase_coords[4]
+            - (sin_x + self.l * cos_x)
+            * (phase_coords[1] / (1 - phase_coords[4]))
+            * phase_coords[4]
+        )
+        out[1] = (
+            0.5
+            * self.k
+            * (-(sin_x - self.l * cos_x) * phase_coords[0] * phase_coords[4])
+            + self.l
+            * sin_x
+            * (phase_coords[1] / (1 - phase_coords[4]))
+            * phase_coords[4]
+        )
+
+        out[2] = 0.5 * (
+            -self.k * self.l * sin_y * phase_coords[2] * phase_coords[4]
+            - (sin_y + self.l * cos_y)
+            * (phase_coords[3] / (1 - phase_coords[4]))
+            * phase_coords[4]
+        )
+        out[3] = (
+            0.5
+            * self.k
+            * ((sin_y - self.l * cos_y) * phase_coords[2] * phase_coords[4])
+            - self.l
+            * sin_y
+            * (phase_coords[3] / (1 - phase_coords[4]))
+            * phase_coords[4]
+        )
+        return out
+
     def _get_length(self) -> float:
         return self.l
+
+    def _get_transfer_matrix(self) -> np.ndarray:
+        out = np.zeros((5, 5))
+        if self.k >= 0:
+            out[0:2, 0:2] = self.__focussing(self.k)[:2, :2]
+            out[2:4, 2:4] = self.__defocussing(-self.k)[:2, :2]
+        else:
+            out[2:4, 2:4] = self.__focussing(-self.k)[:2, :2]
+            out[0:2, 0:2] = self.__defocussing(self.k)[:2, :2]
+        out[4, 4] = 1
+        return out
 
     def _get_transfer_matrix_h(self) -> np.ndarray:
         if self.k >= 0:
@@ -58,7 +123,6 @@ class Quadrupole(BaseElement):
         # m_f[0, 2] = 0
         m_f[1, 0] = -sqrt_k * np.sin(sqrt_k * self.l)
         m_f[1, 1] = np.cos(sqrt_k * self.l)
-        # m_f[1, 2] = 0
         m_f[2, 2] = 1
         return m_f
 
@@ -71,7 +135,6 @@ class Quadrupole(BaseElement):
         # m_d[0, 2] = 0
         m_d[1, 0] = (sqrt_k) * np.sinh(sqrt_k * self.l)
         m_d[1, 1] = np.cosh(sqrt_k * self.l)
-        # m_d[1, 2] = 0
         m_d[2, 2] = 1
         return m_d
 
@@ -137,6 +200,13 @@ class QuadrupoleThin(BaseElement):
 
     def _get_length(self) -> float:
         return 0
+
+    def _get_transfer_matrix(self) -> np.ndarray:
+        out = np.zeros((5, 5))
+        out[0:2, 0:2] = self._get_transfer_matrix_h()[:2, :2]
+        out[2:4, 2:4] = self._get_transfer_matrix_v()[:2, :2]
+        out[4, 4] = 1
+        return out
 
     def _get_transfer_matrix_h(self) -> np.ndarray:
         m_h = np.zeros((3, 3))

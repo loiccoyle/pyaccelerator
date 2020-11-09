@@ -6,10 +6,83 @@ from matplotlib import patches
 
 from ..lattice import Lattice
 from .base import BaseElement
+from .utils import straight_element
+
+
+class Sextupole(BaseElement):
+    """Sextupole element.
+
+    Args:
+        k: Strength in meters^-3.
+        l: Element length in meters.
+        name (optional): Element name.
+
+    Attributes:
+        k: Sextupole strength in meters^-3.
+        l: Element length in meters.
+        length: Element length in meters.
+        m_h: Element phase space transfer matrix in the horizontal plane.
+        m_v: Element phase space transfer matrix in the vertical plane.
+        name: Element name.
+    """
+
+    _instance_count = count(0)
+
+    def __init__(self, k: float, l: float, name: Optional[str] = None):
+        self.k = k
+        self.l = l
+        if name is None:
+            name = f"sextupole_{next(self._instance_count)}"
+        super().__init__("k", "l", "name")
+        self.name = name
+
+    def _non_linear_term(self, phase_coords: np.ndarray) -> np.ndarray:
+        # see http://cern.ch/mad8/doc/phys_guide.pdf chapter 5.5.3
+        out = np.zeros(phase_coords.shape)
+        out[1] = -0.5 * self.k * self.l * (phase_coords[0] ** 2 - phase_coords[2] ** 2)
+        out[3] = 0.5 * self.k * self.l * (phase_coords[0] * phase_coords[2])
+        return out
+
+    def _get_length(self) -> float:
+        return self.l
+
+    def _get_transfer_matrix(self) -> np.ndarray:
+        out = np.identity(5)
+        out[0, 1] = self.l
+        out[2, 3] = self.l
+        return out
+
+    def slice(self, n_sextupoles: int) -> Lattice:
+        """Slice the element into a many smaller elements.
+
+        Args:
+            n_sextupoles: Number of :py:class:`Sextupole` elements.
+
+        Returns:
+            :py:class:`~accelerator.lattice.Lattice` of sliced :py:class:`Sextupole` elements.
+        """
+        out = [
+            Sextupole(
+                self.k,
+                self.l / n_sextupoles,
+                name=f"{self.name}_slice_{i}",
+            )
+            for i in range(n_sextupoles)
+        ]
+        return Lattice(out)
+
+    def _get_patch(self, s: float) -> patches.Patch:
+        label = "Sextupole"
+        colour = "tab:green"
+        return patches.Rectangle((s, -1), self.length, 2, facecolor=colour, label=label)
+
+    @staticmethod
+    def _dxztheta_ds(theta: float, d_s: float) -> np.ndarray:
+        return straight_element(theta, d_s)
 
 
 class SextupoleThin(BaseElement):
-    """Sextupole element.
+    """Thin Sextupole element.
 
     Args:
         k: Strength in meters^-2.
@@ -32,27 +105,17 @@ class SextupoleThin(BaseElement):
         super().__init__("k", "name")
         self.name = name
 
-    def _non_linear_term(self, phase_coord: np.ndarray) -> np.ndarray:
-        out = np.zeros(phase_coord.shape)
-        out[1] = -(1 / 2) * self.k * phase_coord[0] ** 2
+    def _non_linear_term(self, phase_coords: np.ndarray) -> np.ndarray:
+        out = np.zeros(phase_coords.shape)
+        out[1] = -0.5 * self.k * (phase_coords[0] ** 2 - phase_coords[2] ** 2)
+        out[3] = 0.5 * self.k * (phase_coords[0] * phase_coords[2])
         return out
 
     def _get_length(self) -> float:
         return 0
 
-    def _get_transfer_matrix_h(self) -> np.ndarray:
-        m_h = np.zeros((3, 3))
-        m_h[0, 0] = 1
-        m_h[0, 1] = 0
-        # m_h[0, 2] = 0
-        # m_h[1, 0] = 0
-        m_h[1, 1] = 1
-        # m_h[1, 2] = 0
-        m_h[2, 2] = 1
-        return m_h
-
-    def _get_transfer_matrix_v(self) -> np.ndarray:
-        return self._get_transfer_matrix_h()
+    def _get_transfer_matrix(self) -> np.ndarray:
+        return np.identity(5)
 
     def _get_patch(self, s: float) -> patches.Patch:
         label = "Thin Sextupole"
