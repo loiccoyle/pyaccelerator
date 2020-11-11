@@ -195,7 +195,8 @@ class Lattice(list):
         # plt.show()
         # fft_tune = freqs[np.argmax(pos_fft)]
         # print(fft_tune)
-        tune, _ = HarmonicAnalysis(position).laskar_method(2)
+        tune, _ = HarmonicAnalysis(position).laskar_method(3)
+        print(tune)
         if tune[0] == 0:
             # if there is a DC component to the signal then the tune will be the
             # second harmonic
@@ -203,8 +204,8 @@ class Lattice(list):
         else:
             # if not then the tune will be the first harmonic
             tune = tune[0]
-        if tune > 0.5:
-            tune = 1 - tune
+        # if tune > 0.5:
+        #     tune = 1 - tune
         return tune
         # print('laskar', tune)
         # return fft_tune
