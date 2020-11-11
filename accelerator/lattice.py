@@ -2,7 +2,7 @@
 import json
 import os
 import re
-from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Type, Union
+from typing import TYPE_CHECKING, List, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -153,7 +153,7 @@ class Lattice(list):
             plane: plane of interest, either "h" or "v".
 
         Returns:
-            Twiss periodic soluton.
+            Twiss periodic solution.
         """
         plane = plane.lower()
         return compute_twiss_solution(self.m[PLANE_SLICES[plane], PLANE_SLICES[plane]])
@@ -269,12 +269,12 @@ class Lattice(list):
 
     def transport(
         self,
-        initial: Optional[Sequence[Union[float, np.ndarray]]] = None,
+        initial: Sequence[Union[float, np.ndarray]],
     ) -> TransportedPhasespace:
         """Transport phase space coordinates or twiss parameters along the lattice.
 
         Args:
-            initial (optional): phase space coords to transport through the
+            initial: phase space coords to transport through the
                 lattice.
 
         Returns:
@@ -342,7 +342,7 @@ class Lattice(list):
         Args:
             twiss: list of twiss parameters, beta[m], alpha[rad], and
                 gamma[m^-1], one twiss parameter can be None.
-            plane: plane of interest, defaults to "h".
+            plane: plane of interest, either "h" or "v".
 
         Returns:
             Named tuple containing the twiss parameters along the lattice the
