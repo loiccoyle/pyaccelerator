@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Dict, Optional, Sequence, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Sequence, Tuple, Union
 
 import numpy as np
 from scipy.optimize import minimize
@@ -14,25 +14,22 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 class BaseTarget:
+    """Base target."""
+
     @abstractmethod
     def loss(self, lattice: "Lattice"):
-        pass
+        """Compute the loss for this target."""
 
 
 class TargetPhasespace(BaseTarget):
-    """Constraint target.
+    """Target phase space coordinates.
 
     Args:
         element: Element name pattern or element instance at which the
             `value` should be achieved.
-        value: Target value of twiss parameters or phase space coordinates
-            at the given `element`.
+        value: Target phase space coordinates at the given `element`.
         initial (optional): Initial phase space coords, a sequence of
-            u[m], u_prime[rad], dp/p.
-        # twiss (optional): Initial twiss parameters, a sequence of beta[m],
-        #     alpha[rad], gamma[m^-1]. If "solution" is provided or if
-        #     neither `phasespace` nor `twiss` is provided, the twiss
-        #     periodic solution is computed and used for the transport.
+            x[m], x_prime, y[m], y_prime, dp/p.
     """
 
     def __init__(
@@ -56,10 +53,6 @@ class TargetPhasespace(BaseTarget):
         return np.vstack(tranported)
 
     def loss(self, lattice: "Lattice") -> float:
-        # if transported is None:
-        #     # is None when 'solution' was specified but the lattice
-        #     # has no twiss periodic solution.
-        #     return np.inf
         transported = self._transport(lattice)
 
         transported_columns = [i + 1 for i in lattice.search(self.element)]
@@ -77,6 +70,15 @@ class TargetPhasespace(BaseTarget):
 
 
 class TargetTwiss(BaseTarget):
+    """Target twiss parameters.
+
+    Args:
+        element: Element name pattern or element instance at which the
+            `value` should be achieved.
+        value: Target value of twiss parameters at the given `element`.
+        plane: Plane of interest, either "h" or "v".
+    """
+
     def __init__(
         self,
         element: Union[str, "BaseElement"],
@@ -95,10 +97,6 @@ class TargetTwiss(BaseTarget):
         return np.vstack(twiss)
 
     def loss(self, lattice: "Lattice") -> float:
-        # if transported is None:
-        #     # is None when 'solution' was specified but the lattice
-        #     # has no twiss periodic solution.
-        #     return np.inf
         try:
             transported = self._transport(lattice)
         except ValueError:
@@ -119,6 +117,15 @@ class TargetTwiss(BaseTarget):
 
 
 class TargetDispersion(BaseTarget):
+    """Target dispersion function.
+
+    Args:
+        element: Element name pattern or element instance at which the
+            `value` should be achieved.
+        value: Target value of dispersion function at the given `element`.
+        plane: Plane of interest, either "h" or "v".
+    """
+
     def __init__(
         self,
         element: Union[str, "BaseElement"],
@@ -157,6 +164,14 @@ class TargetDispersion(BaseTarget):
 
 
 class TargetGlobal(BaseTarget):
+    """Target global lattice attribute.
+
+    Args:
+        method: lattice method to match.
+        value: Target value.
+        **method_kwargs: additional method kwargs.
+    """
+
     def __init__(self, method: str, value: float, **method_kwargs):
         self.method = method
         self.value = value
@@ -206,27 +221,19 @@ class Constraints:
 
             >>> lat = Lattice([Drift(1)])
             >>> lat.constraints.add_free_parameter(element="drift", attribute="l")
-            >>> lat.constraints.add_target(element="drift", value=[10, None, None], phasespace=[0, 1, 0], plane="h")
+            >>> target = TargetPhasespace("drift", [10, None, None, None, None], [0, 1, 0, 0, 0]))
+            >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
             Lattice([Drift(length=10, name='drift_0')])
-
-        Compute :py:class:`~accelerator.elements.drift.Drift` length to
-        reach a beta of 5 meters from initial twiss parameters [1, 0, 1]:
-
-            >>> lat = Lattice([Drift(1)])
-            >>> lat.constraints.add_free_parameter("drift", "l")
-            >>> lat.constraints.add_target("drift", [5, None, None], twiss=[1, 0, 1], plane="h")
-            >>> matched_lat, _ = lat.constraints.match()
-            >>> matched_lat
-            Lattice([Drift(length=2, name='drift_0')])
 
         Compute :py:class:`~accelerator.elements.drift.Drift` length to
         reach a x coord of 5 meters after the first Drift:
 
             >>> lat = Lattice([Drift(1), Drift(1)])
             >>> lat.constraints.add_free_parameter("drift_0", "l")
-            >>> lat.constraints.add_target("drift_0", [5, None, None], phasespace=[0, 1, 0], plane="h")
+            >>> target = TargetPhasespace("drift_0", [5, None, None, None, None], [0, 1, 0, 0, 0]))
+            >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
             Lattice([Drift(length=5, name='drift_0'), Drift(length=1, name='drift_1')])
@@ -237,7 +244,8 @@ class Constraints:
 
             >>> lat = Lattice([Drift(1), Drift(1)])
             >>> lat.constraints.add_free_parameter("drift", "l")
-            >>> lat.constraints.add_target("drift_1", [5, None, None], phasespace=[0, 1, 0], plane="h")
+            >>> target = TargetPhasespace("drift_1", [5, None, None, None, None], [0, 1, 0, 0, 0])
+            >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
             Lattice([Drift(length=2.5, name='drift_0'), Drift(length=2.5, name='drift_1')])
@@ -249,7 +257,8 @@ class Constraints:
             ... Drift(1), QuadrupoleThin(1.6, name='quad_f')])
             >>> lat.constraints.add_free_parameter("quad_f", "f")
             >>> lat.constraints.add_free_parameter("quad_d", "f")
-            >>> lat.constraints.add_target("quad_d", [0.5, None, None], twiss="solution", plane="h")
+            >>> target = TargetTwiss("quad_d", [0.5, None, None], plane="h")
+            >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
             Lattice([QuadrupoleThin(f=1.319, name='quad_f'), Drift(length=1, name='drift_0'),
@@ -266,42 +275,13 @@ class Constraints:
         """Add a constraint target.
 
         Args:
-            element: Element name pattern or element instance at which the
-                `value` should be achieved.
-            value: Target value of twiss parameters or phase space coordinates
-                at the given `element`.
-            phasespace (optional): Initial phase space coords, a sequence of
-                u[m], u_prime[rad], dp/p.
-            twiss (optional): Initial twiss parameters a sequence of beta[m],
-                alpha[rad], gamma[m^-1]. If "solution" is provided or if
-                neither `phasespace` nor `twiss` is provided, the twiss
-                periodic solution is computed and used for the transport.
-            plane: Plane of interest, either "h" or "v", defaults to "h".
-
-        Examples:
-            Adding a beta value target of 0.6 meters after a
-            :py:class:`~accelerator.element.quadrupole.Quadrupole`:
-
-                >>> quad = QuadrupoleThin(0.8)
-                >>> lat = Lattice([Drift(1), quad])
-                >>> lat
-                Lattice([Drift(l=1, name='drift_0'), QuadrupoleThin(f=0.8, name='quad_0')])
-                >>> lat.constraints.add_target("quad_0", [0.6, None, None], twiss=[1, 0 ,1])
-                ... # or lat.constraints.add_target(quad, [0.6, None, None], twiss=[1, 0 ,1])
+            target: An instance of either ``TargetPhasespace``,
+                ``TargetDispersion``, ``TargetTwiss`` or ``TargetGlobal``.
         """
-        target_dict = {
-            "dispersion": TargetDispersion,
-            "phasespace": TargetPhasespace,
-            "twiss": TargetTwiss,
-            "global": TargetGlobal,
-        }
-        # if target is None:
-        #     target = target_dict[target_type](*args, **kwargs)
-
         self.targets.append(target)
 
     def add_free_parameter(self, element: str, attribute: str):
-        """Add a constraint free parameter.
+        """Add a free parameter.
 
         Args:
             element: Element name pattern or element instance for which the
@@ -362,8 +342,8 @@ class Constraints:
             for target in self.targets:
                 out.append(target.loss(lattice))
             # mean of the losses
-            print(out)
-            print(np.linalg.norm(out, 2))
+            # print(out)
+            # print(np.linalg.norm(out, 2))
             return np.linalg.norm(out, 2)
 
         res = minimize(
@@ -400,4 +380,4 @@ class Constraints:
         return out
 
     def __repr__(self):
-        return f"Constraints({repr(self._lattice)})"
+        return f"Free Parameters: {repr(self.free_parameters)}\nTargets: {repr(self.targets)}"

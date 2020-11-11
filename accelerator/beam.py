@@ -1,7 +1,6 @@
 """Accelerator Beam"""
 from typing import Optional, Sequence, Tuple, Union
 
-import matplotlib.pyplot as plt
 import numpy as np
 from scipy.constants import physical_constants
 
@@ -33,12 +32,36 @@ class Beam:
         Compute the phase space ellipse:
 
             >>> beam = Beam()
-            >>> x, x_prime, dp = beam.ellipse([1, 2, 5], plane="h")
+            >>> ellipse = beam.ellipse([1, 2, 5])
+            >>> ellipse.x
+            ...
+            >>> ellipse.x_prime
+            ...
+            >>> ellipse.y
+            ...
+            >>> ellipse.y_prime
+            ...
+            >>> ellipse.dp
+            ...
+            >>> ellipse.plot()
+            ...
 
         Match a distribution to twiss parameters:
 
             >>> beam = Beam()
-            >>> x, x_prime, dp = beam.match([1, 2, 5], plane="h")
+            >>> distrib = beam.match([1, 2, 5])
+            >>> distrib.x
+            ...
+            >>> distrib.x_prime
+            ...
+            >>> distrib.y
+            ...
+            >>> distrib.y_prime
+            ...
+            >>> distrib.dp
+            ...
+            >>> distrib.plot()
+            ...
     """
 
     _sampling_map = {"bigaussian": bigaussian}
@@ -100,9 +123,11 @@ class Beam:
         """Compute the beam's phase space ellipse given the twiss parameters.
 
         Args:
-            twiss: Twiss parameters, beta[m], alpha[rad], gamma[m^-1], one
+            twiss_h: Horizontal twiss parameters, beta[m], alpha[rad], gamma[m^-1], one
                 twiss parameter can be None.
-            plane: Plane of interest, either "h" or "v", defaults to "h".
+            twiss_v: Vertical twiss parameters, beta[m], alpha[rad], gamma[m^-1], one
+                twiss parameter can be None, if None assumes the same twiss
+                values as `twiss_h`.
             closure_tol: Numerical tolerance on the twiss closure condition,
                 defaults to 1e-10.
             n_angles: Number of angles for which to compute the ellipse,
@@ -152,8 +177,11 @@ class Beam:
         `twiss` parameters.
 
         Args:
-            twiss: Initial twiss parameters.
-            plane: Plane of interest, either "h" or "v", defaults to "h".
+            twiss_h: Horizontal twiss parameters, beta[m], alpha[rad],
+                gamma[m^-1], to which to match the distribution.
+            twiss_v: Horizontal twiss parameters, beta[m], alpha[rad],
+                gamma[m^-1], to which to match the distribution, if None will
+                use the same values as `twiss_h`.
             closure_tol: Numerical tolerance on the twiss closure condition,
                 defaults to 1e-10.
 

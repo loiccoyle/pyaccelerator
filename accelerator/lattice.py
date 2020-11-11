@@ -1,4 +1,3 @@
-# TODO: redo the docstrings
 """Accelerator lattice"""
 import json
 import os
@@ -7,8 +6,9 @@ from typing import TYPE_CHECKING, List, Optional, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import minimize, root
+from scipy.optimize import root
 
+from .harmonic_analysis import HarmonicAnalysis
 from .constraints import Constraints
 from .transfer_matrix import TransferMatrix
 from .utils import (
@@ -29,7 +29,7 @@ class Lattice(list):
     """A lattice of accelerator elements.
 
     Looks like a list, smells like a list and tastes like a list.
-    Is infact an accelerator lattice.
+    Is in fact an accelerator lattice.
 
     Examples:
         Create a simple lattice.
@@ -55,7 +55,7 @@ class Lattice(list):
                 >>> lat.save("drift.json")
                 >>> lat_loaded = Lattice.load("drift.json")
         """
-        # TODO: non top level import to avoid circular imports
+        # non top level import to avoid circular imports
         from .elements.utils import deserialize
 
         with open(path, "r") as fp:
@@ -87,9 +87,7 @@ class Lattice(list):
         Returns:
             Closed orbit solution transported through the lattice.
         """
-        return self._transport_phasespace(
-            *self.closed_orbit_solution(dp, **solver_kwargs)
-        )
+        return self.transport(self.closed_orbit_solution(dp, **solver_kwargs))
 
     def closed_orbit_solution(self, dp: float, **solver_kwargs) -> np.ndarray:
         """Compute the closed orbit solution for a given dp/p.
@@ -108,10 +106,11 @@ class Lattice(list):
             init[4] = dp
             _, *transported = self.transport(init)
             out = [point[-1] for point in transported]
+            # print(init - out)
             return (init - out)[:4]
 
         opt_res = root(try_solve, [0, 0, 0, 0], **solver_kwargs)
-        print(opt_res)
+        # print(opt_res)
         solution = np.zeros(5)
         solution[4] = dp
         if opt_res.success:
@@ -159,7 +158,7 @@ class Lattice(list):
         plane = plane.lower()
         return compute_twiss_solution(self.m[PLANE_SLICES[plane], PLANE_SLICES[plane]])
 
-    def tune(self, plane: str = "h", n_turns: int = 1028, dp: float = 0) -> float:
+    def tune(self, plane: str = "h", n_turns: int = 1024, dp: float = 0) -> float:
         """Compute the fractional part of the tune.
 
         Note: the whole tune value would be Q = n + q or Q = n + (1 - q) with q
@@ -189,20 +188,37 @@ class Lattice(list):
         # remove the very first frequency and amplitude as for some reason
         # the 0 frequency can have a very high amplitude, I guess it is the
         # constant component
-        pos_fft = abs(np.fft.rfft(position))[1:]
-        freqs = np.fft.rfftfreq(n_turns)[1:]
-        print(pos_fft.shape)
-        print(len(freqs))
-        plt.plot(freqs, pos_fft, marker=".", linewidth=0)
-        plt.yscale("log")
-        plt.show()
-        plt.plot(position)
-        plt.show()
-        plt.scatter(position, out_turns[:, PLANE_INDICES[plane][1]], s=0.1)
-        plt.show()
-        return freqs[np.argmax(pos_fft)]
 
-    def chromaticity(self, plane: str = "h", delta_dp=0.1, **kwargs) -> float:
+        # pos_fft = abs(np.fft.rfft(position)[1:])
+        # freqs = np.fft.rfftfreq(len(position))[1:]
+        # plt.plot(freqs, pos_fft)
+        # plt.show()
+        # fft_tune = freqs[np.argmax(pos_fft)]
+        # print(fft_tune)
+        tune, _ = HarmonicAnalysis(position).laskar_method(2)
+        if tune[0] == 0:
+            # if there is a DC component to the signal then the tune will be the
+            # second harmonic
+            tune = tune[1]
+        else:
+            # if not then the tune will be the first harmonic
+            tune = tune[0]
+        if tune > 0.5:
+            tune = 1 - tune
+        return tune
+        # print('laskar', tune)
+        # return fft_tune
+        # print(tune)
+        # plt.plot(position)
+        # if tune[0] == 0:
+        #     # if there is a DC component to the signal then the tune will be the
+        #     # second harmonic
+        #     return tune[1]
+        # else:
+        #     # if not then the tune will be the first harmonic
+        #     return tune[0]
+
+    def chromaticity(self, plane: str = "h", delta_dp=1e-2, **kwargs) -> float:
         """Compute the chromaticity. Tracks 2 particles with different dp/p and
         computes the chromaticity from the tune change.
 
@@ -218,8 +234,9 @@ class Lattice(list):
         tune_1 = self.tune(plane=plane, dp=delta_dp, **kwargs)
         print(tune_0)
         print(tune_1)
-        # if tune_1 > tune_0:
-        #     tune_1 = 1 -
+        if tune_1 > tune_0:
+            tune_0 = 1 - tune_0
+            tune_1 = 1 - tune_1
         return (tune_1 - tune_0) / delta_dp
 
     def slice(self, element_type: Type["BaseElement"], n_element: int) -> "Lattice":
@@ -230,7 +247,7 @@ class Lattice(list):
             n_element: Slice `element_type` into `n_element` smaller elements.
 
         Returns:
-                Sliced :py:class:`Lattice`.
+            Sliced :py:class:`Lattice`.
 
         Examples:
             Slice the :py:class:`~accelerator.elements.drift.Drift` elements
@@ -257,133 +274,49 @@ class Lattice(list):
         """Transport phase space coordinates or twiss parameters along the lattice.
 
         Args:
-            phasespace (optional): phase space coords to transport through
-                the lattice, a sequence of u[m], u_prime[rad], dp/p.
-            twiss (optional): twiss parameters to transport through the
-                lattice, a sequence of beta[m], alpha[rad], gamma[m^-1].
-                If "solution" is provided or if neither `phasespace` nor
-                `twiss` is provided, the twiss periodic solution is computed
-                and used for the transport.
-            plane: the plane of interest, either "h" or "v", defaults
-                to "h".
-
-        Raises:
-            ValueError: if both `phasespace` and `twiss` are provided.
-            ValueError: if the twiss solution computation fails.
+            initial (optional): phase space coords to transport through the
+                lattice.
 
         Returns:
-            If `phasespace` is provided, returns a named tuple containing the
-            coordinates along the lattice, phase space position, angle and
-            dp/p, named 's', 'u', 'u_prime' and 'dp' respectively.
-
-            If `phasespace` is a distribution of phase space coordinates,
-            returns a named tuple containing the coordinate along the lattice,
-            the position distribution, the angle distribution, the dp/p
-            distribution and , named 's', 'u', 'u_prime', and 'dp' respectively.
-
-            If a `twiss` is provided, returns a named tuple containing the
-            coordinate along the lattice and the twiss parameters, beta, alpha,
-            gamma, named 's', 'beta', 'alpha', and 'gamma' respectively.
-
+            Transported phase space coords through the lattice.
 
         Examples:
             Transport phase space coords through a
             :py:class:`~accelerator.elements.drift.Drift`:
 
                 >>> lat = Lattice([Drift(1)])
-                >>> lat.transport(phasespace=[1, 1, 0])
-                TransportedPhasespace(s=array([0, 1], u=array([1., 2.]), u_prime=array([1., 1.]), dp=array([0., 0.]))
-
-            Transport twiss parameters through a
-            :py:class:`~accelerator.elements.drift.Drift`:
-
-                >>> lat = Lattice([Drift(1)])
-                >>> lat.transport(twiss=[1, 0, 1])
-                TransportedTwiss(s=array([0, 1]), beta=array([1., 2.]), alpha=array([ 0., -1.]), gamma=array([1., 1.]))
+                >>> lat.transport(phasespace=[1, 1, 0, 0, 0])
+                TransportedPhasespace(s=array([0, 1], x=array([1., 2.]), x_prime=array([1., 1.]), y=array([0, 0]), y_prime=array([0, 0]), dp=array([0., 0.]))
 
             Transport a distribution of phase space coordinates through the
             lattice:
 
                 >>> beam = Beam()
                 >>> lat = Lattice([Drift(1)])
-                >>> tranported = lat.transport(phasespace=beam.match([1, 0, 1]))
-                >>> plt.plot(tranported.s, tranported.u)
+                >>> transported = lat.transport(beam.match([1, 0, 1]))
+                >>> plt.plot(tranported.s, transported.x)
                 ...
 
             Transport a phase space ellipse's coordinates through the lattice:
 
                 >>> beam = Beam()
                 >>> lat = Lattice([Drift(1)])
-                >>> tranported = lat.transport(phasespace=beam.ellipse([1, 0, 1]))
-                >>> plt.plot(tranported.u, tranported.u_prime)
+                >>> transported = lat.transport(beam.ellipse([1, 0, 1]))
+                >>> plt.plot(transported.x, transported.x_prime)
                 ...
         """
-        # TODO: clean this up
-        return self._transport_phasespace(*initial)
-
-    def _transport_twiss(
-        self,
-        twiss: Sequence[float],
-        plane: str = "h",
-    ) -> TransportedTwiss:
-        """Transport the given twiss parameters along the lattice.
-
-        Args:
-            twiss: list of twiss parameters, beta[m], alpha[rad], and
-                gamma[m^-1], one twiss parameter can be None.
-            plane: plane of interest, defaults to "h".
-
-        Returns:
-            named tuple containing 's', '*coords', with 'coords' the phase
-                space coordinates ('u', 'u_prime', 'dp') or the twiss
-                parameters, depending on the `twiss` flag. along the lattice and
-                's' the coordinates along the ring.
-        """
-        twiss = to_twiss(twiss)
-        out = [twiss]
+        if not isinstance(initial, np.ndarray):
+            initial = np.array(initial)
+        out = [initial]
         s_coords = [0]
-        # transfer_matrix = "m_" + plane
-        transfer_ms = [element.m.twiss(plane=plane) for element in self]
-        for i, m in enumerate(transfer_ms):
-            out.append(m @ out[i])
-            s_coords.append(s_coords[i] + self[i].length)
-        out = np.hstack(out)
-        return TransportedTwiss(np.array(s_coords), *out)
-
-    def _transport_phasespace(
-        self,
-        x: np.ndarray,
-        x_prime: np.ndarray,
-        y: np.ndarray,
-        y_prime: np.ndarray,
-        dp: np.ndarray,
-    ) -> TransportedPhasespace:
-        """Transport a distribution of in phase space along the lattice.
-
-        Args:
-            u: phase space position[m] coordinates, 1D array same length as
-                `u_prime`.
-            u_prime: phase space angle[rad] coordinate, 1D array same length as
-                `u`.
-            plane: plane of interest, either "h" or "v".
-
-        Returns:
-            named tuple containing 's' the coordinate along the lattice, 'u'
-                the position array and 'u_prime' the angle array and 'dp' the
-                momentum deviation.
-        """
-        coords = np.vstack([x, x_prime, y, y_prime, dp])
-        out = [coords]
-        s_coords = [0]
-        transfer_ms = [(element.m, element._non_linear_term) for element in self]
-        for i, (transfer_m, non_linear) in enumerate(transfer_ms):
+        for i, element in enumerate(self):
             # for most elements there are no non linear effects
             # print('non_linear')
             # print(out[i])
-            print(non_linear(out[i]))
-            post_element = (transfer_m @ out[i]) + non_linear(out[i])
+            # print(non_linear(out[i]))
+            post_element = element._transport(out[i])
             out.append(post_element)
-            s_coords.append(s_coords[i] + self[i].length)
+            s_coords.append(s_coords[i] + element.length)
         x_coords, x_prime_coords, y_coords, y_prime_coords, dp_coords = zip(*out)
         x_coords = np.vstack(x_coords).squeeze().T
         x_prime_coords = np.vstack(x_prime_coords).squeeze().T
@@ -398,6 +331,32 @@ class Lattice(list):
             y_prime_coords,
             dp_coords,
         )
+
+    def _transport_twiss(
+        self,
+        twiss: Sequence[float],
+        plane: str = "h",
+    ) -> TransportedTwiss:
+        """Transport the given twiss parameters along the lattice.
+
+        Args:
+            twiss: list of twiss parameters, beta[m], alpha[rad], and
+                gamma[m^-1], one twiss parameter can be None.
+            plane: plane of interest, defaults to "h".
+
+        Returns:
+            Named tuple containing the twiss parameters along the lattice the
+                coordinates along the ring.
+        """
+        twiss = to_twiss(twiss)
+        out = [twiss]
+        s_coords = [0]
+        transfer_ms = [element.m.twiss(plane=plane) for element in self]
+        for i, m in enumerate(transfer_ms):
+            out.append(m @ out[i])
+            s_coords.append(s_coords[i] + self[i].length)
+        out = np.hstack(out)
+        return TransportedTwiss(np.array(s_coords), *out)
 
     def search(self, pattern: str, *args, **kwargs) -> List[int]:
         """Search the lattice for elements with `name` matching the pattern.
@@ -414,7 +373,11 @@ class Lattice(list):
             List of indexes in the lattice where the element's name matches the pattern.
         """
         pattern = re.compile(pattern)
-        out = [i for i, element in enumerate(self) if re.search(pattern, element.name)]
+        out = [
+            i
+            for i, element in enumerate(self)
+            if re.search(pattern, element.name, *args, **kwargs)
+        ]
         if not out:
             raise ValueError(f"'{pattern}' does not match with any elements in {self}")
         return out
@@ -510,7 +473,7 @@ class Plotter:
         Plot a lattice:
 
             >>> lat = Lattice([QuadrupoleThin(-0.6), Drift(1), QuadrupoleThin(0.6)])
-            >>> lat.plot.lattice()  # or lat.plot("layout")
+            >>> lat.plot.layout()  # or lat.plot("layout")
             ...
 
         Plot the top down view of the lattice:

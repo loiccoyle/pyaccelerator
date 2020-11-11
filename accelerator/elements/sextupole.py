@@ -21,8 +21,7 @@ class Sextupole(BaseElement):
         k: Sextupole strength in meters^-3.
         l: Element length in meters.
         length: Element length in meters.
-        m_h: Element phase space transfer matrix in the horizontal plane.
-        m_v: Element phase space transfer matrix in the vertical plane.
+        m: Element phase space transfer matrix.
         name: Element name.
     """
 
@@ -40,7 +39,7 @@ class Sextupole(BaseElement):
         # see http://cern.ch/mad8/doc/phys_guide.pdf chapter 5.5.3
         out = np.zeros(phase_coords.shape)
         out[1] = -0.5 * self.k * self.l * (phase_coords[0] ** 2 - phase_coords[2] ** 2)
-        out[3] = 0.5 * self.k * self.l * (phase_coords[0] * phase_coords[2])
+        out[3] = self.k * self.l * (phase_coords[0] * phase_coords[2])
         return out
 
     def _get_length(self) -> float:
@@ -91,8 +90,7 @@ class SextupoleThin(BaseElement):
     Attributes:
         k: Sextupole strength in meters^-2.
         length: Element length in meters.
-        m_h: Element phase space transfer matrix in the horizontal plane.
-        m_v: Element phase space transfer matrix in the vertical plane.
+        m: Element phase space transfer matrix.
         name: Element name.
     """
 
@@ -108,7 +106,7 @@ class SextupoleThin(BaseElement):
     def _non_linear_term(self, phase_coords: np.ndarray) -> np.ndarray:
         out = np.zeros(phase_coords.shape)
         out[1] = -0.5 * self.k * (phase_coords[0] ** 2 - phase_coords[2] ** 2)
-        out[3] = 0.5 * self.k * (phase_coords[0] * phase_coords[2])
+        out[3] = self.k * (phase_coords[0] * phase_coords[2])
         return out
 
     def _get_length(self) -> float:

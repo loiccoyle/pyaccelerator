@@ -21,8 +21,7 @@ class Dipole(BaseElement):
         length: Element length in meters.
         rho: Bending radius in meters.
         theta: Bending angle in radians.
-        m_h: Element phase space transfer matrix in the horizontal plane.
-        m_v: Element phase space transfer matrix in the vertical plane.
+        m: Element phase space transfer matrix.
         name: Element name.
     """
 
@@ -41,38 +40,19 @@ class Dipole(BaseElement):
 
     def _get_transfer_matrix(self) -> np.ndarray:
         out = np.zeros((5, 5))
-        out[0:2, 0:2] = self._get_transfer_matrix_h()[:2, :2]
-        out[2:4, 2:4] = self._get_transfer_matrix_v()[:2, :2]
+        out[0, 0] = np.cos(self.theta)
+        out[0, 1] = self.rho * np.sin(self.theta)
+        out[1, 0] = -(1 / self.rho) * np.sin(self.theta)
+        out[1, 1] = np.cos(self.theta)
+
+        out[2, 2] = 1
+        out[2, 3] = self.length
+        out[3, 3] = 1
 
         out[0, 4] = self.rho * (1 - np.cos(self.theta))
         out[1, 4] = np.sin(self.theta)
         out[4, 4] = 1
         return out
-
-    def _get_transfer_matrix_h(self) -> np.ndarray:
-        # horizontal
-        m_h = np.zeros((3, 3))
-        m_h[0, 0] = np.cos(self.theta)
-        m_h[0, 1] = self.rho * np.sin(self.theta)
-        m_h[0, 2] = self.rho * (1 - np.cos(self.theta))
-        m_h[1, 0] = -(1 / self.rho) * np.sin(self.theta)
-        m_h[1, 1] = np.cos(self.theta)
-        m_h[1, 2] = np.sin(self.theta)
-        m_h[2, 2] = 1
-        return m_h
-
-    def _get_transfer_matrix_v(self) -> np.ndarray:
-        # vertical
-        m_v = np.zeros((3, 3))
-        m_v[0, 0] = 1
-        m_v[0, 1] = self.length
-        # m_v[0, 2] = 0
-        # m_v[1, 0] = 0
-        m_v[1, 1] = 1
-        # m_v[1, 2] = 0
-        # m_v[1, 2] = 0
-        m_v[2, 2] = 1
-        return m_v
 
     def slice(self, n_dipoles: int) -> Lattice:
         """Slice the element into a many smaller elements.
@@ -108,8 +88,7 @@ class DipoleThin(BaseElement):
     Attributes:
         length: Element length in meters.
         theta: Bending angle in radians.
-        m_h: Element phase space transfer matrix in the horizontal plane.
-        m_v: Element phase space transfer matrix in the vertical plane.
+        m: Element phase space transfer matrix.
         name: Element name.
     """
 
@@ -127,14 +106,6 @@ class DipoleThin(BaseElement):
 
     def _get_transfer_matrix(self) -> np.ndarray:
         return np.identity(5)
-
-    def _get_transfer_matrix_h(self) -> np.ndarray:
-        # horizontal
-        return np.identity(3)
-
-    def _get_transfer_matrix_v(self) -> np.ndarray:
-        # vertical
-        return np.identity(3)
 
     def _get_patch(self, s: float) -> patches.Patch:
         return patches.FancyArrowPatch(

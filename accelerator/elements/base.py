@@ -1,7 +1,6 @@
 from abc import abstractmethod
-from typing import Any, Dict, Optional, Sequence, Tuple
+from typing import Any, Dict
 
-import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch
 
@@ -48,6 +47,11 @@ class BaseElement:
         Returns:
             ``matplotlib.patches.Patch`` which represents the element.
         """
+
+    def _transport(self, phase_coords: np.ndarray) -> np.ndarray:
+        return (self._get_transfer_matrix() @ phase_coords) + self._non_linear_term(
+            phase_coords
+        )
 
     def _non_linear_term(self, phase_coords: np.ndarray) -> np.ndarray:
         return np.zeros(phase_coords.shape)
