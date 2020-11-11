@@ -17,20 +17,14 @@ class TestSextupoleThin(TestCase):
     def test_transfer_matrix(self):
         sextupole = SextupoleThin(1)
         # the linear part is the identity matrix
-        expected_transfer_matrix_h = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        expected_transfer_matrix_v = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        m_h, m_v = (
-            sextupole._get_transfer_matrix_h(),
-            sextupole._get_transfer_matrix_v(),
-        )
-        assert np.allclose(m_h, expected_transfer_matrix_h)
-        assert np.allclose(m_v, expected_transfer_matrix_v)
-        assert np.allclose(sextupole.m_h, m_h)
-        assert np.allclose(sextupole.m_v, m_v)
+        expected_transfer_matrix = np.identity(5)
+        m = sextupole._get_transfer_matrix()
+        assert np.allclose(m, expected_transfer_matrix)
+        assert np.allclose(sextupole.m, m)
 
         # now the non linear part
-        matrix = sextupole._non_linear_term(np.array([1.0, 1.0, 0.0]))
-        assert np.allclose(matrix, np.array([[0, -1 / 2, 0]]))
+        term = sextupole._non_linear_term(np.array([2, 0, 1, 0, 0]))
+        assert np.allclose(term, np.array([[0, -1.5, 0, 2, 0]]))
 
     def test_repr(self):
         repr(SextupoleThin(1))
@@ -50,10 +44,6 @@ class TestSextupoleThin(TestCase):
         assert dic["element"] == "SextupoleThin"
         assert dic["k"] == sextupole.k
         assert dic["name"] == sextupole.name
-
-    def test_plot(self):
-        sextupole = SextupoleThin(0.8)
-        sextupole.plot()
 
     def test_copy(self):
         sextupole = SextupoleThin(1)

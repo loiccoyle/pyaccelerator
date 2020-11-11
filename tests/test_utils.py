@@ -77,42 +77,34 @@ class TestUtils(TestCase):
                 Drift(1),
                 QuadrupoleThin(2 * 0.8),
             ]
-        ).m_h
+        ).m.h
         expected = np.array([[3.33066560e00], [1.11528141e-16], [3.00240288e-01]])
         assert np.allclose(utils.compute_twiss_solution(transfer_matrix_fodo), expected)
-
-    def test_compute_dispersion_solution(self):
-        transfer_matrix_dipole = Lattice(
-            [
-                Dipole(100, np.pi / 2),
-                Drift(100),
-                Dipole(100, np.pi / 2),
-                Drift(100),
-                Dipole(100, np.pi / 2),
-                Drift(100),
-                Dipole(100, np.pi / 2),
-                Drift(100),
-            ]
-        ).m_h
-        expected = np.array([[100], [0], [1]])
-        assert np.allclose(
-            expected, utils.compute_dispersion_solution(transfer_matrix_dipole)
-        )
 
     def test_namedtuples(self):
         # just testing the plotting, these values are nonsense
         distribution = utils.PhasespaceDistribution(
-            np.array([1, 2, 3]), np.array([1, 1, 1]), np.array([0, 0, 0])
+            np.array([1, 2, 3]),
+            np.array([1, 1, 1]),
+            np.array([1, 2, 3]),
+            np.array([1, 1, 1]),
+            np.array([0, 0, 0]),
         )
         distribution.plot()
 
         distribution = utils.PhasespaceDistribution(
-            np.array([1, 2, 3]), np.array([1, 1, 1]), np.array([0, 0.1, 0.2])
+            np.array([1, 2, 3]),
+            np.array([1, 1, 1]),
+            np.array([1, 2, 3]),
+            np.array([1, 1, 1]),
+            np.array([0, 0.1, 0.2]),
         )
         distribution.plot()
 
         transported_phasespace = utils.TransportedPhasespace(
             np.array([0, 1, 2]),
+            np.array([1, 2, 3]),
+            np.array([1, 1, 1]),
             np.array([1, 2, 3]),
             np.array([1, 1, 1]),
             np.array([0, 0, 0]),
@@ -121,6 +113,8 @@ class TestUtils(TestCase):
 
         transported_distribution = utils.TransportedPhasespace(
             np.array([0, 1, 2]),
+            np.array([[1, 2, 3], [1, 2, 3]]),
+            np.array([[1, 1, 1], [1, 1, 1]]),
             np.array([[1, 2, 3], [1, 2, 3]]),
             np.array([[1, 1, 1], [1, 1, 1]]),
             np.array([[0, 0, 0], [0, 0, 0]]),
