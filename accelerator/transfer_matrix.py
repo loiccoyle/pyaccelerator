@@ -13,8 +13,8 @@ class TransferMatrix(np.ndarray):
             raise ValueError(f"'{obj}' should be 2D.")
         if obj.shape[0] != obj.shape[1]:
             raise ValueError(f"'{obj}' is not square.")
-        # if obj.shape[0] != 5:
-        #     raise ValueError(f"'{obj}' should be of shape (5, 5)")
+        if obj.shape[0] != 5:
+            raise ValueError(f"'{obj}' should be of shape (5, 5)")
 
         # @property
         def twiss(obj, plane="h"):
