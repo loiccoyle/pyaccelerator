@@ -85,6 +85,7 @@ class TargetTwiss(BaseTarget):
         value: Sequence[float],
         plane: str = "h",
     ):
+        plane = plane.lower()
         value = np.array(value)
         if isinstance(element, BaseElement):
             element = element.name
@@ -132,7 +133,7 @@ class TargetDispersion(BaseTarget):
         value: float,
         plane: str = "h",
     ):
-        value = np.array(value)
+        plane = plane.lower()
         if isinstance(element, BaseElement):
             element = element.name
         self.element = element
