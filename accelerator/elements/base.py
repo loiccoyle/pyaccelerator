@@ -67,43 +67,6 @@ class BaseElement:
         out["element"] = self.__class__.__name__
         return out
 
-    # def plot(
-    #     self,
-    #     *args,
-    #     u_init: Optional[Sequence[float]] = None,
-    #     plane="h",
-    #     **kwargs,
-    # ) -> Tuple[plt.Figure, np.ndarray]:
-    #     """Plot the effect of the element on the phase space coords.
-
-    #     Args:
-    #         u_init (optional): Initial phase space coords, defaults to [1, np.pi/8, 0].
-    #         plane: Ether "h" or "v", defaults to "h".
-    #         *args: Passed to ``matplotlib.pyplot.plot``.
-    #         **kwargs: Passed to ``matplotlib.pyplot.plot``.
-
-    #     Returns:
-    #         Plotted ``plt.Figure`` and array of ``plt.Axes``.
-    #     """
-    #     if u_init is None:
-    #         u_init = [1, np.pi / 8, 0]
-    #     u_init = np.vstack(u_init)
-    #     plane_map = {"h": self.m_h, "v": self.m_v}
-    #     coord_map = {"h": "x", "v": "y"}
-    #     coord = coord_map[plane]
-    #     m = plane_map[plane]
-    #     u_1 = m @ u_init + self._non_linear_term(u_init)
-    #     x_axis = [0, self.length]
-    #     fig, axes = plt.subplots(2, 1, sharex=True)
-    #     axes[0].plot(x_axis, [u_init[0], u_1[0]], *args, label=coord, **kwargs)
-    #     axes[0].legend()
-    #     axes[0].set_ylabel(f"{coord} (m)")
-    #     axes[1].plot(x_axis, [u_init[1], u_1[1]], *args, label=f"{coord}'", **kwargs)
-    #     axes[1].legend()
-    #     axes[1].set_ylabel(f"{coord}'")
-    #     axes[1].set_xlabel("s (m)")
-    #     return fig, axes
-
     def copy(self) -> "BaseElement":
         """Create a copy of this instance.
 
