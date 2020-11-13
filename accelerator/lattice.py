@@ -110,7 +110,7 @@ class Lattice(list):
             return (init - out)[:4]
 
         opt_res = root(try_solve, [0, 0, 0, 0], **solver_kwargs)
-        # print(opt_res)
+        print(opt_res)
         solution = np.zeros(5)
         solution[4] = dp
         if opt_res.success:
@@ -128,11 +128,13 @@ class Lattice(list):
         Return:
             Dispersion solution transported through the lattice.
         """
-        dp = 0.1
+        dp = 1e-3
         out = self.closed_orbit(dp=dp, **solver_kwargs)
         x = out.x / dp
         y = out.y / dp
-        return TransportedPhasespace(out.s, x, out.x_prime, y, out.y_prime, out.dp)
+        x_prime = out.x_prime / dp
+        y_prime = out.y_prime / dp
+        return TransportedPhasespace(out.s, x, x_prime, y, y_prime, out.dp)
 
     def twiss(self, plane="h") -> TransportedTwiss:
         """Compute the twiss parameters through the lattice for a given plane.
@@ -175,7 +177,7 @@ class Lattice(list):
             The fractional part of the tune.
         """
         init = np.zeros(5)
-        init[PLANE_INDICES[plane]] = [1e-9, 0]
+        init[PLANE_INDICES[plane]] = [1e-6, 0]
         init[4] = dp
         out_turns = [init]
         # track for n_turns
@@ -185,17 +187,17 @@ class Lattice(list):
         out_turns = np.array(out_turns)
         # get the frequency with the highest amplitude
         position = out_turns[:, PLANE_INDICES[plane][0]]
-        # remove the very first frequency and amplitude as for some reason
-        # the 0 frequency can have a very high amplitude, I guess it is the
-        # constant component
+        angle = out_turns[:, PLANE_INDICES[plane][1]]
 
-        # pos_fft = abs(np.fft.rfft(position)[1:])
-        # freqs = np.fft.rfftfreq(len(position))[1:]
-        # plt.plot(freqs, pos_fft)
-        # plt.show()
-        # fft_tune = freqs[np.argmax(pos_fft)]
-        # print(fft_tune)
-        tune, _ = HarmonicAnalysis(position).laskar_method(3)
+        beta, alpha, _ = self.twiss_solution(plane=plane)
+        sqrt_beta = np.sqrt(beta)
+
+        norm_eta = position / sqrt_beta
+        norm_eta_prime = position * alpha / sqrt_beta + sqrt_beta * angle
+
+        complex_signal = norm_eta - 1j * norm_eta_prime
+
+        tune, _ = HarmonicAnalysis(complex_signal).laskar_method(2)
         print(tune)
         if tune[0] == 0:
             # if there is a DC component to the signal then the tune will be the
@@ -205,6 +207,8 @@ class Lattice(list):
             # if not then the tune will be the first harmonic
             tune = tune[0]
         # if tune > 0.5:
+        #     # doing can cause issues as it flips the slope of the tune change
+        #     # w.r.t. to dp/p
         #     tune = 1 - tune
         return tune
         # print('laskar', tune)
@@ -219,7 +223,7 @@ class Lattice(list):
         #     # if not then the tune will be the first harmonic
         #     return tune[0]
 
-    def chromaticity(self, plane: str = "h", delta_dp=1e-2, **kwargs) -> float:
+    def chromaticity(self, plane: str = "h", delta_dp=1e-3, **kwargs) -> float:
         """Compute the chromaticity. Tracks 2 particles with different dp/p and
         computes the chromaticity from the tune change.
 
@@ -235,9 +239,10 @@ class Lattice(list):
         tune_1 = self.tune(plane=plane, dp=delta_dp, **kwargs)
         print(tune_0)
         print(tune_1)
-        if tune_1 > tune_0:
-            tune_0 = 1 - tune_0
-            tune_1 = 1 - tune_1
+        # if tune_1 > tune_0:
+        #     # this is not correct this means you basically can never have positive chromaticity
+        #     tune_0 = 1 - tune_0
+        #     tune_1 = 1 - tune_1
         return (tune_1 - tune_0) / delta_dp
 
     def slice(self, element_type: Type["BaseElement"], n_element: int) -> "Lattice":
@@ -311,10 +316,6 @@ class Lattice(list):
         out = [initial]
         s_coords = [0]
         for i, element in enumerate(self):
-            # for most elements there are no non linear effects
-            # print('non_linear')
-            # print(out[i])
-            # print(non_linear(out[i]))
             post_element = element._transport(out[i])
             out.append(post_element)
             s_coords.append(s_coords[i] + element.length)
