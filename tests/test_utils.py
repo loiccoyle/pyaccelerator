@@ -91,6 +91,8 @@ class TestUtils(TestCase):
             np.array([0, 0, 0]),
         )
         distribution.plot()
+        distribution.plot("h")
+        distribution.plot("v")
 
         distribution = utils.PhasespaceDistribution(
             np.array([1, 2, 3]),
@@ -100,6 +102,10 @@ class TestUtils(TestCase):
             np.array([0, 0.1, 0.2]),
         )
         distribution.plot()
+        distribution.plot("h")
+        distribution.plot("v")
+        with self.assertRaises(ValueError):
+            distribution.plot("asdada")
 
         transported_phasespace = utils.TransportedPhasespace(
             np.array([0, 1, 2]),
@@ -110,6 +116,11 @@ class TestUtils(TestCase):
             np.array([0, 0, 0]),
         )
         transported_phasespace.plot()
+        transported_phasespace.plot(add_legend=True)
+        transported_phasespace.plot("h")
+        transported_phasespace.plot("v")
+        with self.assertRaises(ValueError):
+            transported_phasespace.plot("asdada")
 
         transported_distribution = utils.TransportedPhasespace(
             np.array([0, 1, 2]),
@@ -120,6 +131,9 @@ class TestUtils(TestCase):
             np.array([[0, 0, 0], [0, 0, 0]]),
         )
         transported_distribution.plot()
+        transported_distribution.plot(add_legend=True)
+        transported_distribution.plot("h")
+        transported_distribution.plot("v")
 
         transported_twiss = utils.TransportedTwiss(
             np.array([0, 1, 2]),

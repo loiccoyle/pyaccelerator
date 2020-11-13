@@ -81,8 +81,8 @@ def plot_phasespace(
 
     if plane == "h":
         plot_plane(ax, self.x, self.x_prime, "x", add_legend=add_legend)
-    elif plane == "h":
-        plot_plane(ax[1], self.y, self.y_prime, "y", add_legend=add_legend)
+    elif plane == "v":
+        plot_plane(ax, self.y, self.y_prime, "y", add_legend=add_legend)
     elif plane == "both":
         plot_plane(ax[0], self.x, self.x_prime, "x", add_legend=False)
         plot_plane(ax[1], self.y, self.y_prime, "y", add_legend=add_legend)
@@ -125,8 +125,8 @@ def plot_phasespace_distribution(
 
     if plane == "h":
         plot_plane(ax, self.x, self.x_prime, "x", add_cbar=True)
-    elif plane == "h":
-        plot_plane(ax[1], self.y, self.y_prime, "y", add_cbar=True)
+    elif plane == "v":
+        plot_plane(ax, self.y, self.y_prime, "y", add_cbar=True)
     elif plane == "both":
         plot_plane(ax[0], self.x, self.x_prime, "x", add_cbar=False)
         plot_plane(ax[1], self.y, self.y_prime, "y", add_cbar=True)
