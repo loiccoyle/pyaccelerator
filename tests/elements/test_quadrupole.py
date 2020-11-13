@@ -43,6 +43,15 @@ class TestQuadrupole(TestCase):
         assert np.allclose(m, expected_transfer_matrix)
         assert np.allclose(quadrupole.m, m)
 
+    def test_transport(self):
+        quadrupole = Quadrupole(k=1, l=1)
+        out = quadrupole._transport(np.array([0, 0, 0, 0, 0]))
+        assert np.allclose(out, [0, 0, 0, 0, 0])
+        # out = quadrupole._transport(np.array([1, 0, 0, 0, 0]))
+        # assert np.allclose(out, [1, 0, 0, 0, 0])
+        # out = quadrupole._transport(np.array([1, 0, 0, 0, 1]))
+        # assert np.allclose(out, [1, 0, 0, 0, 1])
+
     def test_slice(self):
         quadrupole = Quadrupole(k=1 / 2, l=5)
         assert len(quadrupole.slice(10)) == 10

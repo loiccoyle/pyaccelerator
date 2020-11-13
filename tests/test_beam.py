@@ -51,6 +51,10 @@ class TestBeam(TestCase):
         self.assertAlmostEqual(y_prime.min(), -np.sqrt(beam.geo_emittance_v))
         assert dp.shape == y.shape
 
+        with self.assertRaises(ValueError):
+            # twiss clojure not met
+            beam.ellipse([1, 0, 2])
+
     def test_match(self):
         beam = Beam(n_particles=int(1e6), sigma_energy=0.001)
         x, x_prime, y, y_prime, dp = beam.match([1, 0, 1])
@@ -82,13 +86,8 @@ class TestBeam(TestCase):
         self.assertAlmostEqual(dp.std(), beam.sigma_p / beam.p, places=3)
         self.assertAlmostEqual(dp.std(), beam.sigma_p / beam.p, places=3)
 
-    # def test_plot(self):
-    #     beam = Beam()
-    #     beam.plot(twiss_h=[1, 0, 1], twiss_v=[0.5, 0, 2])
-    #     beam.plot(twiss_v=[0.5, 0, 2])
-    #     beam.plot(twiss_h=[1, 0, 1])
-    #     with self.assertRaises(ValueError):
-    #         beam.plot()
+        with self.assertRaises(ValueError):
+            beam.match([1, 0, 2])
 
     def test_repr(self):
         beam = Beam()
