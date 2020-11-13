@@ -38,8 +38,12 @@ class Sextupole(BaseElement):
     def _non_linear_term(self, phase_coords: np.ndarray) -> np.ndarray:
         # see http://cern.ch/mad8/doc/phys_guide.pdf chapter 5.5.3
         out = np.zeros(phase_coords.shape)
-        out[1] = -0.5 * self.k * self.l * (phase_coords[0] ** 2 - phase_coords[2] ** 2)
-        out[3] = self.k * self.l * (phase_coords[0] * phase_coords[2])
+        # strength depends on dp/p
+        k = self.k / (1 + phase_coords[4])
+        # k = self.k
+
+        out[1] = -0.5 * k * self.l * (phase_coords[0] ** 2 - phase_coords[2] ** 2)
+        out[3] = k * self.l * (phase_coords[0] * phase_coords[2])
         return out
 
     def _get_length(self) -> float:
