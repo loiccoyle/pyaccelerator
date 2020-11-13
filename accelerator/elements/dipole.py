@@ -38,6 +38,25 @@ class Dipole(BaseElement):
     def _get_length(self) -> float:
         return self.rho * self.theta
 
+    def _transport(self, phase_coords: np.ndarray) -> np.ndarray:
+        rho = self.rho * (1 + phase_coords[4])
+        out = np.zeros(phase_coords.shape)
+        out[0] = (
+            np.cos(self.theta) * phase_coords[0]
+            + rho * np.sin(self.theta) * phase_coords[1]
+            + rho * (1 - np.cos(self.theta)) * phase_coords[4]
+        )
+        out[1] = (
+            -(1 / rho) * np.sin(self.theta) * phase_coords[0]
+            + np.cos(self.theta) * phase_coords[1]
+            + np.sin(self.theta) * phase_coords[4]
+        )
+
+        out[2] = phase_coords[2] + self.length * phase_coords[3]
+        out[3] = phase_coords[3]
+        out[4] = phase_coords[4]
+        return out
+
     def _get_transfer_matrix(self) -> np.ndarray:
         out = np.zeros((5, 5))
         out[0, 0] = np.cos(self.theta)
