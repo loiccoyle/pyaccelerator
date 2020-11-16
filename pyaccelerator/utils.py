@@ -5,7 +5,6 @@ from typing import Optional, Sequence, Tuple, Union
 import matplotlib.pyplot as plt
 import numpy as np
 
-
 # where the x, x' and y, y' are located in the phase space coord vector
 PLANE_INDICES = {"h": [0, 1], "v": [2, 3]}
 PLANE_SLICES = {"h": slice(0, 2), "v": slice(2, 4)}

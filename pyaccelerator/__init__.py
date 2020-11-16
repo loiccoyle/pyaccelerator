@@ -4,9 +4,9 @@ import logging
 
 from . import elements
 from .beam import Beam
+from .constraints import TargetDispersion, TargetGlobal, TargetPhasespace, TargetTwiss
 from .elements import *
 from .lattice import Lattice
-from .constraints import TargetPhasespace, TargetDispersion, TargetTwiss, TargetGlobal
 
 __all__ = [
     "Beam",
