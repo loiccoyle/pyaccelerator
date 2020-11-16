@@ -56,6 +56,7 @@ class Quadrupole(BaseElement):
         return out
 
     def _transport(self, phase_coords: np.ndarray) -> np.ndarray:
+        # strength depends on dp/p
         k = self.k / (1 + phase_coords[4])
 
         sin_x, cos_x, sin_y, cos_y = self._compute_sin_cos(k)
@@ -177,6 +178,7 @@ class QuadrupoleThin(BaseElement):
         return out
 
     def _transport(self, phase_coords: np.ndarray) -> np.ndarray:
+        # overwrite transport method to have a focal length which depends on dp/p
         f = self.f * (1 + phase_coords[4])
         one_over_f = 1 / f
 

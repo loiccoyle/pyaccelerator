@@ -106,7 +106,6 @@ class Lattice(list):
             init[4] = dp
             _, *transported = self.transport(init)
             out = [point[-1] for point in transported]
-            # print(init - out)
             return (init - out)[:4]
 
         opt_res = root(try_solve, [0, 0, 0, 0], **solver_kwargs)
@@ -198,7 +197,6 @@ class Lattice(list):
         complex_signal = norm_eta - 1j * norm_eta_prime
 
         tune, _ = HarmonicAnalysis(complex_signal).laskar_method(2)
-        print(tune)
         if tune[0] == 0:
             # if there is a DC component to the signal then the tune will be the
             # second harmonic
@@ -206,22 +204,7 @@ class Lattice(list):
         else:
             # if not then the tune will be the first harmonic
             tune = tune[0]
-        # if tune > 0.5:
-        #     # doing can cause issues as it flips the slope of the tune change
-        #     # w.r.t. to dp/p
-        #     tune = 1 - tune
         return tune
-        # print('laskar', tune)
-        # return fft_tune
-        # print(tune)
-        # plt.plot(position)
-        # if tune[0] == 0:
-        #     # if there is a DC component to the signal then the tune will be the
-        #     # second harmonic
-        #     return tune[1]
-        # else:
-        #     # if not then the tune will be the first harmonic
-        #     return tune[0]
 
     def chromaticity(self, plane: str = "h", delta_dp=1e-3, **kwargs) -> float:
         """Compute the chromaticity. Tracks 2 particles with different dp/p and
