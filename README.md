@@ -17,9 +17,6 @@ Python package to build simple toy accelerators.
 pip install pyaccelerator
 ```
 
-In the near future I will publish it on Pypi.
-
----
 It usualy a good idea to use a [virtual environment](https://docs.python.org/3/tutorial/venv.html). To create a virtual environment in the `venv` folder (assuming python3):
 ```sh
 python -m venv venv
