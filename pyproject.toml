@@ -1,9 +1,11 @@
 [tool.poetry]
 name = "pyaccelerator"
-version = "0.1.0"
+version = "0.1.1"
 description = "Accelerator building blocks."
 authors = ["Loic Coyle <loic.coyle <loic.coyle@hotmail.fr>", "Michael Schenk"]
 license = "MIT"
+readme = "README.md"
+repository = "https://github.com/loiccoyle/pyaccelerator"
 
 [tool.poetry.dependencies]
 python = "^3.6"

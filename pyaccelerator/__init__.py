@@ -18,6 +18,6 @@ __all__ = [
 ]
 __all__.extend(elements.__all__)
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 logger = logging.getLogger("pyaccelerator")
