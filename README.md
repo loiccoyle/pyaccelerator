@@ -2,7 +2,7 @@
 
 [![Tests](https://github.com/loiccoyle/accelerator/workflows/tests/badge.svg)](https://github.com/loiccoyle/accelerator/actions?query=workflow%3Atests)
 [![Documentation Status](https://readthedocs.org/projects/pyaccelerator/badge/?version=latest)](https://pyaccelerator.readthedocs.io/en/latest/?badge=latest)
-[![pypi](https://pypi.org/project/pyaccelerator/)](https://img.shields.io/pypi/v/pyaccelerator)
+[![pypi](https://img.shields.io/pypi/v/pyaccelerator)](https://pypi.org/project/pyaccelerator/)
 
 Python package to build simple toy accelerators.
 
