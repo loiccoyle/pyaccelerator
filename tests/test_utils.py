@@ -2,11 +2,10 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator import utils
-from accelerator.elements.dipole import Dipole
-from accelerator.elements.drift import Drift
-from accelerator.elements.quadrupole import QuadrupoleThin
-from accelerator.lattice import Lattice
+from pyaccelerator import utils
+from pyaccelerator.elements.drift import Drift
+from pyaccelerator.elements.quadrupole import QuadrupoleThin
+from pyaccelerator.lattice import Lattice
 
 
 class TestUtils(TestCase):

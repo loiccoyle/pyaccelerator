@@ -5,13 +5,13 @@ from unittest import TestCase
 import matplotlib.pyplot as plt
 import numpy as np
 
-from accelerator.beam import Beam
-from accelerator.elements.custom import CustomThin
-from accelerator.elements.dipole import Dipole, DipoleThin
-from accelerator.elements.drift import Drift
-from accelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
-from accelerator.elements.sextupole import SextupoleThin
-from accelerator.lattice import Lattice, Plotter
+from pyaccelerator.beam import Beam
+from pyaccelerator.elements.custom import CustomThin
+from pyaccelerator.elements.dipole import Dipole, DipoleThin
+from pyaccelerator.elements.drift import Drift
+from pyaccelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
+from pyaccelerator.elements.sextupole import SextupoleThin
+from pyaccelerator.lattice import Lattice, Plotter
 
 
 class TestLattice(TestCase):

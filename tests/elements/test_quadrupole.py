@@ -2,8 +2,8 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
-from accelerator.lattice import Lattice
+from pyaccelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
+from pyaccelerator.lattice import Lattice
 
 
 class TestQuadrupole(TestCase):

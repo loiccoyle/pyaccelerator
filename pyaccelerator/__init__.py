@@ -1,5 +1,7 @@
 """Python package to build simple toy accelerator.
 """
+import logging
+
 from . import elements
 from .beam import Beam
 from .elements import *
@@ -17,3 +19,5 @@ __all__ = [
 __all__.extend(elements.__all__)
 
 __version__ = "0.1.0"
+
+logger = logging.getLogger("pyaccelerator")

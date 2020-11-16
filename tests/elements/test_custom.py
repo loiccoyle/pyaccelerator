@@ -2,8 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.elements.custom import CustomThin
-from accelerator.lattice import Lattice
+from pyaccelerator.elements.custom import CustomThin
 
 
 class TestCustomThin(TestCase):

@@ -2,8 +2,8 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.elements.drift import Drift
-from accelerator.lattice import Lattice
+from pyaccelerator.elements.drift import Drift
+from pyaccelerator.lattice import Lattice
 
 
 class TestDrift(TestCase):

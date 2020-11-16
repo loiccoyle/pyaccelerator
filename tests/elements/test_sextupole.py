@@ -2,8 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.elements.sextupole import SextupoleThin
-from accelerator.lattice import Lattice
+from pyaccelerator.elements.sextupole import SextupoleThin
 
 
 class TestSextupoleThin(TestCase):

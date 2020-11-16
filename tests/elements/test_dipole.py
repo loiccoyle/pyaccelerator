@@ -2,8 +2,8 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.elements.dipole import Dipole, DipoleThin
-from accelerator.lattice import Lattice
+from pyaccelerator.elements.dipole import Dipole, DipoleThin
+from pyaccelerator.lattice import Lattice
 
 n_dipoles = 6
 perim = 1e3  # 1km

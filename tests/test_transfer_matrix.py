@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.transfer_matrix import TransferMatrix
+from pyaccelerator.transfer_matrix import TransferMatrix
 
 
 class TestTransferMatrix(TestCase):

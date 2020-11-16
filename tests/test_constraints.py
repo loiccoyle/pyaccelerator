@@ -2,17 +2,16 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.constraints import (
+from pyaccelerator.constraints import (
     Constraints,
     FreeParameter,
     TargetDispersion,
-    TargetGlobal,
     TargetPhasespace,
     TargetTwiss,
 )
-from accelerator.elements.drift import Drift
-from accelerator.elements.quadrupole import QuadrupoleThin
-from accelerator.lattice import Lattice
+from pyaccelerator.elements.drift import Drift
+from pyaccelerator.elements.quadrupole import QuadrupoleThin
+from pyaccelerator.lattice import Lattice
 
 
 class TestTargetPhasespace(TestCase):

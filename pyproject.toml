@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "accelerator"
+name = "pyaccelerator"
 version = "0.1.0"
-description = ""
+description = "Accelerator building blocks."
 authors = ["Loic Coyle <loic.coyle <loic.coyle@hotmail.fr>"]
 license = "MIT"
 

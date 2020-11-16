@@ -2,7 +2,7 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.beam import Beam
+from pyaccelerator.beam import Beam
 
 
 class TestBeam(TestCase):

@@ -1,5 +1,6 @@
 """Accelerator lattice"""
 import json
+import logging
 import os
 import re
 from typing import TYPE_CHECKING, List, Sequence, Tuple, Type, Union
@@ -8,17 +9,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.optimize import root
 
-from .harmonic_analysis import HarmonicAnalysis
 from .constraints import Constraints
+from .harmonic_analysis import HarmonicAnalysis
 from .transfer_matrix import TransferMatrix
 from .utils import (
+    PLANE_INDICES,
+    PLANE_SLICES,
     TransportedPhasespace,
     TransportedTwiss,
     compute_one_turn,
     compute_twiss_solution,
     to_twiss,
-    PLANE_INDICES,
-    PLANE_SLICES,
 )
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -67,6 +68,7 @@ class Lattice(list):
         self._m = None
         self.plot = Plotter(self)
         self.constraints = Constraints(self)
+        self._log = logging.getLogger(__name__)
 
     @property
     def m(self):
@@ -109,7 +111,7 @@ class Lattice(list):
             return (init - out)[:4]
 
         opt_res = root(try_solve, [0, 0, 0, 0], **solver_kwargs)
-        print(opt_res)
+        self._log.info("Closed orbit optimization:\n %s", opt_res)
         solution = np.zeros(5)
         solution[4] = dp
         if opt_res.success:
@@ -135,6 +137,20 @@ class Lattice(list):
         y_prime = out.y_prime / dp
         return TransportedPhasespace(out.s, x, x_prime, y, y_prime, out.dp)
 
+    def dispersion_solution(self, **solver_kwargs):
+        """Compute the dispersion solution.
+
+        Args:
+            **solver_kwargs: passed to `scipy.root`.
+
+        Returns:
+            Dispersion solution.
+        """
+        dp = 1e-3
+        out = self.closed_orbit_solution(dp=dp, **solver_kwargs)
+        out /= dp
+        return out
+
     def twiss(self, plane="h") -> TransportedTwiss:
         """Compute the twiss parameters through the lattice for a given plane.
 
@@ -145,7 +161,7 @@ class Lattice(list):
             Twiss parameters through the lattice.
         """
         plane = plane.lower()
-        return self._transport_twiss(self.twiss_solution(plane=plane), plane=plane)
+        return self.transport_twiss(self.twiss_solution(plane=plane), plane=plane)
 
     def twiss_solution(self, plane: str = "h") -> np.ndarray:
         """Compute the twiss periodic solution.
@@ -159,7 +175,9 @@ class Lattice(list):
         plane = plane.lower()
         return compute_twiss_solution(self.m[PLANE_SLICES[plane], PLANE_SLICES[plane]])
 
-    def tune(self, plane: str = "h", n_turns: int = 1024, dp: float = 0) -> float:
+    def tune(
+        self, plane: str = "h", n_turns: int = 1024, dp: float = 0, tol=1e-6
+    ) -> float:
         """Compute the fractional part of the tune.
 
         Note: the whole tune value would be Q = n + q or Q = n + (1 - q) with q
@@ -171,6 +189,7 @@ class Lattice(list):
                 values lead to more precise values at the expense of computation
                 time.
             dp: dp/p value of the tracked particle.
+            tol: numerical tolerance for DC component.
 
         Returns:
             The fractional part of the tune.
@@ -197,7 +216,9 @@ class Lattice(list):
         complex_signal = norm_eta - 1j * norm_eta_prime
 
         tune, _ = HarmonicAnalysis(complex_signal).laskar_method(2)
-        if tune[0] == 0:
+        self._log.info("Harmonics: %s", tune)
+        if abs(tune[0]) < tol:
+            self._log.info("Dropped DC component.")
             # if there is a DC component to the signal then the tune will be the
             # second harmonic
             tune = tune[1]
@@ -220,12 +241,6 @@ class Lattice(list):
         """
         tune_0 = self.tune(plane=plane, dp=0, **kwargs)
         tune_1 = self.tune(plane=plane, dp=delta_dp, **kwargs)
-        print(tune_0)
-        print(tune_1)
-        # if tune_1 > tune_0:
-        #     # this is not correct this means you basically can never have positive chromaticity
-        #     tune_0 = 1 - tune_0
-        #     tune_1 = 1 - tune_1
         return (tune_1 - tune_0) / delta_dp
 
     def slice(self, element_type: Type["BaseElement"], n_element: int) -> "Lattice":
@@ -317,7 +332,7 @@ class Lattice(list):
             dp_coords,
         )
 
-    def _transport_twiss(
+    def transport_twiss(
         self,
         twiss: Sequence[float],
         plane: str = "h",
