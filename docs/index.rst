@@ -15,13 +15,13 @@
    :maxdepth: 2
    :caption: Contents:
 
-   autoapi/accelerator/lattice/index
-   autoapi/accelerator/constraints/index
-   autoapi/accelerator/beam/index
-   autoapi/accelerator/elements/index
+   autoapi/pyaccelerator/lattice/index
+   autoapi/pyaccelerator/constraints/index
+   autoapi/pyaccelerator/beam/index
+   autoapi/pyaccelerator/elements/index
    autoapi/index
 
-   Source (Git) <https://github.com/loiccoyle/accelerator>
+   Source (Git) <https://github.com/loiccoyle/pyaccelerator>
 
 
 

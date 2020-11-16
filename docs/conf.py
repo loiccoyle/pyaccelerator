@@ -14,14 +14,14 @@ from datetime import date
 
 import sphinx_rtd_theme
 
-from accelerator import __version__
+from pyaccelerator import __version__
 
 # -- Project information -----------------------------------------------------
 
 version = __version__
-project = "accelerator {}".format(version)
+project = "pyaccelerator {}".format(version)
 copyright = "{0}, Loic Coyle".format(date.today().year)
-author = "Loic Coyle"
+author = "Loic Coyle, Michael Schenk"
 
 # -- General configuration ---------------------------------------------------
 
@@ -48,7 +48,7 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
 # AutoAPI
 autoapi_type = "python"
-autoapi_dirs = ["../accelerator"]
+autoapi_dirs = ["../pyaccelerator"]
 autoapi_options = ["members", "undoc-members"]
 autoapi_include_summaries = True
 
