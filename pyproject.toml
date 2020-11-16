@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyaccelerator"
-version = "0.1.2"
+version = "0.1.3"
 description = "Accelerator building blocks."
 authors = ["Loic Coyle <loic.coyle <loic.coyle@hotmail.fr>", "Michael Schenk"]
 license = "MIT"
