@@ -2,8 +2,8 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
-from accelerator.lattice import Lattice
+from pyaccelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
+from pyaccelerator.lattice import Lattice
 
 
 class TestQuadrupole(TestCase):
@@ -16,43 +16,47 @@ class TestQuadrupole(TestCase):
 
     def test_transfer_matrix(self):
         quadrupole = Quadrupole(k=1 / 100, l=1)
-        m_h, m_v = (
-            quadrupole._get_transfer_matrix_h(),
-            quadrupole._get_transfer_matrix_v(),
+        m = quadrupole._get_transfer_matrix()
+        expected_transfer_matrix = np.array(
+            [
+                [0.99500417, 0.99833417, 0, 0, 0],
+                [-0.00998334, 0.99500417, 0, 0, 0],
+                [0, 0, 1.00500417, 1.0016675, 0],
+                [0, 0, 0.01001668, 1.00500417, 0],
+                [0, 0, 0, 0, 1],
+            ]
         )
-        expected_transfer_matrix_h = np.array(
-            [[0.99500417, 0.99833417, 0], [-0.00998334, 0.99500417, 0], [0, 0, 1]]
-        )
-        expected_transfer_matrix_v = np.array(
-            [[1.00500417, 1.0016675, 0], [0.01001668, 1.00500417, 0], [0, 0, 1]]
-        )
-        assert np.allclose(m_h, expected_transfer_matrix_h)
-        assert np.allclose(m_v, expected_transfer_matrix_v)
-        assert np.allclose(quadrupole.m_h, m_h)
-        assert np.allclose(quadrupole.m_v, m_v)
+        assert np.allclose(m, expected_transfer_matrix)
+        assert np.allclose(quadrupole.m, m)
 
         quadrupole = Quadrupole(k=-1 / 100, l=1)
-        m_h, m_v = (
-            quadrupole._get_transfer_matrix_h(),
-            quadrupole._get_transfer_matrix_v(),
+        m = quadrupole._get_transfer_matrix()
+        expected_transfer_matrix = np.array(
+            [
+                [1.00500417, 1.0016675, 0, 0, 0],
+                [0.01001668, 1.00500417, 0, 0, 0],
+                [0, 0, 0.99500417, 0.99833417, 0],
+                [0, 0, -0.00998334, 0.99500417, 0],
+                [0, 0, 0, 0, 1],
+            ]
         )
-        expected_transfer_matrix_h = np.array(
-            [[1.00500417, 1.0016675, 0], [0.01001668, 1.00500417, 0], [0, 0, 1]]
-        )
-        expected_transfer_matrix_v = np.array(
-            [[0.99500417, 0.99833417, 0], [-0.00998334, 0.99500417, 0], [0, 0, 1]]
-        )
-        assert np.allclose(m_h, expected_transfer_matrix_h)
-        assert np.allclose(m_v, expected_transfer_matrix_v)
-        assert np.allclose(quadrupole.m_h, m_h)
-        assert np.allclose(quadrupole.m_v, m_v)
+        assert np.allclose(m, expected_transfer_matrix)
+        assert np.allclose(quadrupole.m, m)
+
+    def test_transport(self):
+        quadrupole = Quadrupole(k=1, l=1)
+        out = quadrupole._transport(np.array([0, 0, 0, 0, 0]))
+        assert np.allclose(out, [0, 0, 0, 0, 0])
+        # out = quadrupole._transport(np.array([1, 0, 0, 0, 0]))
+        # assert np.allclose(out, [1, 0, 0, 0, 0])
+        # out = quadrupole._transport(np.array([1, 0, 0, 0, 1]))
+        # assert np.allclose(out, [1, 0, 0, 0, 1])
 
     def test_slice(self):
         quadrupole = Quadrupole(k=1 / 2, l=5)
         assert len(quadrupole.slice(10)) == 10
         assert isinstance(quadrupole.slice(10), Lattice)
-        assert np.allclose(quadrupole.slice(10).m_h, quadrupole.m_h)
-        assert np.allclose(quadrupole.slice(10).m_v, quadrupole.m_v)
+        assert np.allclose(quadrupole.slice(10).m, quadrupole.m)
         assert quadrupole.slice(10)[0].name == quadrupole.name + "_slice_0"
 
     def test_repr(self):
@@ -75,10 +79,6 @@ class TestQuadrupole(TestCase):
         assert dic["k"] == quad.k
         assert dic["l"] == quad.l
         assert dic["name"] == quad.name
-
-    def test_plot(self):
-        quad = Quadrupole(1 / 100, 1)
-        quad.plot()
 
     def test_copy(self):
         quad = Quadrupole(1 / 100, 1)
@@ -107,16 +107,18 @@ class TestQuadrupoleThin(TestCase):
 
     def test_transfer_matrix(self):
         quadrupole = QuadrupoleThin(1)
-        expected_transfer_matrix_h = np.array([[1, 0, 0], [-1, 1, 0], [0, 0, 1]])
-        expected_transfer_matrix_v = np.array([[1, 0, 0], [1, 1, 0], [0, 0, 1]])
-        m_h, m_v = (
-            quadrupole._get_transfer_matrix_h(),
-            quadrupole._get_transfer_matrix_v(),
+        expected_transfer_matrix = np.array(
+            [
+                [1, 0, 0, 0, 0],
+                [-1, 1, 0, 0, 0],
+                [0, 0, 1, 0, 0],
+                [0, 0, 1, 1, 0],
+                [0, 0, 0, 0, 1],
+            ]
         )
-        assert np.allclose(m_h, expected_transfer_matrix_h)
-        assert np.allclose(m_v, expected_transfer_matrix_v)
-        assert np.allclose(quadrupole.m_h, m_h)
-        assert np.allclose(quadrupole.m_v, m_v)
+        m = quadrupole._get_transfer_matrix()
+        assert np.allclose(m, expected_transfer_matrix)
+        assert np.allclose(quadrupole.m, m)
 
     def test_repr(self):
         repr(QuadrupoleThin(1))
@@ -136,10 +138,6 @@ class TestQuadrupoleThin(TestCase):
         assert dic["element"] == "QuadrupoleThin"
         assert dic["f"] == quad.f
         assert dic["name"] == quad.name
-
-    def test_plot(self):
-        quad = QuadrupoleThin(0.8)
-        quad.plot()
 
     def test_copy(self):
         quad = QuadrupoleThin(1)

@@ -6,4 +6,7 @@ test:
 test-cov:
 	pytest --cov=$(PKGNAME) tests --cov-report term-missing
 
-.PHONY: test test-cov
+format:
+	isort . && black .
+
+.PHONY: test test-cov format

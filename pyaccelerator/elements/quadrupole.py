@@ -1,5 +1,5 @@
 from itertools import count
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 from matplotlib import patches
@@ -21,8 +21,7 @@ class Quadrupole(BaseElement):
         k: Quadrupole trength in meters^-2.
         l: Element length in meters.
         length: Element length in meters.
-        m_h: Element phase space transfer matrix in the horizontal plane.
-        m_v: Element phase space transfer matrix in the vertical plane.
+        m: Element phase space transfer matrix.
         name: Element name.
     """
 
@@ -39,41 +38,67 @@ class Quadrupole(BaseElement):
     def _get_length(self) -> float:
         return self.l
 
-    def _get_transfer_matrix_h(self) -> np.ndarray:
-        if self.k >= 0:
-            return self.__focussing(self.k)
-        return self.__defocussing(self.k)
+    def _get_transfer_matrix(self) -> np.ndarray:
+        sin_x, cos_x, sin_y, cos_y = self._compute_sin_cos(self.k)
 
-    def _get_transfer_matrix_v(self) -> np.ndarray:
-        if self.k >= 0:
-            return self.__defocussing(-self.k)
-        return self.__focussing(-self.k)
+        out = np.zeros((5, 5))
+        out[0, 0] = cos_x
+        out[0, 1] = sin_x
+        out[1, 0] = -self.k * sin_x
+        out[1, 1] = cos_x
 
-    def __focussing(self, k) -> np.ndarray:
-        """Compute a foccusing matrix, with k >= 0."""
-        sqrt_k = np.sqrt(k)
-        m_f = np.zeros((3, 3))
-        m_f[0, 0] = np.cos(sqrt_k * self.l)
-        m_f[0, 1] = (1 / sqrt_k) * np.sin(sqrt_k * self.l)
-        # m_f[0, 2] = 0
-        m_f[1, 0] = -sqrt_k * np.sin(sqrt_k * self.l)
-        m_f[1, 1] = np.cos(sqrt_k * self.l)
-        # m_f[1, 2] = 0
-        m_f[2, 2] = 1
-        return m_f
+        out[2, 2] = cos_y
+        out[2, 3] = sin_y
+        out[3, 2] = self.k * sin_y
+        out[3, 3] = cos_y
 
-    def __defocussing(self, k) -> np.ndarray:
-        """Compute a defoccusing matrix, with k < 0."""
+        out[4, 4] = 1
+        return out
+
+    def _transport(self, phase_coords: np.ndarray) -> np.ndarray:
+        # strength depends on dp/p
+        k = self.k / (1 + phase_coords[4])
+
+        sin_x, cos_x, sin_y, cos_y = self._compute_sin_cos(k)
+        out = np.zeros(phase_coords.shape)
+        out[0] = cos_x * phase_coords[0] + sin_x * phase_coords[1]
+        out[1] = -k * sin_x * phase_coords[0] + cos_x * phase_coords[1]
+
+        out[2] = cos_y * phase_coords[2] + sin_y * phase_coords[3]
+        out[3] = k * sin_y * phase_coords[2] + cos_y * phase_coords[3]
+
+        out[4] = phase_coords[4]
+        return out
+
+    def _compute_sin_cos(self, k) -> Tuple[Union[float, np.ndarray]]:
+        # needs to work with arrays in order to track a distribution of particles.
+        if isinstance(k, float):
+            k = np.array(k)
+
         sqrt_k = np.sqrt(abs(k))
-        m_d = np.zeros((3, 3))
-        m_d[0, 0] = np.cosh(sqrt_k * self.l)
-        m_d[0, 1] = (1 / sqrt_k) * np.sinh(sqrt_k * self.l)
-        # m_d[0, 2] = 0
-        m_d[1, 0] = (sqrt_k) * np.sinh(sqrt_k * self.l)
-        m_d[1, 1] = np.cosh(sqrt_k * self.l)
-        # m_d[1, 2] = 0
-        m_d[2, 2] = 1
-        return m_d
+
+        sin_x = np.zeros(k.shape)
+        cos_x = np.zeros(k.shape)
+        sin_y = np.zeros(k.shape)
+        cos_y = np.zeros(k.shape)
+
+        k_pos_mask = k >= 0
+        sqrt_k_pos = sqrt_k[k_pos_mask]
+
+        k_neg_mask = k < 0
+        sqrt_k_neg = sqrt_k[k_neg_mask]
+
+        sin_x[k_pos_mask] = np.sin(sqrt_k_pos * self.l) / sqrt_k_pos
+        cos_x[k_pos_mask] = np.cos(sqrt_k_pos * self.l)
+        sin_y[k_pos_mask] = np.sinh(sqrt_k_pos * self.l) / sqrt_k_pos
+        cos_y[k_pos_mask] = np.cosh(sqrt_k_pos * self.l)
+
+        sin_x[k_neg_mask] = np.sinh(sqrt_k_neg * self.l) / sqrt_k_neg
+        cos_x[k_neg_mask] = np.cosh(sqrt_k_neg * self.l)
+        sin_y[k_neg_mask] = np.sin(sqrt_k_neg * self.l) / sqrt_k_neg
+        cos_y[k_neg_mask] = np.cos(sqrt_k_neg * self.l)
+
+        return sin_x, cos_x, sin_y, cos_y
 
     def slice(self, n_quadrupoles: int) -> Lattice:
         """Slice the element into a many smaller elements.
@@ -96,10 +121,10 @@ class Quadrupole(BaseElement):
 
     def _get_patch(self, s: float) -> patches.Patch:
         if self.k < 0:
-            label = "Defocussing Quad"
+            label = "Defocussing Quad."
             colour = "tab:red"
         elif self.k > 0:
-            label = "Focussing Quad"
+            label = "Focussing Quad."
             colour = "tab:blue"
         else:
             # if for whatever reason the strength is 0 skip
@@ -122,8 +147,8 @@ class QuadrupoleThin(BaseElement):
 
     Attributes:
         f: Element focal length in meters.
-        m_h: Element phase space transfer matrix in the horizontal plane.
-        m_v: Element phase space transfer matrix in the vertical plane.
+        m: Element phase space transfer matrix.
+        name: Element name.
     """
 
     _instance_count = count(0)
@@ -138,36 +163,43 @@ class QuadrupoleThin(BaseElement):
     def _get_length(self) -> float:
         return 0
 
-    def _get_transfer_matrix_h(self) -> np.ndarray:
-        m_h = np.zeros((3, 3))
-        m_h[0, 0] = 1
-        # m_h[0, 1] = 0
-        # m_h[0, 2] = 0
-        m_h[1, 0] = -1 / self.f
-        m_h[1, 1] = 1
-        # m_h[1, 2] = 0
-        m_h[2, 2] = 1
-        return m_h
+    def _get_transfer_matrix(self) -> np.ndarray:
 
-    def _get_transfer_matrix_v(self) -> np.ndarray:
-        m_v = np.zeros((3, 3))
-        m_v[0, 0] = 1
-        # m_v[0, 1] = 0
-        # m_v[0, 2] = 0
-        m_v[1, 0] = 1 / self.f
-        m_v[1, 1] = 1
-        # m_v[1, 2] = 0
-        m_v[2, 2] = 1
-        return m_v
+        out = np.zeros((5, 5))
+        out[0, 0] = 1
+        out[1, 0] = -1 / self.f
+        out[1, 1] = 1
+
+        out[2, 2] = 1
+        out[3, 2] = 1 / self.f
+        out[3, 3] = 1
+
+        out[4, 4] = 1
+        return out
+
+    def _transport(self, phase_coords: np.ndarray) -> np.ndarray:
+        # overwrite transport method to have a focal length which depends on dp/p
+        f = self.f * (1 + phase_coords[4])
+        one_over_f = 1 / f
+
+        out = np.zeros(phase_coords.shape)
+        out[0] = phase_coords[0]
+        out[1] = -one_over_f * phase_coords[0] + phase_coords[1]
+
+        out[2] = phase_coords[2]
+        out[3] = one_over_f * phase_coords[2] + phase_coords[3]
+
+        out[4] = phase_coords[4]
+        return out
 
     def _get_patch(self, s: float) -> Union[None, patches.Patch]:
         if self.f < 0:
             head_length = -10
-            label = "Defocussing Thin Quad"
+            label = "Defocussing Thin Quad."
             colour = "tab:red"
         elif self.f > 0:
             head_length = 10
-            label = "Focussing Thin Quad"
+            label = "Focussing Thin Quad."
             colour = "tab:blue"
         else:
             # if for whatever reason the strength is 0 skip

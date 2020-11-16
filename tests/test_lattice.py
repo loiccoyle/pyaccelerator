@@ -5,11 +5,13 @@ from unittest import TestCase
 import matplotlib.pyplot as plt
 import numpy as np
 
-from accelerator.beam import Beam
-from accelerator.elements.dipole import Dipole, DipoleThin
-from accelerator.elements.drift import Drift
-from accelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
-from accelerator.lattice import Lattice, Plotter
+from pyaccelerator.beam import Beam
+from pyaccelerator.elements.custom import CustomThin
+from pyaccelerator.elements.dipole import Dipole, DipoleThin
+from pyaccelerator.elements.drift import Drift
+from pyaccelerator.elements.quadrupole import Quadrupole, QuadrupoleThin
+from pyaccelerator.elements.sextupole import SextupoleThin
+from pyaccelerator.lattice import Lattice, Plotter
 
 
 class TestLattice(TestCase):
@@ -26,12 +28,10 @@ class TestLattice(TestCase):
 
     def test_transfer_matrixes(self):
         lat = Lattice([Drift(1), Drift(1)])
-        assert np.allclose(lat.m_h, Drift(2).m_h)
-        assert np.allclose(lat.m_v, Drift(2).m_v)
+        assert np.allclose(lat.m, Drift(2).m)
 
         lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
-        assert np.allclose(lat.m_h, QuadrupoleThin(0.8).m_h @ Drift(1).m_h)
-        assert np.allclose(lat.m_v, QuadrupoleThin(0.8).m_v @ Drift(1).m_v)
+        assert np.allclose(lat.m, QuadrupoleThin(0.8).m @ Drift(1).m)
 
     def test_slice(self):
         lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
@@ -39,8 +39,7 @@ class TestLattice(TestCase):
         assert len(lat_sliced) == 11
         assert all([isinstance(element, Drift) for element in lat_sliced[:10]])
         assert all([element.length == 0.1 for element in lat_sliced[:10]])
-        assert np.allclose(lat.m_h, lat_sliced.m_h)
-        assert np.allclose(lat.m_v, lat_sliced.m_v)
+        assert np.allclose(lat.m, lat_sliced.m)
 
         lat = Lattice([Drift(1), Dipole(np.pi / 4, 100)])
         lat = lat.slice(Drift, 10)
@@ -52,13 +51,13 @@ class TestLattice(TestCase):
         lat = Lattice()
         assert len(lat) == 0
         with self.assertRaises(TypeError):
-            lat.m_h
+            lat.m
         lat.append(Drift(1))
         assert len(lat) == 1
-        assert np.allclose(lat.m_h, Drift(1).m_h)
+        assert np.allclose(lat.m, Drift(1).m)
         lat.append(Drift(1))
         assert len(lat) == 2
-        assert np.allclose(lat.m_h, Drift(2).m_h)
+        assert np.allclose(lat.m, Drift(2).m)
 
         drift = Drift(1)
         quad = QuadrupoleThin(0.8)
@@ -71,30 +70,25 @@ class TestLattice(TestCase):
 
         lat = Lattice([Drift(1)])
         assert len(lat) == 1
-        assert np.allclose(lat.m_h, Drift(1).m_h)
-        assert np.allclose(lat.m_v, Drift(1).m_v)
+        assert np.allclose(lat.m, Drift(1).m)
         lat = lat * 2
         assert len(lat) == 2
-        assert np.allclose(lat.m_h, Drift(2).m_h)
-        assert np.allclose(lat.m_v, Drift(2).m_v)
+        assert np.allclose(lat.m, Drift(2).m)
 
         lat = Lattice([Drift(1)])
         lat = lat + lat
         assert len(lat) == 2
-        assert np.allclose(lat.m_h, Drift(2).m_h)
-        assert np.allclose(lat.m_v, Drift(2).m_v)
+        assert np.allclose(lat.m, Drift(2).m)
 
         lat = Lattice([Drift(1)])
         lat.extend([Drift(1)])
         assert len(lat) == 2
-        assert np.allclose(lat.m_h, Drift(2).m_h)
-        assert np.allclose(lat.m_v, Drift(2).m_v)
+        assert np.allclose(lat.m, Drift(2).m)
 
         lat = Lattice([Drift(1)])
         lat.insert(0, QuadrupoleThin(0.8))
         assert len(lat) == 2
-        assert np.allclose(lat.m_h, Drift(1).m_h @ QuadrupoleThin(0.8).m_h)
-        assert np.allclose(lat.m_v, Drift(1).m_v @ QuadrupoleThin(0.8).m_v)
+        assert np.allclose(lat.m, Drift(1).m @ QuadrupoleThin(0.8).m)
 
         lat = Lattice([Drift(1)])
         popped = lat.pop(0)
@@ -113,36 +107,48 @@ class TestLattice(TestCase):
     def test_tranport_phasespace(self):
         # transporting phase space coords:
         lat = Lattice([Drift(1)])
-        s, u, u_prime, dp = lat.transport(phasespace=[1, 0, 0])
-        assert len(u) == 2
-        assert len(u_prime) == 2
+        s, x, x_prime, y, y_prime, dp = lat.transport([1, 0, 0, 0, 0])
+        assert len(x) == 2
+        assert len(x_prime) == 2
+        assert len(y) == 2
+        assert len(y_prime) == 2
         assert len(s) == 2
-        assert np.allclose(u, np.array([1, 1]))
-        assert np.allclose(u_prime, np.array([0, 0]))
+        assert np.allclose(x, np.array([1, 1]))
+        assert np.allclose(x_prime, np.array([0, 0]))
+        assert np.allclose(y, np.array([0, 0]))
+        assert np.allclose(y_prime, np.array([0, 0]))
         assert np.allclose(s, np.array([0, 1]))
-        assert dp.shape == u.shape
+        assert dp.shape == x.shape
 
-        s, u, u_prime, dp = lat.transport([1, 1, 0])
-        assert len(u) == 2
-        assert len(u_prime) == 2
+        s, x, x_prime, y, y_prime, dp = lat.transport([1, 1, 0, 0, 0])
+        assert len(x) == 2
+        assert len(x_prime) == 2
+        assert len(y) == 2
+        assert len(y_prime) == 2
         assert len(s) == 2
-        assert np.allclose(u, np.array([1, 2]))
-        assert np.allclose(u_prime, np.array([1, 1]))
+        assert np.allclose(x, np.array([1, 2]))
+        assert np.allclose(x_prime, np.array([1, 1]))
+        assert np.allclose(y, np.array([0, 0]))
+        assert np.allclose(y_prime, np.array([0, 0]))
         assert np.allclose(s, np.array([0, 1]))
-        assert dp.shape == u.shape
+        assert dp.shape == x.shape
 
         # make sure the transport is consistent:
         lat = Lattice([Drift(2)])
-        s_1, u_1, u_prime_1, dp = lat.transport([1, 1, 0])
+        s_1, x_1, x_prime_1, y_1, y_prime_1, dp = lat.transport([1, 1, 0, 0, 0])
         lat = Lattice([Drift(1), Drift(1)])
-        s_2, u_2, u_prime_2, dp = lat.transport([1, 1, 0])
-        assert len(u_2) == 3
-        assert len(u_prime_2) == 3
+        s_2, x_2, x_prime_2, y_2, y_prime_2, dp = lat.transport([1, 1, 0, 0, 0])
+        assert len(x_2) == 3
+        assert len(x_prime_2) == 3
+        assert len(y_2) == 3
+        assert len(y_prime_2) == 3
         assert len(s_2) == 3
-        assert u_1[-1] == u_2[-1]
-        assert u_prime_1[-1] == u_prime_2[-1]
+        assert x_1[-1] == x_2[-1]
+        assert x_prime_1[-1] == x_prime_2[-1]
+        assert y_1[-1] == y_2[-1]
+        assert y_prime_1[-1] == y_prime_2[-1]
         assert s_1[-1] == s_2[-1]
-        assert dp.shape == u_2.shape
+        assert dp.shape == x_2.shape
 
     def test_tranport_twiss(self):
         # transporting phase space coords:
@@ -158,17 +164,11 @@ class TestLattice(TestCase):
                 QuadrupoleThin(2 * f),
             ]
         )
-        s, beta, alpha, gamma = FODO.transport(twiss=FODO.m_h.twiss_solution)
+        s, beta, alpha, gamma = FODO.twiss()
         assert len(beta) == len(FODO) + 1
         assert len(alpha) == len(FODO) + 1
         assert len(gamma) == len(FODO) + 1
         assert len(s) == len(FODO) + 1
-        # make sure the default is correct
-        s_2, beta_2, alpha_2, gamma_2 = FODO.transport()
-        assert np.allclose(beta, beta_2)
-        assert np.allclose(alpha, alpha_2)
-        assert np.allclose(gamma, gamma_2)
-        assert np.allclose(s, s_2)
         # make sure the periodic solution is infact periodic
         self.assertAlmostEqual(beta[0], beta[-1])
         self.assertAlmostEqual(alpha[0], alpha[-1])
@@ -178,7 +178,7 @@ class TestLattice(TestCase):
         assert np.argmin(beta) == 2
 
         # now in the v plane
-        s, beta, alpha, gamma = FODO.transport(twiss=FODO.m_v.twiss_solution, plane="v")
+        s, beta, alpha, gamma = FODO.twiss(plane="v")
         assert len(beta) == len(FODO) + 1
         assert len(alpha) == len(FODO) + 1
         assert len(gamma) == len(FODO) + 1
@@ -206,14 +206,18 @@ class TestLattice(TestCase):
             ]
         )
         beam = Beam()
-        s, u, u_prime, dp = FODO.transport(
-            beam.ellipse(FODO.m_h.twiss_solution, n_angles=n_angles)
+        s, x, x_prime, y, y_prime, dp = FODO.transport(
+            beam.ellipse(FODO.twiss_solution(), n_angles=n_angles)
         )
-        assert u.shape[-1] == len(FODO) + 1
-        assert u_prime.shape[-1] == len(FODO) + 1
+        assert x.shape[-1] == len(FODO) + 1
+        assert x_prime.shape[-1] == len(FODO) + 1
+        assert y.shape[-1] == len(FODO) + 1
+        assert y_prime.shape[-1] == len(FODO) + 1
         assert len(s) == len(FODO) + 1
-        assert u.shape[0] == n_angles
-        assert u_prime.shape[0] == n_angles
+        assert x.shape[0] == n_angles
+        assert x_prime.shape[0] == n_angles
+        assert y.shape[0] == n_angles
+        assert y_prime.shape[0] == n_angles
 
     def test_transport_distribution(self):
         f = 0.8
@@ -229,34 +233,36 @@ class TestLattice(TestCase):
         )
         n_particles = 10
         beam = Beam(n_particles=n_particles)
-        s, u, u_prime, dp = FODO.transport(
-            phasespace=beam.match(FODO.m_h.twiss_solution)
+        s, x, x_prime, y, y_prime, dp = FODO.transport(
+            beam.match(FODO.twiss_solution())
         )
-        assert u.shape[-1] == len(FODO) + 1
-        assert u_prime.shape[-1] == len(FODO) + 1
+        assert x.shape[-1] == len(FODO) + 1
+        assert x_prime.shape[-1] == len(FODO) + 1
+        assert y.shape[-1] == len(FODO) + 1
+        assert y_prime.shape[-1] == len(FODO) + 1
         assert len(s) == len(FODO) + 1
-        assert u.shape[0] == n_particles
-        assert u_prime.shape[0] == n_particles
+        assert x.shape[0] == n_particles
+        assert x_prime.shape[0] == n_particles
+        assert y.shape[0] == n_particles
+        assert y_prime.shape[0] == n_particles
 
     def test_transport_input(self):
         # just checking it doesn't raise ValueError
         lat = Lattice([Drift(1)])
         # make sure arrays also work
-        lat.transport(phasespace=np.array([1, 2, 1]))
-        lat.transport(phasespace=np.array([[1, 2, 3], [1, 2, 3], [1, 2, 3]]))
+        lat.transport(np.array([1, 2, 1, 1, 1]))
+        lat.transport(np.array([[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]]))
         # make sure lists work
-        lat.transport(phasespace=[1, 2, 3])
-        lat.transport(phasespace=[[1, 2, 3], [1, 2, 3], [1, 2, 3]])
+        lat.transport([1, 2, 3, 1, 2])
+        lat.transport([[1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3], [1, 2, 3]])
         # tuples ?
-        lat.transport(phasespace=(1, 2, 3))
-        lat.transport(phasespace=((1, 2, 3), (1, 2, 3), (1, 2, 3)))
+        lat.transport((1, 2, 3, 1, 2))
+        lat.transport(((1, 2, 3), (1, 2, 3), (1, 2, 3), (1, 2, 3), (1, 2, 3)))
 
     def test_transport_error(self):
         lat = Lattice([Drift(1)])
         with self.assertRaises(ValueError):
-            lat.transport(phasespace=[1, 0, 1], twiss=[1, 1, 1])
-        with self.assertRaises(ValueError):
-            lat.transport(twiss="solution")
+            lat.twiss()
 
     def test_save_load(self):
         lat = Lattice([Drift(1), QuadrupoleThin(0.5)])
@@ -330,6 +336,8 @@ class TestPlotter(TestCase):
                 QuadrupoleThin(0),
                 Dipole(1, np.pi / 2),
                 DipoleThin(np.pi / 16),
+                SextupoleThin(1),
+                CustomThin(np.identity(5)),
             ]
         )
         plotter = Plotter(lat)
@@ -337,7 +345,7 @@ class TestPlotter(TestCase):
         fig, axes = plotter.top_down()
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, plt.Axes)
-        fig, axes = plotter.lattice()
+        fig, axes = plotter.layout()
         assert isinstance(fig, plt.Figure)
         assert isinstance(axes, plt.Axes)
         fig, axes = plotter()

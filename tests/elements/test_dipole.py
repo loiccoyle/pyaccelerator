@@ -2,8 +2,8 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.elements.dipole import Dipole, DipoleThin
-from accelerator.lattice import Lattice
+from pyaccelerator.elements.dipole import Dipole, DipoleThin
+from pyaccelerator.lattice import Lattice
 
 n_dipoles = 6
 perim = 1e3  # 1km
@@ -22,26 +22,24 @@ class TestDipole(TestCase):
 
     def test_transfer_matrix(self):
         dipole = Dipole(rho_dipole, angle_dipole)
-        expected_transfer_matrix_h = np.array(
+        expected_transfer_matrix = np.array(
             [
-                [0.5, 1.37832224e02, 7.95774715e01],
-                [-5.44139809e-03, 0.5, 8.66025404e-01],
-                [0, 0, 1],
+                [0.5, 1.37832224e02, 0, 0, 7.95774715e01],
+                [-5.44139809e-03, 0.5, 0, 0, 8.66025404e-01],
+                [0, 0, 1, l_dipole, 0],
+                [0, 0, 0, 1, 0],
+                [0, 0, 0, 0, 1],
             ]
         )
-        expected_transfer_matrix_v = np.array([[1, l_dipole, 0], [0, 1, 0], [0, 0, 1]])
-        m_h, m_v = dipole._get_transfer_matrix_h(), dipole._get_transfer_matrix_v()
-        assert np.allclose(m_h, expected_transfer_matrix_h)
-        assert np.allclose(m_v, expected_transfer_matrix_v)
-        assert np.allclose(dipole.m_h, m_h)
-        assert np.allclose(dipole.m_v, m_v)
+        m = dipole._get_transfer_matrix()
+        assert np.allclose(m, expected_transfer_matrix)
+        assert np.allclose(dipole.m, m)
 
     def test_slice(self):
         dipole = Dipole(rho_dipole, angle_dipole)
         assert len(dipole.slice(10)) == 10
         assert isinstance(dipole.slice(10), Lattice)
-        assert np.allclose(dipole.slice(10).m_h, dipole.m_h)
-        assert np.allclose(dipole.slice(10).m_v, dipole.m_v)
+        assert np.allclose(dipole.slice(10).m, dipole.m)
         assert dipole.slice(10)[0].name == dipole.name + "_slice_0"
 
     def test_repr(self):
@@ -71,10 +69,6 @@ class TestDipole(TestCase):
         assert dic["theta"] == dipole.theta
         assert dic["name"] == dipole.name
 
-    def test_plot(self):
-        dipole = Dipole(rho_dipole, angle_dipole)
-        dipole.plot()
-
     def test_copy(self):
         dipole = Dipole(rho_dipole, angle_dipole)
         copy = dipole.copy()
@@ -103,13 +97,10 @@ class TestDipoleThin(TestCase):
 
     def test_transfer_matrix(self):
         dipole = DipoleThin(angle_dipole)
-        expected_transfer_matrix_h = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        expected_transfer_matrix_v = np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]])
-        m_h, m_v = dipole._get_transfer_matrix_h(), dipole._get_transfer_matrix_v()
-        assert np.allclose(m_h, expected_transfer_matrix_h)
-        assert np.allclose(m_v, expected_transfer_matrix_v)
-        assert np.allclose(dipole.m_h, m_h)
-        assert np.allclose(dipole.m_v, m_v)
+        expected_transfer_matrix = np.identity(5)
+        m = dipole._get_transfer_matrix()
+        assert np.allclose(m, expected_transfer_matrix)
+        assert np.allclose(dipole.m, m)
 
     def test_repr(self):
         repr(DipoleThin(angle_dipole))
@@ -134,10 +125,6 @@ class TestDipoleThin(TestCase):
         assert dic["element"] == "DipoleThin"
         assert dic["theta"] == dipole.theta
         assert dic["name"] == dipole.name
-
-    def test_plot(self):
-        dipole = DipoleThin(angle_dipole)
-        dipole.plot()
 
     def test_copy(self):
         dipole = DipoleThin(angle_dipole)

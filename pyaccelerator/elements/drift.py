@@ -19,8 +19,7 @@ class Drift(BaseElement):
     Attributes:
         l: Element length in meters.
         length: Element length in meters.
-        m_h: Element phase space transfer matrix in the horizontal plane.
-        m_v: Element phase space transfer matrix in the vertical plane.
+        m: Element phase space transfer matrix.
         name: Element name.
     """
 
@@ -36,20 +35,11 @@ class Drift(BaseElement):
     def _get_length(self) -> float:
         return self.l
 
-    def _get_transfer_matrix_h(self) -> np.ndarray:
-        m_h = np.zeros((3, 3))
-        m_h[0, 0] = 1
-        m_h[0, 1] = self.length
-        # m_h[0, 2] = 0
-        # m_h[1, 0] = 0
-        m_h[1, 1] = 1
-        # m_h[1, 2] = 0
-        m_h[2, 2] = 1
-        return m_h
-
-    def _get_transfer_matrix_v(self) -> np.ndarray:
-        # same as horizontal
-        return self._get_transfer_matrix_h()
+    def _get_transfer_matrix(self) -> np.ndarray:
+        out = np.identity(5)
+        out[0, 1] = self.length
+        out[2, 3] = self.length
+        return out
 
     def slice(self, n_drifts: int) -> Lattice:
         """Slice the element into a many smaller elements.

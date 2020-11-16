@@ -2,8 +2,8 @@ from unittest import TestCase
 
 import numpy as np
 
-from accelerator.elements import utils
-from accelerator.elements.drift import Drift
+from pyaccelerator.elements import utils
+from pyaccelerator.elements.drift import Drift
 
 
 class TestUtils(TestCase):

@@ -1,4 +1,4 @@
-# Accelerator
+# pyaccelerator
 
 [![Tests](https://github.com/loiccoyle/accelerator/workflows/tests/badge.svg)](https://github.com/loiccoyle/accelerator/actions?query=workflow%3Atests)
 [![Documentation Status](https://readthedocs.org/projects/pyaccelerator/badge/?version=latest)](https://pyaccelerator.readthedocs.io/en/latest/?badge=latest)
@@ -6,16 +6,16 @@
 Python package to build simple toy accelerators.
 
 # Dependencies:
-  * numpy
-  * matplotlib
-  * scipy
+  * `numpy`
+  * `matplotlib`
+  * `scipy`
 
 # Installation:
 For now you will need to git clone the repository and install the package:
 
 ```sh
-git clone https://github.com/loiccoyle/accelerator
-cd accelerator
+git clone https://github.com/loiccoyle/pyaccelerator
+cd pyaccelerator
 pip install .
 ```
 
@@ -35,9 +35,9 @@ source venv/bin/activate
 Proceed with the installation to install in the virtual environment.
 
 To deactivate the virtual environment:
- ```sh
- deactivate
- ```
+```sh
+deactivate
+```
 
 # Usage:
 See the `notebooks` folder for some examples.
