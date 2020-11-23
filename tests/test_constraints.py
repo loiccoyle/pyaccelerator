@@ -16,37 +16,49 @@ from pyaccelerator.lattice import Lattice
 
 class TestTargetPhasespace(TestCase):
     def test_init(self):
-        target = TargetPhasespace("element", [10, 1, 0, 0, 0], [0, 1, 0, 0, 0])
+        target = TargetPhasespace("element", x=10, x_prime=1, y=0, y_prime=0, dp=0)
+        assert target.element == "element"
+        assert target.initial is None
+        np.allclose(target.value, np.array([10, 1, 0, 0, 0]))
+
+        target = TargetPhasespace(
+            "element", x=10, x_prime=1, y=0, y_prime=0, dp=0, initial=[0, 1, 0, 0, 0]
+        )
         assert target.element == "element"
         assert target.initial == (0, 1, 0, 0, 0)
         np.allclose(target.value, np.array([10, 1, 0, 0, 0]))
 
         drift = Drift(1)
-        target = TargetPhasespace(drift, [10, 1, 0, 0, 0], [0, 1, 0, 0, 0])
+        target = TargetPhasespace(drift, x=10, x_prime=1, y=0, y_prime=0, dp=0)
         assert target.element == drift.name
-        assert target.initial == (0, 1, 0, 0, 0)
         np.allclose(target.value, np.array([10, 1, 0, 0, 0]))
 
+        with self.assertRaises(ValueError):
+            TargetPhasespace(drift)
+
     def test_repr(self):
-        target = TargetPhasespace("element", [10, 1, 0, 0, 0], [0, 1, 0, 0, 0])
+        target = TargetPhasespace("element", x=10, x_prime=1, y=0, y_prime=0, dp=0)
         repr(target)
 
 
 class TestTargetTwiss(TestCase):
     def test_init(self):
-        target = TargetTwiss("element", [1, 2, 3], plane="h")
+        target = TargetTwiss("element", beta=1, alpha=2, gamma=3, plane="h")
         assert target.element == "element"
         np.allclose(target.value, np.array([1, 2, 3]))
         assert target.plane == "h"
 
         drift = Drift(1)
-        target = TargetTwiss(drift, [1, 2, 3], plane="h")
+        target = TargetTwiss(drift, beta=1, alpha=2, gamma=3, plane="h")
         assert target.element == drift.name
         np.allclose(target.value, np.array([1, 2, 3]))
         assert target.plane == "h"
 
+        with self.assertRaises(ValueError):
+            TargetTwiss(drift)
+
     def test_repr(self):
-        target = TargetTwiss("element", [1, 2, 3], plane="h")
+        target = TargetTwiss("element", beta=1, alpha=2, gamma=3, plane="h")
         repr(target)
 
 
@@ -95,7 +107,7 @@ class TestConstraints(TestCase):
     def test_add_target(self):
         lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
         cons = Constraints(lat)
-        target = TargetPhasespace("quadrupole", [10, 1, 0, 0, 0], [0, 1, 0, 0, 0])
+        target = TargetPhasespace("quadrupole", x=10, x_prime=1, y=0, y_prime=0, dp=0)
         cons.add_target(target)
         assert cons.targets[0] == target
 
@@ -110,7 +122,7 @@ class TestConstraints(TestCase):
         lat = Lattice([Drift(1), QuadrupoleThin(0.8)])
         cons = Constraints(lat)
         cons.add_free_parameter("drift", "l")
-        target = TargetPhasespace("quadrupole", [10, 1, 0, 0, 0], [0, 1, 0, 0, 0])
+        target = TargetPhasespace("quadrupole", x=10, x_prime=1, y=0, y_prime=0, dp=0)
         cons.add_target(target)
         cons.clear()
         assert cons.targets == []
@@ -130,7 +142,7 @@ class TestConstraints(TestCase):
             # missing target
             lat.constraints.match()
         lat.constraints.clear()
-        target = TargetPhasespace("drift", [2, None, None, None, None], [1, 1, 0, 0, 0])
+        target = TargetPhasespace("drift", x=2)
         lat.constraints.add_target(target)
         with self.assertRaises(ValueError):
             # missing free parameter
@@ -139,9 +151,7 @@ class TestConstraints(TestCase):
         # Compute drift length to reach a x coord of 10 meters:
         lat = Lattice([Drift(1)])
         lat.constraints.add_free_parameter(element="drift", attribute="l")
-        target = TargetPhasespace(
-            "drift", [10, None, None, None, None], [0, 1, 0, 0, 0]
-        )
+        target = TargetPhasespace("drift", x=10, initial=[0, 1, 0, 0, 0])
         lat.constraints.add_target(target)
         matched_lat, res = lat.constraints.match()
         assert res.success
@@ -155,7 +165,7 @@ class TestConstraints(TestCase):
         drift_1 = Drift(1)
         lat = Lattice([drift_0, drift_1])
         lat.constraints.add_free_parameter(drift_0, "l")
-        target = TargetPhasespace(drift_0, [5, None, None, None, None], [0, 1, 0, 0, 0])
+        target = TargetPhasespace(drift_0, x=5, initial=[0, 1, 0, 0, 0])
         lat.constraints.add_target(target)
         matched_lat, res = lat.constraints.match()
         assert res.success
@@ -171,7 +181,7 @@ class TestConstraints(TestCase):
         drift_1 = Drift(1)
         lat = Lattice([drift_0, drift_1])
         lat.constraints.add_free_parameter("drift", "l")
-        target = TargetPhasespace(drift_1, [5, None, None, None, None], [0, 1, 0, 0, 0])
+        target = TargetPhasespace(drift_1, x=5, initial=[0, 1, 0, 0, 0])
         lat.constraints.add_target(target)
         matched_lat, res = lat.constraints.match()
         assert res.success
@@ -193,7 +203,7 @@ class TestConstraints(TestCase):
         )
         lat.constraints.add_free_parameter("quad_f", "f")
         lat.constraints.add_free_parameter("quad_d", "f")
-        target = TargetTwiss("quad_d", [0.5, None, None], plane="h")
+        target = TargetTwiss("quad_d", beta=0.5, plane="h")
         lat.constraints.add_target(target)
         matched, opt_res = lat.constraints.match()
         s, beta, *_ = matched.twiss()
