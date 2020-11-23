@@ -1,4 +1,5 @@
 from abc import abstractmethod
+from collections.abc import Iterable
 from typing import TYPE_CHECKING, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -28,32 +29,43 @@ class TargetPhasespace(BaseTarget):
         element: Element name pattern or element instance at which the
             `value` should be achieved.
         value: Target phase space coordinates at the given `element`.
-        initial (optional): Initial phase space coords, a sequence of
-            x[m], x_prime, y[m], y_prime, dp/p.
+        x (optional): Target x coordinate.
+        x_prime (optional): Target x_prime coordinate.
+        y (optional): Target y coordinate.
+        y_prime (optional): Target y_prime coordinate.
+        dp (optional): Target dp coordinate (probably breaks everything).
     """
 
     def __init__(
         self,
         element: Union[str, "BaseElement"],
-        value: Sequence[float],
-        initial: Optional[Sequence[float]] = None,
+        x: Optional[float] = None,
+        x_prime: Optional[float] = None,
+        y: Optional[float] = None,
+        y_prime: Optional[float] = None,
+        dp: Optional[float] = None,
     ):
-        if initial is not None:
-            initial = tuple(initial)
-
-        value = np.array(value)
+        value = [x, x_prime, y, y_prime, dp]
+        if all([v is None for v in value]):
+            raise ValueError("All phase space coords are None.")
         if isinstance(element, BaseElement):
             element = element.name
         self.element = element
-        self.value = value
-        self.initial = initial
+        self.value = np.array(value)
+        # as of yet dp doesn't change use it to set the closed orbit
+        if dp is None:
+            dp = 0
+        self._dp = dp
 
     def _transport(self, lattice: "Lattice"):
-        _, *tranported = lattice.transport(self.initial)
+        _, *tranported = lattice.transport(lattice.closed_orbit_solution(self._dp))
         return np.vstack(tranported)
 
     def loss(self, lattice: "Lattice") -> float:
-        transported = self._transport(lattice)
+        try:
+            transported = self._transport(lattice)
+        except ValueError:
+            return np.inf
 
         transported_columns = [i + 1 for i in lattice.search(self.element)]
         transported_rows = [
@@ -61,7 +73,7 @@ class TargetPhasespace(BaseTarget):
         ]
         result = transported[transported_rows, transported_columns]
         # l-2 norm
-        return np.linalg.norm(result - self.value[transported_rows], 2)
+        return result - self.value[transported_rows]
 
     def __repr__(self) -> str:
         args = ["element", "value", "initial"]
@@ -73,24 +85,30 @@ class TargetTwiss(BaseTarget):
     """Target twiss parameters.
 
     Args:
-        element: Element name pattern or element instance at which the
-            `value` should be achieved.
-        value: Target value of twiss parameters at the given `element`.
+        element: Element name pattern or element instance at which the target
+            `beta`, `alpha`, `gamma` should be achieved.
+        beta (optional): Target beta value at the location of the `element`.
+        alpha (optional): Target alpha value at the location of the `element`.
+        gamma (optional): Target gamma value at the location of the `element`.
         plane: Plane of interest, either "h" or "v".
     """
 
     def __init__(
         self,
         element: Union[str, "BaseElement"],
-        value: Sequence[float],
+        beta: Optional[float] = None,
+        alpha: Optional[float] = None,
+        gamma: Optional[float] = None,
         plane: str = "h",
     ):
         plane = plane.lower()
-        value = np.array(value)
+        value = [beta, alpha, gamma]
+        if all([v is None for v in value]):
+            raise ValueError("All twiss parameters are None.")
         if isinstance(element, BaseElement):
             element = element.name
         self.element = element
-        self.value = value
+        self.value = np.array(value)
         self.plane = plane
 
     def _transport(self, lattice: "Lattice"):
@@ -109,7 +127,7 @@ class TargetTwiss(BaseTarget):
         ]
         result = transported[transported_rows, transported_columns]
         # l-2 norm
-        return np.linalg.norm(result - self.value[transported_rows], 2)
+        return result - self.value[transported_rows]
 
     def __repr__(self) -> str:
         args = ["element", "value", "plane"]
@@ -222,7 +240,7 @@ class Constraints:
 
             >>> lat = Lattice([Drift(1)])
             >>> lat.constraints.add_free_parameter(element="drift", attribute="l")
-            >>> target = TargetPhasespace("drift", [10, None, None, None, None], [0, 1, 0, 0, 0]))
+            >>> target = TargetPhasespace("drift", x=10))
             >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
@@ -233,7 +251,7 @@ class Constraints:
 
             >>> lat = Lattice([Drift(1), Drift(1)])
             >>> lat.constraints.add_free_parameter("drift_0", "l")
-            >>> target = TargetPhasespace("drift_0", [5, None, None, None, None], [0, 1, 0, 0, 0]))
+            >>> target = TargetPhasespace("drift_0", x=5))
             >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
@@ -245,7 +263,7 @@ class Constraints:
 
             >>> lat = Lattice([Drift(1), Drift(1)])
             >>> lat.constraints.add_free_parameter("drift", "l")
-            >>> target = TargetPhasespace("drift_1", [5, None, None, None, None], [0, 1, 0, 0, 0])
+            >>> target = TargetPhasespace("drift_1", x=5)
             >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
@@ -258,7 +276,7 @@ class Constraints:
             ... Drift(1), QuadrupoleThin(1.6, name='quad_f')])
             >>> lat.constraints.add_free_parameter("quad_f", "f")
             >>> lat.constraints.add_free_parameter("quad_d", "f")
-            >>> target = TargetTwiss("quad_d", [0.5, None, None], plane="h")
+            >>> target = TargetTwiss("quad_d", beta=0.5, plane="h")
             >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
@@ -322,12 +340,8 @@ class Constraints:
             New matched :py:class:`~accelerator.lattce.Lattice` instance and
             ``scipy.optimize.OptmizeResult``.
         """
-        if "constraints" in kwargs.keys():
-            # use the scipy constraint default
-            default_method = None
-        else:
-            # set the non constrained minimization method to Nelder Mead
-            default_method = "Nelder-Mead"
+        if "method" not in kwargs.keys() and "constraints" not in kwargs.keys():
+            kwargs["method"] = "Nelder-Mead"
 
         if self.targets == []:
             raise ValueError("No targets specified.")
@@ -341,15 +355,16 @@ class Constraints:
             self._set_parameters(new_settings, lattice)
             out = []
             for target in self.targets:
-                out.append(target.loss(lattice))
-            # mean of the losses
+                loss = target.loss(lattice)
+                if not isinstance(loss, Iterable):
+                    loss = [loss]
+                out.extend(loss)
             # print(out)
-            # print(np.linalg.norm(out, 2))
             return np.linalg.norm(out, 2)
 
-        res = minimize(
-            match_function, *args, x0=root_start, method=default_method, **kwargs
-        )
+        # a root finder would be better suited but scipy doesn't have one that
+        # works with arbitrary number of inputs & outputs, that I could find.
+        res = minimize(match_function, *args, x0=root_start, **kwargs)
         if res.success:
             # sometimes the last iteration is not the minimum, set the real
             # solution
@@ -361,7 +376,6 @@ class Constraints:
         for param, value in zip(self.free_parameters, new_settings):
             for i in lattice.search(param.element):
                 setattr(lattice[i], param.attribute, value)
-                # print(lattice[i])
         # TODO: decide if we keep the caching of the one turn matrices?
         lattice._clear_cache()
 
