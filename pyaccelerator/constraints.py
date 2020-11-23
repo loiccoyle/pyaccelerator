@@ -34,6 +34,8 @@ class TargetPhasespace(BaseTarget):
         y (optional): Target y coordinate.
         y_prime (optional): Target y_prime coordinate.
         dp (optional): Target dp coordinate (probably breaks everything).
+        initial (optional): Initial phase space coordinates with which to start
+            the transport. If None will use the close orbit solution.
     """
 
     def __init__(
@@ -44,21 +46,30 @@ class TargetPhasespace(BaseTarget):
         y: Optional[float] = None,
         y_prime: Optional[float] = None,
         dp: Optional[float] = None,
+        initial: Optional[Sequence[float]] = None,
     ):
         value = [x, x_prime, y, y_prime, dp]
         if all([v is None for v in value]):
             raise ValueError("All phase space coords are None.")
+        if initial is not None:
+            initial = tuple(initial)
+
         if isinstance(element, BaseElement):
             element = element.name
         self.element = element
         self.value = np.array(value)
+        self.initial = initial
         # as of yet dp doesn't change use it to set the closed orbit
         if dp is None:
             dp = 0
         self._dp = dp
 
     def _transport(self, lattice: "Lattice"):
-        _, *tranported = lattice.transport(lattice.closed_orbit_solution(self._dp))
+        if self.initial is None:
+            init = lattice.closed_orbit_solution(self._dp)
+        else:
+            init = self.initial
+        _, *tranported = lattice.transport(init)
         return np.vstack(tranported)
 
     def loss(self, lattice: "Lattice") -> float:
@@ -240,7 +251,7 @@ class Constraints:
 
             >>> lat = Lattice([Drift(1)])
             >>> lat.constraints.add_free_parameter(element="drift", attribute="l")
-            >>> target = TargetPhasespace("drift", x=10))
+            >>> target = TargetPhasespace("drift", x=10, initial=[0, 1, 0, 0, 0])
             >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
@@ -251,7 +262,7 @@ class Constraints:
 
             >>> lat = Lattice([Drift(1), Drift(1)])
             >>> lat.constraints.add_free_parameter("drift_0", "l")
-            >>> target = TargetPhasespace("drift_0", x=5))
+            >>> target = TargetPhasespace("drift_0", x=5, initial=[0, 1, 0, 0, 0])
             >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
@@ -263,7 +274,7 @@ class Constraints:
 
             >>> lat = Lattice([Drift(1), Drift(1)])
             >>> lat.constraints.add_free_parameter("drift", "l")
-            >>> target = TargetPhasespace("drift_1", x=5)
+            >>> target = TargetPhasespace("drift_1", x=5, initial=[0, 1, 0, 0, 0])
             >>> lat.constraints.add_target(target)
             >>> matched_lat, _ = lat.constraints.match()
             >>> matched_lat
