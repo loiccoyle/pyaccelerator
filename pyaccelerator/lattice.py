@@ -117,7 +117,7 @@ class Lattice(list):
         if opt_res.success:
             solution[:4] = opt_res.x
         else:
-            raise ValueError("Failed to compute dispersion solution.")
+            raise ValueError("Failed to compute closed orbit solution.")
         return solution
 
     def dispersion(self, **solver_kwargs) -> TransportedPhasespace:
@@ -176,7 +176,7 @@ class Lattice(list):
         return compute_twiss_solution(self.m[PLANE_SLICES[plane], PLANE_SLICES[plane]])
 
     def tune(
-        self, plane: str = "h", n_turns: int = 1024, dp: float = 0, tol=1e-6
+        self, plane: str = "h", n_turns: int = 1024, dp: float = 0, tol=1e-4
     ) -> float:
         """Compute the fractional part of the tune.
 
