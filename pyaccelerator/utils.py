@@ -62,7 +62,7 @@ def plot_phasespace(
         phasespace = style == "phasespace"
     fig, ax = plt.subplots(1, n_plots, sharex=True, sharey=True)
 
-    def plot_plane_phasespace(ax, u, u_prime, plane):
+    def plot_plane_phasespace(ax, u, u_prime, plane, add_legend=False):
         """Plot the phase space for a plane."""
         # TODO: this could be split into multiple subplots like what Michael did
         # in the notebook.
@@ -72,13 +72,14 @@ def plot_phasespace(
         ax.set_xlabel(f"{plane} [m]")
         ax.set_ylabel(f"{plane}'")
         ax.set_aspect("equal")
-        fig.subplots_adjust(right=0.8)
-        ax.legend(
-            lines,
-            [f"s={s}" for s in self.s],
-            bbox_to_anchor=(1.05, 1),
-            loc="upper left",
-        )
+        if add_legend:
+            fig.subplots_adjust(right=0.8)
+            ax.legend(
+                lines,
+                [f"s={s}" for s in self.s],
+                bbox_to_anchor=(1.05, 1),
+                loc="upper left",
+            )
 
     def plot_plane_s(ax_u, ax_u_prime, u, u_prime, plane):
         """Plot the evolution along s"""
@@ -101,12 +102,12 @@ def plot_phasespace(
 
     if phasespace:
         if plane == "h":
-            plot_plane_phasespace(ax, self.x, self.x_prime, "x")
+            plot_plane_phasespace(ax, self.x, self.x_prime, "x", add_legend=True)
         elif plane == "v":
-            plot_plane_phasespace(ax, self.y, self.y_prime, "y")
+            plot_plane_phasespace(ax, self.y, self.y_prime, "y", add_legend=True)
         elif plane == "both":
-            plot_plane_phasespace(ax[0], self.x, self.x_prime, "x")
-            plot_plane_phasespace(ax[1], self.y, self.y_prime, "y")
+            plot_plane_phasespace(ax[0], self.x, self.x_prime, "x", add_legend=False)
+            plot_plane_phasespace(ax[1], self.y, self.y_prime, "y", add_legend=True)
     else:
         if plane == "both":
             # create twinx axis for both planes which all share their y axis.
