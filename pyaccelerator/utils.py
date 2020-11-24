@@ -35,56 +35,95 @@ def plot_twiss(self) -> Tuple[plt.Figure, plt.Axes]:
 
 
 def plot_phasespace(
-    self, plane: str = "both", add_legend=False
+    self, plane: str = "both", style="auto"
 ) -> Tuple[plt.Figure, plt.Axes]:
     """Plot the evolution of phase space coordinates through the lattice.
+
+    Args:
+        plane: plane of interest, either 'h' or 'v'.
+        style: either 's', 'phasespace' or 'auto'.
 
     Return:
         The plotted ``plt.Figure`` and ``plt.Axes``.
     """
+    # TODO: this plotting stuff needs a facelift... it's getting spaghetti...
     plane = plane.lower()
     if plane not in ("h", "v", "both"):
         raise ValueError("'plane' should be either 'h', 'v' or 'both'.")
+    if style not in ("auto", "s", "phasespace"):
+        raise ValueError("'style' should be either 'auto', 's' or 'phasespace'.")
     if plane == "both":
         n_plots = 2
     else:
         n_plots = 1
+    if style == "auto":
+        phasespace = self.x.ndim > 1
+    else:
+        phasespace = style == "phasespace"
     fig, ax = plt.subplots(1, n_plots, sharex=True, sharey=True)
 
-    def plot_plane(ax, u, u_prime, plane, add_legend=False):
-        if all([coord.ndim > 1 for coord in (u, u_prime, self.dp)]):
-            # if the data contains multiple particles, plot in phase space
-            # TODO: this could be split into multiple subplots like what Michael did
-            # in the notebook.
-            lines = ax.plot(u, u_prime, linewidth=0, marker=".")
-            ax.set_xlabel(f"{plane} [m]")
-            ax.set_ylabel(f"{plane}'")
-            ax.set_aspect("equal")
-            if add_legend:
-                fig.subplots_adjust(right=0.8)
-                ax.legend(
-                    lines,
-                    [f"s={s}" for s in self.s],
-                    bbox_to_anchor=(1.05, 1),
-                    loc="upper left",
-                )
-        else:
-            # else plot the evolution of the particle coordinates
-            ax.plot(self.s, u, label=f"{plane}")
-            ax.plot(self.s, u_prime, label=f"{plane}_prime")
-            ax.plot(self.s, self.dp, label="dp")
-            ax.set_xlabel("s [m]")
-            ax.set_ylabel(f"{plane} [m]")
-            if add_legend:
-                ax.legend()
+    def plot_plane_phasespace(ax, u, u_prime, plane):
+        """Plot the phase space for a plane."""
+        # TODO: this could be split into multiple subplots like what Michael did
+        # in the notebook.
+        lines = ax.plot(
+            np.atleast_2d(u), np.atleast_2d(u_prime), linewidth=0, marker="."
+        )
+        ax.set_xlabel(f"{plane} [m]")
+        ax.set_ylabel(f"{plane}'")
+        ax.set_aspect("equal")
+        fig.subplots_adjust(right=0.8)
+        ax.legend(
+            lines,
+            [f"s={s}" for s in self.s],
+            bbox_to_anchor=(1.05, 1),
+            loc="upper left",
+        )
 
-    if plane == "h":
-        plot_plane(ax, self.x, self.x_prime, "x", add_legend=add_legend)
-    elif plane == "v":
-        plot_plane(ax, self.y, self.y_prime, "y", add_legend=add_legend)
-    elif plane == "both":
-        plot_plane(ax[0], self.x, self.x_prime, "x", add_legend=False)
-        plot_plane(ax[1], self.y, self.y_prime, "y", add_legend=add_legend)
+    def plot_plane_s(ax_u, ax_u_prime, u, u_prime, plane):
+        """Plot the evolution along s"""
+        # plot the evolution of the particle coordinates
+        ax_u.plot(self.s, u.T, label=f"{plane}")
+        if u.ndim == 1:
+            # only one particle
+            ax_u_prime.plot(self.s, u_prime.T, color="tab:orange", label=f"{plane}'")
+            ax_u_prime.set_ylabel(f"{plane}'")
+            lines, labels = ax_u.get_legend_handles_labels()
+            lines2, labels2 = ax_u_prime.get_legend_handles_labels()
+            ax_u.legend(lines + lines2, labels + labels2)
+        else:
+            # if there is a bunch of particles it gets very messy
+            # so don't plot the u_prime coord
+            ax_u_prime.set_visible(False)
+        ax_u.set_xlabel("s [m]")
+        ax_u.set_ylabel(f"{plane} [m]")
+        fig.tight_layout()
+
+    if phasespace:
+        if plane == "h":
+            plot_plane_phasespace(ax, self.x, self.x_prime, "x")
+        elif plane == "v":
+            plot_plane_phasespace(ax, self.y, self.y_prime, "y")
+        elif plane == "both":
+            plot_plane_phasespace(ax[0], self.x, self.x_prime, "x")
+            plot_plane_phasespace(ax[1], self.y, self.y_prime, "y")
+    else:
+        if plane == "both":
+            # create twinx axis for both planes which all share their y axis.
+            ax_x = ax[0]
+            ax_x_prime = ax[0].twinx()
+            ax_y = ax[1]
+            ax_y_prime = ax[1].twinx()
+            ax_x_prime.get_shared_y_axes().join(ax_x_prime, ax_y_prime)
+            plot_plane_s(ax_x, ax_x_prime, self.x, self.x_prime, "x")
+            plot_plane_s(ax_y, ax_y_prime, self.y, self.y_prime, "y")
+        else:
+            ax_u = ax
+            ax_u_prime = ax.twinx()
+            if plane == "h":
+                plot_plane_s(ax_u, ax_u_prime, self.x, self.x_prime, "x")
+            elif plane == "v":
+                plot_plane_s(ax_u, ax_u_prime, self.y, self.y_prime, "y")
 
     return fig, ax
 
@@ -93,6 +132,9 @@ def plot_phasespace_distribution(
     self, plane: str = "both"
 ) -> Tuple[plt.Figure, plt.Axes]:
     """Plot the phase space coordinates distribution.
+
+    Args:
+        plane: plane of interest, either 'h' or 'v'.
 
     Return:
         The plotted ``plt.Figure`` and ``plt.Axes``.

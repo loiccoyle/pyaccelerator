@@ -1,4 +1,5 @@
 from unittest import TestCase
+import matplotlib.pyplot as plt
 
 import numpy as np
 
@@ -83,43 +84,48 @@ class TestUtils(TestCase):
     def test_namedtuples(self):
         # just testing the plotting, these values are nonsense
         distribution = utils.PhasespaceDistribution(
-            np.array([1, 2, 3]),
-            np.array([1, 1, 1]),
-            np.array([1, 2, 3]),
-            np.array([1, 1, 1]),
-            np.array([0, 0, 0]),
+            np.array([1, 2, 3]),  # x
+            np.array([1, 1, 1]),  # x_prime
+            np.array([1, 2, 3]),  # y
+            np.array([1, 1, 1]),  # y_prime
+            np.array([0, 0, 0]),  # dp/p
         )
         distribution.plot()
-        distribution.plot("h")
-        distribution.plot("v")
+        distribution.plot(plane="h")
+        distribution.plot(plane="v")
+        plt.close()
 
         distribution = utils.PhasespaceDistribution(
-            np.array([1, 2, 3]),
-            np.array([1, 1, 1]),
-            np.array([1, 2, 3]),
-            np.array([1, 1, 1]),
-            np.array([0, 0.1, 0.2]),
+            np.array([1, 2, 3]),  # x
+            np.array([1, 1, 1]),  # x_prime
+            np.array([1, 2, 3]),  # y
+            np.array([1, 1, 1]),  # y_prime
+            np.array([0, 0.1, 0.2]),  # dp/p
         )
         distribution.plot()
-        distribution.plot("h")
-        distribution.plot("v")
+        distribution.plot(plane="h")
+        distribution.plot(plane="v")
         with self.assertRaises(ValueError):
             distribution.plot("asdada")
+        plt.close()
 
         transported_phasespace = utils.TransportedPhasespace(
-            np.array([0, 1, 2]),
-            np.array([1, 2, 3]),
-            np.array([1, 1, 1]),
-            np.array([1, 2, 3]),
-            np.array([1, 1, 1]),
-            np.array([0, 0, 0]),
+            np.array([0, 1, 2]),  # s
+            np.array([1, 2, 3]),  # x
+            np.array([1, 1, 1]),  # x_prime
+            np.array([1, 2, 3]),  # y
+            np.array([1, 1, 1]),  # y_prime
+            np.array([0, 0, 0]),  # dp/p
         )
         transported_phasespace.plot()
-        transported_phasespace.plot(add_legend=True)
-        transported_phasespace.plot("h")
-        transported_phasespace.plot("v")
+        transported_phasespace.plot(plane="h")
+        transported_phasespace.plot(plane="v")
+        transported_phasespace.plot(plane="h", style="phasespace")
+        transported_phasespace.plot(plane="v", style="phasespace")
         with self.assertRaises(ValueError):
-            transported_phasespace.plot("asdada")
+            transported_phasespace.plot(plane="asdada")
+            transported_phasespace.plot(style="asdada")
+        plt.close()
 
         transported_distribution = utils.TransportedPhasespace(
             np.array([0, 1, 2]),
@@ -130,9 +136,12 @@ class TestUtils(TestCase):
             np.array([[0, 0, 0], [0, 0, 0]]),
         )
         transported_distribution.plot()
-        transported_distribution.plot(add_legend=True)
-        transported_distribution.plot("h")
-        transported_distribution.plot("v")
+        transported_distribution.plot()
+        transported_distribution.plot(plane="h")
+        transported_distribution.plot(plane="v")
+        transported_phasespace.plot(plane="h", style="s")
+        transported_phasespace.plot(plane="v", style="s")
+        plt.close()
 
         transported_twiss = utils.TransportedTwiss(
             np.array([0, 1, 2]),
@@ -141,3 +150,4 @@ class TestUtils(TestCase):
             np.array([0, 0, 0]),
         )
         transported_twiss.plot()
+        plt.close()
