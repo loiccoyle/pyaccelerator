@@ -60,7 +60,11 @@ def plot_phasespace(
         phasespace = self.x.ndim > 1
     else:
         phasespace = style == "phasespace"
-    fig, ax = plt.subplots(1, n_plots, sharex=True, sharey=True)
+
+    if phasespace:
+        fig, ax = plt.subplots(1, n_plots, sharex=True, sharey=True)
+    else:
+        fig, ax = plt.subplots(n_plots, 1, sharex=True, sharey=True)
 
     def plot_plane_phasespace(ax, u, u_prime, plane, add_legend=False):
         """Plot the phase space for a plane."""
