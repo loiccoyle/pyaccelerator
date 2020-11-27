@@ -83,8 +83,7 @@ class TargetPhasespace(BaseTarget):
             i for i, value in enumerate(self.value) if value is not None
         ]
         result = transported[transported_rows, transported_columns]
-        # l-2 norm
-        return result - self.value[transported_rows]
+        return abs(result - self.value[transported_rows])
 
     def __repr__(self) -> str:
         args = ["element", "value", "initial"]
@@ -137,8 +136,7 @@ class TargetTwiss(BaseTarget):
             i for i, value in enumerate(self.value) if value is not None
         ]
         result = transported[transported_rows, transported_columns]
-        # l-2 norm
-        return result - self.value[transported_rows]
+        return abs(result - self.value[transported_rows])
 
     def __repr__(self) -> str:
         args = ["element", "value", "plane"]
@@ -161,6 +159,7 @@ class TargetDispersion(BaseTarget):
         element: Union[str, "BaseElement"],
         value: float,
         plane: str = "h",
+        **solver_kwargs,
     ):
         plane = plane.lower()
         if isinstance(element, BaseElement):
@@ -168,11 +167,11 @@ class TargetDispersion(BaseTarget):
         self.element = element
         self.value = value
         self.plane = plane
+        self.solver_kwargs = solver_kwargs
 
     def _transport(self, lattice: "Lattice"):
-        _, *transported = lattice.dispersion(plane=self.plane)
-        dispersion = transported[PLANE_INDICES[self.plane][0]]
-        return np.array(dispersion)
+        _, *transported = lattice.dispersion(**self.solver_kwargs)
+        return transported[PLANE_INDICES[self.plane][0]]
 
     def loss(self, lattice: "Lattice") -> float:
         try:
@@ -181,14 +180,11 @@ class TargetDispersion(BaseTarget):
             return np.inf
 
         transported_columns = [i + 1 for i in lattice.search(self.element)]
-        transported_rows = [
-            i for i, value in enumerate(self.value) if value is not None
-        ]
-        result = transported[transported_rows, transported_columns]
+        result = transported[transported_columns]
         return abs(result - self.value)
 
     def __repr__(self) -> str:
-        args = ["element", "value", "plane"]
+        args = ["element", "value", "plane", "solver_kwargs"]
         arg_string = ", ".join([arg + "=" + repr(getattr(self, arg)) for arg in args])
         return f"TargetDispersion({arg_string})"
 
@@ -200,6 +196,12 @@ class TargetGlobal(BaseTarget):
         method: lattice method to match.
         value: Target value.
         **method_kwargs: additional method kwargs.
+
+    Examples:
+        Create a constraint on the horizontal tune value:
+
+            >>> TargetGlobal("tune", 0.23, plane='h', n_turns=512)
+            TargetGlobal(method='tune', value=0.23, method_kwargs={'plane': 'h', 'n_turns': 512})
     """
 
     def __init__(self, method: str, value: float, **method_kwargs):
@@ -212,7 +214,7 @@ class TargetGlobal(BaseTarget):
         return abs(out - self.value)
 
     def __repr__(self) -> str:
-        args = ["element", "value", "method_kwargs"]
+        args = ["method", "value", "method_kwargs"]
         arg_string = ", ".join([arg + "=" + repr(getattr(self, arg)) for arg in args])
         return f"TargetGlobal({arg_string})"
 
