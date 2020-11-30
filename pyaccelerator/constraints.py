@@ -145,6 +145,60 @@ class TargetTwiss(BaseTarget):
         return f"TargetTwiss({arg_string})"
 
 
+class TargetTwissSolution(BaseTarget):
+    """Target periodic twiss solution, twiss parameters at the beginning and
+    end of the lattice.
+
+    Useful when a lattice needs some coaxing into having a periodic twiss
+    solution i.e. when `lattice.twiss` fails to find a solution.
+
+    Note: Only one of the twiss arguments can be omitted.
+
+    Args:
+        beta (optional): Target beta value at beginning and end of lattice.
+        alpha (optional): Target alpha value at beginning and end of lattice.
+        gamma (optional): Target gamma value at beginning and end of lattice.
+        plane: Plane of interest, either "h" or "v".
+    """
+
+    def __init__(
+        self,
+        beta: Optional[float] = None,
+        alpha: Optional[float] = None,
+        gamma: Optional[float] = None,
+        plane: str = "h",
+    ):
+        plane = plane.lower()
+        value = [beta, alpha, gamma]
+        if all([v is None for v in value]):
+            raise ValueError("All twiss parameters are None.")
+        self.value = np.array(value)
+        self.plane = plane
+
+    def _transport(self, lattice: "Lattice"):
+        _, *twiss = lattice.transport_twiss(self.value, plane=self.plane)
+        return np.vstack(twiss)
+
+    def loss(self, lattice: "Lattice") -> float:
+        try:
+            transported = self._transport(lattice)
+        except ValueError:
+            return np.inf
+
+        transported_columns = -1 # Use Twiss values at end of lattice
+        transported_rows = [
+            i for i, value in enumerate(self.value) if value is not None
+        ]
+
+        result = transported[transported_rows, transported_columns]
+        return abs(result - self.value[transported_rows])
+
+    def __repr__(self) -> str:
+        args = ["value", "plane"]
+        arg_string = ", ".join([arg + "=" + repr(getattr(self, arg)) for arg in args])
+        return f"TargetTwissSolution({arg_string})"
+
+
 class TargetDispersion(BaseTarget):
     """Target dispersion function.
 
