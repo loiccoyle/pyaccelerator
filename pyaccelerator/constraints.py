@@ -383,7 +383,7 @@ class Constraints:
             # sometimes the last iteration is not the minimum, set the real
             # solution
             self._set_parameters(res.x, lattice)
-            if res.fun > 1e-2:
+            if res.fun > 1e-1:
                 # as this is a minimzation algorithm, it can find a minimum
                 # but the matching could still be off.
                 self._logger.warning("Loss is high:%f, double check the matching.", res.fun)
