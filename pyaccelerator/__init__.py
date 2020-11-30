@@ -4,7 +4,13 @@ import logging
 
 from . import elements
 from .beam import Beam
-from .constraints import TargetDispersion, TargetGlobal, TargetPhasespace, TargetTwiss
+from .constraints import (
+    TargetDispersion,
+    TargetGlobal,
+    TargetPhasespace,
+    TargetTwiss,
+    TargetTwissSolution,
+)
 from .elements import *
 from .lattice import Lattice
 
@@ -13,6 +19,7 @@ __all__ = [
     "Lattice",
     "TargetPhasespace",
     "TargetTwiss",
+    "TargetTwissSolution",
     "TargetDispersion",
     "TargetGlobal",
 ]

@@ -144,10 +144,14 @@ class TargetTwiss(BaseTarget):
         return f"TargetTwiss({arg_string})"
 
 
-class TargetPeriodicTwiss(BaseTarget):
-    """Target periodic Twiss parameters at beginning and end of lattice.
-    Differs from TargetTwiss for using .transport_twiss method rather
-    than .twiss. Might work in case .twiss fails to find periodic solution.
+class TargetTwissSolution(BaseTarget):
+    """Target periodic twiss solution, twiss parameters at the beginning and
+    end of the lattice.
+
+    Useful when a lattice needs some coaxing into having a periodic twiss
+    solution i.e. when `lattice.twiss` fails to find a solution.
+
+    Note: Only one of the twiss arguments can be omitted.
 
     Args:
         beta (optional): Target beta value at beginning and end of lattice.
@@ -191,7 +195,7 @@ class TargetPeriodicTwiss(BaseTarget):
     def __repr__(self) -> str:
         args = ["value", "plane"]
         arg_string = ", ".join([arg + "=" + repr(getattr(self, arg)) for arg in args])
-        return f"TargetPeriodicTwiss({arg_string})"
+        return f"TargetTwissSolution({arg_string})"
 
 
 class TargetDispersion(BaseTarget):
