@@ -91,62 +91,6 @@ class TargetPhasespace(BaseTarget):
         return f"TargetPhasespace({arg_string})"
 
 
-class TargetPeriodicTwiss(BaseTarget):
-    """Target periodic twiss parameters. Difference wrt. TargetTwiss, not using the
-    .twiss method, just transport_twiss.
-
-    Args:
-        element: Element name pattern or element instance at which the target
-            `beta`, `alpha`, `gamma` should be achieved.
-        beta (optional): Target beta value at the location of the `element`.
-        alpha (optional): Target alpha value at the location of the `element`.
-        gamma (optional): Target gamma value at the location of the `element`.
-        plane: Plane of interest, either "h" or "v".
-    """
-
-    def __init__(
-        self,
-        element: Union[str, "BaseElement"],
-        beta: Optional[float] = None,
-        alpha: Optional[float] = None,
-        gamma: Optional[float] = None,
-        plane: str = "h",
-    ):
-        plane = plane.lower()
-        value = [beta, alpha, gamma]
-        if all([v is None for v in value]):
-            raise ValueError("All twiss parameters are None.")
-        if isinstance(element, BaseElement):
-            element = element.name
-        self.element = element
-        self.value = np.array(value)
-        self.init_value = self.value.copy()
-        self.plane = plane
-
-    def _transport(self, lattice: "Lattice"):
-        # _, *twiss = lattice.twiss(plane=self.plane)
-        _, *twiss = lattice.transport_twiss(self.init_value, plane=self.plane)
-        return np.vstack(twiss)
-
-    def loss(self, lattice: "Lattice") -> float:
-        try:
-            transported = self._transport(lattice)
-        except ValueError:
-            return np.inf
-
-        transported_columns = [i + 1 for i in lattice.search(self.element)]
-        transported_rows = [
-            i for i, value in enumerate(self.value) if value is not None
-        ]
-        result = transported[transported_rows, transported_columns]
-        return abs(result - self.value[transported_rows])
-
-    def __repr__(self) -> str:
-        args = ["element", "value", "plane"]
-        arg_string = ", ".join([arg + "=" + repr(getattr(self, arg)) for arg in args])
-        return f"TargetTwiss({arg_string})"
-
-
 class TargetTwiss(BaseTarget):
     """Target twiss parameters.
 
