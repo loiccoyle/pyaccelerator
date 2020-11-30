@@ -1,5 +1,6 @@
 from abc import abstractmethod
 from collections.abc import Iterable
+from logging import getLogger
 from typing import TYPE_CHECKING, Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -302,6 +303,7 @@ class Constraints:
         self._lattice = lattice
         self.targets = []
         self.free_parameters = []
+        self._logger = getLogger(__name__)
 
     def add_target(self, target: BaseTarget):
         """Add a constraint target.
@@ -372,7 +374,6 @@ class Constraints:
                 if not isinstance(loss, Iterable):
                     loss = [loss]
                 out.extend(loss)
-            # print(out)
             return np.linalg.norm(out, 2)
 
         # a root finder would be better suited but scipy doesn't have one that
@@ -382,6 +383,10 @@ class Constraints:
             # sometimes the last iteration is not the minimum, set the real
             # solution
             self._set_parameters(res.x, lattice)
+            if res.fun > 1e-2:
+                # as this is a minimzation algorithm, it can find a minimum
+                # but the matching could still be off.
+                self._logger.warning("Loss is high:%f, double check the matching.", res.fun)
         return lattice, res
 
     def _set_parameters(self, new_settings: Sequence[float], lattice: "Lattice"):
