@@ -1,11 +1,9 @@
-from typing import TYPE_CHECKING, Any, Dict
+from typing import Any, Dict
 
 import numpy as np
 
 from .. import elements
-
-if TYPE_CHECKING:  # pragma: no cover
-    from .base import BaseElement
+from .base import BaseElement
 
 
 def straight_element(theta: float, d_s: float) -> np.ndarray:
@@ -21,7 +19,7 @@ def bent_element(theta: float, d_s: float, rho: float) -> np.ndarray:
     return np.array([d_x, d_y, d_theta])
 
 
-def deserialize(dic: Dict[str, Any]) -> "BaseElement":
+def deserialize(dic: Dict[str, Any]) -> BaseElement:
     """Deserialize a element dictionary into an element instance.
 
     Args:

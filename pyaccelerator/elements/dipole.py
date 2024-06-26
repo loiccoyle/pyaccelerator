@@ -73,18 +73,18 @@ class Dipole(BaseElement):
         out[4, 4] = 1
         return out
 
-    def slice(self, n_dipoles: int) -> Lattice:
+    def slice(self, n_slices: int) -> Lattice:
         """Slice the element into a many smaller elements.
 
         Args:
-            n_dipoles: Number of :py:class:`Dipole` elements.
+            n_slices: Number of :py:class:`Dipole` elements.
 
         Returns:
             :py:class:`~accelerator.lattice.Lattice` of sliced :py:class:`Dipole` elements.
         """
         out = [
-            Dipole(self.rho, self.theta / n_dipoles, name=f"{self.name}_slice_{i}")
-            for i in range(n_dipoles)
+            Dipole(self.rho, self.theta / n_slices, name=f"{self.name}_slice_{i}")
+            for i in range(n_slices)
         ]
         return Lattice(out)
 
@@ -136,7 +136,5 @@ class DipoleThin(BaseElement):
             facecolor="lightcoral",
         )
 
-    def _dxztheta_ds(
-        self, theta: float, d_s: float  # pylint: disable=unused-argument
-    ) -> np.ndarray:
+    def _dxztheta_ds(self, theta: float, d_s: float) -> np.ndarray:
         return np.array([0, 0, self.theta])

@@ -1,4 +1,5 @@
 """Accelerator Beam"""
+
 from typing import Optional, Sequence, Tuple, Union
 
 import numpy as np
@@ -92,7 +93,7 @@ class Beam:
 
     @property
     def beta_relativistic(self):
-        return np.sqrt(1 - 1 / self.gamma_relativistic ** 2)
+        return np.sqrt(1 - 1 / self.gamma_relativistic**2)
 
     @property
     def geo_emittance_h(self):
@@ -105,20 +106,20 @@ class Beam:
     @property
     def p(self):
         # in MeV/c
-        return np.sqrt(self.energy ** 2 + 2 * self.energy * self.mass)
+        return np.sqrt(self.energy**2 + 2 * self.energy * self.mass)
 
     @property
     def sigma_p(self):
         absolute_sigma_e = self.sigma_energy * self.energy
         # in MeV/c
-        return np.sqrt(absolute_sigma_e ** 2 + 2 * absolute_sigma_e * self.mass)
+        return np.sqrt(absolute_sigma_e**2 + 2 * absolute_sigma_e * self.mass)
 
     def ellipse(
         self,
-        twiss_h: Sequence[float],
-        twiss_v: Optional[Sequence[float]] = None,
+        twiss_h: Union[Sequence[float], np.ndarray],
+        twiss_v: Optional[Union[Sequence[float], np.ndarray]] = None,
         closure_tol: float = 1e-10,
-        n_angles: int = 1e3,
+        n_angles: int = 1000,
     ) -> PhasespaceDistribution:
         """Compute the beam's phase space ellipse given the twiss parameters.
 
@@ -137,17 +138,13 @@ class Beam:
             Position, angle phase and dp/p space coordrinates of the ellipse.
                 Note, dp/p will be set to 0.
         """
-        twiss_h = to_twiss(twiss_h)
-        if twiss_v is None:
-            # if no vertical twiss provided use the same as the horizontal
-            twiss_v = twiss_h
-        else:
-            twiss_v = to_twiss(twiss_v)
-        beta_h, alpha_h, _ = twiss_h.T[0]  # pylint: disable=unsubscriptable-object
-        beta_v, alpha_v, _ = twiss_v.T[0]  # pylint: disable=unsubscriptable-object
+        twiss_h_ = to_twiss(twiss_h)
+        twiss_v_ = twiss_h_ if twiss_v is None else to_twiss(twiss_v)
+        beta_h, alpha_h, _ = twiss_h_.T[0]
+        beta_v, alpha_v, _ = twiss_v_.T[0]
         # check the twiss parameters
-        for twiss in (twiss_h, twiss_v):
-            closure = compute_twiss_clojure(twiss)
+        for twiss in (twiss_h_, twiss_v_):
+            closure = compute_twiss_clojure(twiss)  # type: ignore
             if not -closure_tol <= closure - 1 <= closure_tol:
                 raise ValueError(
                     f"Closure condition not met for {twiss}: beta * gamma - alpha**2 = {closure} != 1"
@@ -169,8 +166,8 @@ class Beam:
 
     def match(
         self,
-        twiss_h: Sequence[float],
-        twiss_v: Optional[Sequence[float]] = None,
+        twiss_h: Union[Sequence[float], np.ndarray],
+        twiss_v: Optional[Union[Sequence[float], np.ndarray]] = None,
         closure_tol: float = 1e-10,
     ) -> PhasespaceDistribution:
         """Generate a matched beam phase space distribution to the provided
@@ -188,17 +185,13 @@ class Beam:
         Returns:
             Position, angle and dp/p phase space coordinates.
         """
-        twiss_h = to_twiss(twiss_h)
-        if twiss_v is None:
-            # if no vertical twiss provided use the same as the horizontal
-            twiss_v = twiss_h
-        else:
-            twiss_v = to_twiss(twiss_v)
-        beta_h, alpha_h, _ = twiss_h.T[0]  # pylint: disable=unsubscriptable-object
-        beta_v, alpha_v, _ = twiss_v.T[0]  # pylint: disable=unsubscriptable-object
+        twiss_h_ = to_twiss(twiss_h)
+        twiss_v_ = twiss_h_ if twiss_v is None else to_twiss(twiss_v)
+        beta_h, alpha_h, _ = twiss_h_.T[0]
+        beta_v, alpha_v, _ = twiss_v_.T[0]
         # check the twiss parameters
-        for twiss in (twiss_h, twiss_v):
-            closure = compute_twiss_clojure(twiss)
+        for twiss in (twiss_h_, twiss_v_):
+            closure = compute_twiss_clojure(twiss)  # type: ignore
             if not -closure_tol <= closure - 1 <= closure_tol:
                 raise ValueError(
                     f"Closure condition not met: beta * gamma - alpha**2 = {closure} != 1"

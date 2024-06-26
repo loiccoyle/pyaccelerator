@@ -1,5 +1,5 @@
-"""Python package to build simple toy accelerator.
-"""
+"""Python package to build simple toy accelerator."""
+
 import logging
 
 from . import elements
@@ -11,7 +11,6 @@ from .constraints import (
     TargetTwiss,
     TargetTwissSolution,
 )
-from .elements import *
 from .lattice import Lattice
 
 __all__ = [

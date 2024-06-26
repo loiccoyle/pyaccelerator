@@ -1,5 +1,5 @@
 from itertools import count
-from typing import Optional, Union
+from typing import Optional
 
 import numpy as np
 from matplotlib import patches
@@ -46,7 +46,7 @@ class KickerThin(BaseElement):
         out[3] += self.v_kick
         return out
 
-    def _get_patch(self, s: float) -> Union[None, patches.Patch]:
+    def _get_patch(self, s: float) -> patches.Patch:
         return patches.FancyArrowPatch(
             (s, 0.75),
             (s, -0.75),
@@ -57,6 +57,8 @@ class KickerThin(BaseElement):
         )
 
     def _dxztheta_ds(
-        self, theta: float, d_s: float  # pylint: disable=unused-argument
+        self,
+        theta: float,
+        d_s: float,  # pylint: disable=unused-argument
     ) -> np.ndarray:
         return np.array([0, 0, self.h_kick])

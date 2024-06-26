@@ -1,5 +1,5 @@
 from itertools import count
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import numpy as np
 from matplotlib import patches
@@ -70,7 +70,7 @@ class Quadrupole(BaseElement):
         out[4] = phase_coords[4]
         return out
 
-    def _compute_sin_cos(self, k) -> Tuple[Union[float, np.ndarray]]:
+    def _compute_sin_cos(self, k):
         # needs to work with arrays in order to track a distribution of particles.
         if isinstance(k, float):
             k = np.array(k)
@@ -100,11 +100,11 @@ class Quadrupole(BaseElement):
 
         return sin_x, cos_x, sin_y, cos_y
 
-    def slice(self, n_quadrupoles: int) -> Lattice:
+    def slice(self, n_slices: int) -> Lattice:
         """Slice the element into a many smaller elements.
 
         Args:
-            n_quadrupoles: Number of :py:class:`Quadrupole` elements.
+            n_slices: Number of :py:class:`Quadrupole` elements.
 
         Returns:
             :py:class:`~accelerator.lattice.Lattice` of sliced :py:class:`Quadrupole` elements.
@@ -112,14 +112,14 @@ class Quadrupole(BaseElement):
         out = [
             Quadrupole(
                 self.k,
-                self.l / n_quadrupoles,
+                self.l / n_slices,
                 name=f"{self.name}_slice_{i}",
             )
-            for i in range(n_quadrupoles)
+            for i in range(n_slices)
         ]
         return Lattice(out)
 
-    def _get_patch(self, s: float) -> patches.Patch:
+    def _get_patch(self, s: float) -> Optional[patches.Patch]:
         if self.k < 0:
             label = "Defocussing Quad."
             colour = "tab:red"
@@ -164,7 +164,6 @@ class QuadrupoleThin(BaseElement):
         return 0
 
     def _get_transfer_matrix(self) -> np.ndarray:
-
         out = np.zeros((5, 5))
         out[0, 0] = 1
         out[1, 0] = -1 / self.f
@@ -217,7 +216,5 @@ class QuadrupoleThin(BaseElement):
         )
 
     @staticmethod
-    def _dxztheta_ds(
-        theta: float, d_s: float  # pylint: disable=unused-argument
-    ) -> np.ndarray:
+    def _dxztheta_ds(theta: float, d_s: float) -> np.ndarray:
         return np.array([0, 0, 0])

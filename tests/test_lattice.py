@@ -2,8 +2,9 @@ from pathlib import Path
 from shutil import rmtree
 from unittest import TestCase
 
-import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
 
 from pyaccelerator.beam import Beam
 from pyaccelerator.elements.custom import CustomThin
@@ -343,14 +344,14 @@ class TestPlotter(TestCase):
         plotter = Plotter(lat)
 
         fig, axes = plotter.top_down()
-        assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, plt.Axes)
+        assert isinstance(fig, Figure)
+        assert isinstance(axes, Axes)
         fig, axes = plotter.layout()
-        assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, plt.Axes)
+        assert isinstance(fig, Figure)
+        assert isinstance(axes, Axes)
         fig, axes = plotter()
-        assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, plt.Axes)
+        assert isinstance(fig, Figure)
+        assert isinstance(axes, Axes)
 
         # testing the margins
         lat = Lattice(
@@ -360,8 +361,8 @@ class TestPlotter(TestCase):
         )
         plotter = Plotter(lat)
         fig, axes = plotter.top_down()
-        assert isinstance(fig, plt.Figure)
-        assert isinstance(axes, plt.Axes)
+        assert isinstance(fig, Figure)
+        assert isinstance(axes, Axes)
 
     def test_repr(self):
         lat = Lattice([Drift(1)])

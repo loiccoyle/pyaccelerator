@@ -55,11 +55,11 @@ class Sextupole(BaseElement):
         out[2, 3] = self.l
         return out
 
-    def slice(self, n_sextupoles: int) -> Lattice:
+    def slice(self, n_slices: int) -> Lattice:
         """Slice the element into a many smaller elements.
 
         Args:
-            n_sextupoles: Number of :py:class:`Sextupole` elements.
+            n_slices): Number of :py:class:`Sextupole` elements.
 
         Returns:
             :py:class:`~accelerator.lattice.Lattice` of sliced :py:class:`Sextupole` elements.
@@ -67,10 +67,10 @@ class Sextupole(BaseElement):
         out = [
             Sextupole(
                 self.k,
-                self.l / n_sextupoles,
+                self.l / n_slices,
                 name=f"{self.name}_slice_{i}",
             )
-            for i in range(n_sextupoles)
+            for i in range(n_slices)
         ]
         return Lattice(out)
 
@@ -132,7 +132,5 @@ class SextupoleThin(BaseElement):
         )
 
     @staticmethod
-    def _dxztheta_ds(
-        theta: float, d_s: float  # pylint: disable=unused-argument
-    ) -> np.ndarray:
+    def _dxztheta_ds(theta: float, d_s: float) -> np.ndarray:
         return np.array([0, 0, 0])

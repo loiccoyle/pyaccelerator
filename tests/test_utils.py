@@ -40,7 +40,7 @@ class TestUtils(TestCase):
         assert utils.complete_twiss(beta=1, alpha=None, gamma=1) == (1, 0, 1)
         assert utils.complete_twiss(beta=None, alpha=0, gamma=1) == (1, 0, 1)
         with self.assertRaises(ValueError):
-            assert utils.complete_twiss(beta=1, alpha=None, gamma=None)
+            utils.complete_twiss(beta=1, alpha=None, gamma=None)
 
     def test_compute_one_turn(self):
         list_of_m = [np.diag([1, 1])] * 2

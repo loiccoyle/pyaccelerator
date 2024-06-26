@@ -9,7 +9,7 @@ def bigaussian(
     geometric_emittance_h: float,
     geometric_emittance_v: float,
     sigma_p: float,
-) -> np.array:
+) -> np.ndarray:
     """Generate a bigaussian distributed distribution.
 
     Args:
@@ -27,7 +27,7 @@ def bigaussian(
             geometric_emittance_h,
             geometric_emittance_v,
             geometric_emittance_v,
-            sigma_p ** 2,
+            sigma_p**2,
         )
     )
     return np.random.multivariate_normal(mean, cov, n_particles).T

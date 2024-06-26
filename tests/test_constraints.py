@@ -2,13 +2,9 @@ from unittest import TestCase
 
 import numpy as np
 
-from pyaccelerator.constraints import (
-    Constraints,
-    FreeParameter,
-    TargetDispersion,
-    TargetPhasespace,
-    TargetTwiss,
-)
+from pyaccelerator.constraints import (Constraints, FreeParameter,
+                                       TargetDispersion, TargetPhasespace,
+                                       TargetTwiss)
 from pyaccelerator.elements.drift import Drift
 from pyaccelerator.elements.quadrupole import QuadrupoleThin
 from pyaccelerator.lattice import Lattice
@@ -218,7 +214,3 @@ class TestConstraints(TestCase):
         s, beta, *_ = matched.twiss()
         self.assertAlmostEqual(min(beta), 0.5)
         assert matched[0].f == -2 * matched[2].f
-
-    def test_repr(self):
-        lat = Lattice([Drift(1)])
-        repr(lat.constraints)

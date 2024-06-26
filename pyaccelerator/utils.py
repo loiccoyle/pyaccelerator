@@ -1,10 +1,13 @@
 from collections import namedtuple
 from functools import reduce
 from math import ceil
-from typing import Optional, Sequence, Tuple, Union
+from typing import Optional, Sequence, Tuple, Union, no_type_check
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from numpy.typing import ArrayLike
 
 # where the x, x' and y, y' are located in the phase space coord vector
 PLANE_INDICES = {"h": [0, 1], "v": [2, 3]}
@@ -20,7 +23,7 @@ TransportedPhasespace = namedtuple(
 )
 
 
-def plot_twiss(self) -> Tuple[plt.Figure, plt.Axes]:
+def plot_twiss(self) -> Tuple[Figure, Axes]:
     """Plot the evolution of twiss parameters through the lattice.
 
     Return:
@@ -37,7 +40,7 @@ def plot_twiss(self) -> Tuple[plt.Figure, plt.Axes]:
 
 def plot_phasespace(
     self, plane: str = "both", style: str = "auto", add_legend: bool = True
-) -> Tuple[plt.Figure, plt.Axes]:
+) -> Tuple[Figure, Axes]:
     """Plot the evolution of phase space coordinates through the lattice.
 
     Args:
@@ -125,7 +128,7 @@ def plot_phasespace(
             ax_x_prime = ax[0].twinx()
             ax_y = ax[1]
             ax_y_prime = ax[1].twinx()
-            ax_x_prime.get_shared_y_axes().join(ax_x_prime, ax_y_prime)
+            ax_x_prime.sharey(ax_y_prime)
             plot_plane_s(ax_x, ax_x_prime, self.x, self.x_prime, "x")
             plot_plane_s(ax_y, ax_y_prime, self.y, self.y_prime, "y")
         else:
@@ -139,9 +142,7 @@ def plot_phasespace(
     return fig, ax
 
 
-def plot_phasespace_distribution(
-    self, plane: str = "both"
-) -> Tuple[plt.Figure, plt.Axes]:
+def plot_phasespace_distribution(self, plane: str = "both") -> Tuple[Figure, Axes]:
     """Plot the phase space coordinates distribution.
 
     Args:
@@ -168,7 +169,7 @@ def plot_phasespace_distribution(
             scatter = ax.scatter(u, u_prime, c=self.dp, s=4)
             if add_cbar:
                 fig.subplots_adjust(right=0.8)
-                cbar_ax = fig.add_axes([0.85, 0.15, 0.05, 0.7])
+                cbar_ax = fig.add_axes((0.85, 0.15, 0.05, 0.7))
                 cbar = fig.colorbar(scatter, cax=cbar_ax)
                 cbar.set_label("dp/p", rotation=90)
         ax.set_xlabel(f"{plane} [m]")
@@ -191,7 +192,7 @@ TransportedPhasespace.plot = plot_phasespace
 TransportedTwiss.plot = plot_twiss
 
 
-def to_v_vec(vec: Sequence[float]) -> np.ndarray:
+def to_v_vec(vec: ArrayLike) -> np.ndarray:
     """Helper function to create 1D vertical arrays.
 
     Args:
@@ -200,13 +201,12 @@ def to_v_vec(vec: Sequence[float]) -> np.ndarray:
     Returns:
         Vertical 1D ``np.ndarray``.
     """
-    vec = np.array(vec)
     if np.squeeze(vec).ndim > 1:
         raise ValueError("'vec' is not 1D.")
     return np.array(vec).reshape(-1, 1)
 
 
-def to_twiss(twiss: Sequence[Union[float, None]]) -> np.ndarray:
+def to_twiss(twiss: Union[Sequence[Union[float, None]], np.ndarray]) -> np.ndarray:
     """Helper function to create twiss vectors.
 
     Args:
@@ -217,8 +217,7 @@ def to_twiss(twiss: Sequence[Union[float, None]]) -> np.ndarray:
     """
     if len(twiss) != 3:
         raise ValueError("Length of 'twiss' != 3.")
-    twiss = complete_twiss(*twiss)
-    return to_v_vec(twiss)
+    return to_v_vec(complete_twiss(*twiss))
 
 
 def to_phase_coord(phase_coord: Sequence[float]) -> np.ndarray:
@@ -235,6 +234,7 @@ def to_phase_coord(phase_coord: Sequence[float]) -> np.ndarray:
     return to_v_vec(phase_coord)
 
 
+@no_type_check
 def complete_twiss(
     beta: Optional[float] = None,
     alpha: Optional[float] = None,
@@ -250,22 +250,21 @@ def complete_twiss(
     Returns:
         Tuple of completes twiss parameters, (beta, alpha, gamma).
     """
-
     number_of_none = sum([param is None for param in (beta, alpha, gamma)])
     if number_of_none == 0:
         return (beta, alpha, gamma)
     if number_of_none != 1:
         raise ValueError("Only one twiss parameter can be omitted.")
     if beta is None:
-        beta = (1 + alpha ** 2) / gamma
+        beta = (1 + alpha**2) / gamma
     elif alpha is None:
         alpha = np.sqrt(beta * gamma - 1)
     elif gamma is None:
-        gamma = (1 + alpha ** 2) / beta
+        gamma = (1 + alpha**2) / beta
     return (beta, alpha, gamma)
 
 
-def compute_one_turn(list_of_m: Sequence[np.array]) -> np.array:
+def compute_one_turn(list_of_m: Sequence[np.ndarray]) -> np.ndarray:
     """Iteratively compute the matrix multiplictions of the arrays in the
     provided sequence.
 
@@ -293,7 +292,7 @@ def compute_twiss_clojure(twiss: Sequence[float]) -> float:
     return twiss[0] * twiss[2] - twiss[1] ** 2
 
 
-def compute_m_twiss(m: np.array) -> np.array:
+def compute_m_twiss(m: np.ndarray) -> np.ndarray:
     """Compute the twiss transfer matrix from a 2x2 phase space transfer
     matrix.
 
@@ -340,7 +339,7 @@ def compute_twiss_solution(transfer_m: np.ndarray, tol: float = 1e-10) -> np.nda
     denom = np.sqrt(denom)
     beta = 2 * transfer_m[0, 1] / denom
     alpha = (transfer_m[0, 0] - transfer_m[1, 1]) / denom
-    gamma = (1 + alpha ** 2) / beta
+    gamma = (1 + alpha**2) / beta
     out = to_v_vec((beta, alpha, gamma))
     if out[0, 0] < 0:
         out *= -1

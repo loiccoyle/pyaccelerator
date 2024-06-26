@@ -1,21 +1,25 @@
 from abc import abstractmethod
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Optional
 
 import numpy as np
 from matplotlib.patches import Patch
 
 from ..transfer_matrix import TransferMatrix
 
+if TYPE_CHECKING:
+    from ..lattice import Lattice
+
 
 class BaseElement:
-    """Base class of a lattice element.
-
-    Args:
-        *instance_args: Arguments required to make the instance of this
-            class's subclasses.
-    """
+    name: str
 
     def __init__(self, *instance_args):
+        """Base class of a lattice element.
+
+        Args:
+            *instance_args: Arguments required to make the instance of this
+                class's subclasses.
+        """
         # args of the subclass instance.
         self._instance_args = instance_args
 
@@ -37,7 +41,7 @@ class BaseElement:
         pass
 
     @abstractmethod
-    def _get_patch(self, s: float) -> Patch:
+    def _get_patch(self, s: float) -> Optional[Patch]:
         """Generate a ``matplotlib.patches.Patch`` object to represent the
         element when plotting the lattice.
 
@@ -46,6 +50,15 @@ class BaseElement:
 
         Returns:
             ``matplotlib.patches.Patch`` which represents the element.
+        """
+
+    @abstractmethod
+    def slice(self, n_slices: int) -> "Lattice":
+        """Slice the element into many smaller elements.
+        Args:
+            n_slices: Number of elements to slice the element into.
+        Returns:
+            A list of sliced elements.
         """
 
     def _transport(self, phase_coords: np.ndarray) -> np.ndarray:

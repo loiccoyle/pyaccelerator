@@ -1,4 +1,5 @@
 """Accelerator lattice"""
+
 import json
 import logging
 import os
@@ -7,6 +8,9 @@ from typing import TYPE_CHECKING, List, Sequence, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
+from matplotlib.figure import Figure
+from numpy.typing import ArrayLike
 from scipy.optimize import root
 
 from .constraints import Constraints
@@ -201,11 +205,11 @@ class Lattice(list):
         # track for n_turns
         for _ in range(n_turns - 1):
             _, *transported = self.transport(out_turns[-1])
-            out_turns.append([point[-1] for point in transported])
-        out_turns = np.array(out_turns)
+            out_turns.append([point[-1] for point in transported])  # type: ignore
+        out_turns_ = np.array(out_turns)
         # get the frequency with the highest amplitude
-        position = out_turns[:, PLANE_INDICES[plane][0]]
-        angle = out_turns[:, PLANE_INDICES[plane][1]]
+        position = out_turns_[:, PLANE_INDICES[plane][0]]
+        angle = out_turns_[:, PLANE_INDICES[plane][1]]
 
         beta, alpha, _ = self.twiss_solution(plane=plane)
         sqrt_beta = np.sqrt(beta)
@@ -273,7 +277,7 @@ class Lattice(list):
 
     def transport(
         self,
-        initial: Sequence[Union[float, np.ndarray]],
+        initial: ArrayLike,
     ) -> TransportedPhasespace:
         """Transport phase space coordinates or twiss parameters along the lattice.
 
@@ -334,7 +338,7 @@ class Lattice(list):
 
     def transport_twiss(
         self,
-        twiss: Sequence[float],
+        twiss: Union[Sequence[Union[float, None]], np.ndarray],
         plane: str = "h",
     ) -> TransportedTwiss:
         """Transport the given twiss parameters along the lattice.
@@ -348,13 +352,12 @@ class Lattice(list):
             Named tuple containing the twiss parameters along the lattice the
                 coordinates along the ring.
         """
-        twiss = to_twiss(twiss)
-        out = [twiss]
+        out = [to_twiss(twiss)]  # type: ignore
         s_coords = [0]
         transfer_ms = [element.m.twiss(plane=plane) for element in self]
         for i, m in enumerate(transfer_ms):
             out.append(m @ out[i])
-            s_coords.append(s_coords[i] + self[i].length)
+            s_coords.append(s_coords[i] + self[i].length)  # type: ignore
         out = np.hstack(out)
         return TransportedTwiss(np.array(s_coords), *out)
 
@@ -372,7 +375,7 @@ class Lattice(list):
         Return:
             List of indexes in the lattice where the element's name matches the pattern.
         """
-        pattern = re.compile(pattern)
+        pattern = re.compile(pattern)  # type: ignore
         out = [
             i
             for i, element in enumerate(self)
@@ -426,8 +429,10 @@ class Lattice(list):
     def __getitem__(self, item):
         result = list.__getitem__(self, item)
         try:
+            # if the item is a slice return a lattice
             return Lattice(result)
         except TypeError:
+            # if the item is not a slice return the element
             return result
 
     def save(self, path: os.PathLike):
@@ -489,7 +494,7 @@ class Plotter:
     def top_down(
         self,
         n_s_per_element: int = int(1e3),
-    ) -> Tuple[plt.Figure, plt.Axes]:
+    ) -> Tuple[Figure, Axes]:
         """Plot the s coordinate in the horizontal plane of the lattice.
 
         Args:
@@ -497,7 +502,7 @@ class Plotter:
                 element in the lattice.
 
         Returns:
-            Plotted ``plt.Figure`` and ``plt.Axes``.
+            Plotted ``Figure`` and ``Axes``.
         """
         xztheta = [np.array([0, 0, np.pi / 2])]
         s_start = 0
@@ -529,7 +534,7 @@ class Plotter:
         ax.legend()
         return fig, ax
 
-    def layout(self) -> Tuple[plt.Figure, plt.Axes]:
+    def layout(self) -> Tuple[Figure, Axes]:
         """Plot the lattice.
 
         Returns:

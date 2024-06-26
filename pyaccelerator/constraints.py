@@ -4,14 +4,12 @@ from logging import getLogger
 from typing import TYPE_CHECKING, Optional, Sequence, Tuple, Union
 
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import OptimizeResult, minimize
 
 from .elements.base import BaseElement
 from .utils import PLANE_INDICES
 
-if TYPE_CHECKING:  # pragma: no cover
-    from scipy.optimize import OptimizeResult
-
+if TYPE_CHECKING:
     from .lattice import Lattice
 
 
@@ -19,7 +17,7 @@ class BaseTarget:
     """Base target."""
 
     @abstractmethod
-    def loss(self, lattice: "Lattice"):
+    def loss(self, lattice: "Lattice") -> float:
         """Compute the loss for this target."""
 
 
@@ -83,8 +81,8 @@ class TargetPhasespace(BaseTarget):
         transported_rows = [
             i for i, value in enumerate(self.value) if value is not None
         ]
-        result = transported[transported_rows, transported_columns]
-        return abs(result - self.value[transported_rows])
+        result: float = transported[transported_rows, transported_columns]  # type: ignore
+        return abs(result - self.value[transported_rows])  # type: ignore
 
     def __repr__(self) -> str:
         args = ["element", "value", "initial"]
@@ -136,8 +134,8 @@ class TargetTwiss(BaseTarget):
         transported_rows = [
             i for i, value in enumerate(self.value) if value is not None
         ]
-        result = transported[transported_rows, transported_columns]
-        return abs(result - self.value[transported_rows])
+        result: float = transported[transported_rows, transported_columns]  # type: ignore
+        return abs(result - self.value[transported_rows])  # type: ignore
 
     def __repr__(self) -> str:
         args = ["element", "value", "plane"]
@@ -185,13 +183,13 @@ class TargetTwissSolution(BaseTarget):
         except ValueError:
             return np.inf
 
-        transported_columns = -1 # Use Twiss values at end of lattice
+        transported_columns = -1  # Use Twiss values at end of lattice
         transported_rows = [
             i for i, value in enumerate(self.value) if value is not None
         ]
 
-        result = transported[transported_rows, transported_columns]
-        return abs(result - self.value[transported_rows])
+        result: float = transported[transported_rows, transported_columns]  # type: ignore
+        return abs(result - self.value[transported_rows])  # type: ignore
 
     def __repr__(self) -> str:
         args = ["value", "plane"]
@@ -440,7 +438,9 @@ class Constraints:
             if res.fun > 1e-1:
                 # as this is a minimzation algorithm, it can find a minimum
                 # but the matching could still be off.
-                self._logger.warning("Loss is high:%f, double check the matching.", res.fun)
+                self._logger.warning(
+                    "Loss is high:%f, double check the matching.", res.fun
+                )
         return lattice, res
 
     def _set_parameters(self, new_settings: Sequence[float], lattice: "Lattice"):

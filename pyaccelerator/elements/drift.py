@@ -41,19 +41,19 @@ class Drift(BaseElement):
         out[2, 3] = self.length
         return out
 
-    def slice(self, n_drifts: int) -> Lattice:
+    def slice(self, n_slices: int) -> Lattice:
         """Slice the element into a many smaller elements.
 
         Args:
-            n_drifts: Number of :py:class:`Drift` elements.
+            n_slices: Number of :py:class:`Drift` elements.
 
         Returns:
             :py:class:`~accelerator.lattice.Lattice` of sliced :py:class:`Drift`
             elements.
         """
         out = [
-            Drift(self.length / n_drifts, name=f"{self.name}_slice_{i}")
-            for i in range(n_drifts)
+            Drift(self.length / n_slices, name=f"{self.name}_slice_{i}")
+            for i in range(n_slices)
         ]
         return Lattice(out)
 
