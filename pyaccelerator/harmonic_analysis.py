@@ -38,7 +38,7 @@ class HarmonicAnalysis:
         coefficients, frequencies = zip(
             *sorted(
                 zip(coefficients, frequencies),
-                key=lambda tuple: np.abs(tuple[0]),
+                key=lambda tup: np.abs(tup[0]),
                 reverse=True,
             )
         )
